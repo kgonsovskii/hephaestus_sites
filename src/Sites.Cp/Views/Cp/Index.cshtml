@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sites CP</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #1a1a1a; }
+        body { margin: 0; background: #f4f5f7; }
+        header { background: #111827; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        header nav a { color: #cbd5e1; text-decoration: none; margin-right: 14px; }
+        header nav a.active { color: #fff; font-weight: 600; }
+        main { max-width: 1100px; margin: 24px auto; padding: 0 16px 40px; }
+        .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+        th { font-size: 12px; text-transform: uppercase; color: #6b7280; }
+        button, .btn { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font: inherit; }
+        button.secondary { background: #6b7280; }
+        button.danger { background: #dc2626; }
+        button.small { padding: 4px 8px; font-size: 12px; }
+        input, textarea, select { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+        textarea { min-height: 72px; resize: vertical; }
+        label { display: block; font-size: 13px; color: #374151; margin: 10px 0 4px; }
+        label.inline { display: flex; align-items: center; gap: 8px; margin: 8px 0; cursor: pointer; }
+        label.inline input { width: auto; margin: 0; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+        .badge.warn { background: #fef3c7; color: #92400e; }
+        .badge.ok { background: #d1fae5; color: #065f46; }
+        .muted { color: #6b7280; font-size: 13px; }
+        .hint { color: #6b7280; font-size: 12px; margin-top: 2px; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        #status { min-height: 20px; margin-top: 8px; font-size: 13px; }
+        #status.error { color: #b91c1c; }
+        #status.ok { color: #047857; }
+        .section { border-top: 1px solid #e5e7eb; margin-top: 16px; padding-top: 12px; }
+        .section h4 { margin: 0 0 8px; font-size: 14px; color: #111827; }
+        .dyn-table { width: 100%; margin-top: 8px; }
+        .dyn-table th { font-size: 11px; }
+        .dyn-table td { padding: 6px 4px; }
+        .dyn-table input { margin: 0; }
+        details.raw-json { margin-top: 16px; }
+        details.raw-json summary { cursor: pointer; color: #6b7280; font-size: 13px; }
+        #codedWarning { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; color: #92400e; }
+    </style>
+</head>
+<body>
+@await Html.PartialAsync("_CpNav", "sites")
+<main>
+    <div class="card">
+        <div class="actions" style="justify-content:space-between; align-items:center">
+            <div>
+                <h2 style="margin:0 0 4px">sites.json <span class="badge" id="profileBadge" style="vertical-align:middle">…</span></h2>
+                <div class="muted" id="jsonPath">Loading…</div>
+                <div class="muted">Saves apply immediately — no restart. Use <strong>Clear cache</strong> or <strong>Invalidate</strong> below if content looks stale.</div>
+            </div>
+            <div class="actions">
+                <button type="button" class="secondary" id="clearCacheBtn">Clear cache</button>
+                <button type="button" class="secondary" id="invalidateBtn">Invalidate</button>
+                <button type="button" id="addBtn">Add site</button>
+            </div>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>Target host</th>
+                <th>Source host</th>
+                <th>Cookies</th>
+                <th>Cache</th>
+                <th>Module</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody id="sitesBody"></tbody>
+        </table>
+    </div>
+
+    <div class="card" id="editor" hidden>
+        <h3 id="editorTitle">Edit site</h3>
+        <div id="codedWarning" hidden>
+            This site has a <strong>coded module</strong> for the same source host. JSON is saved, but coded defaults may override some runtime behavior.
+        </div>
+
+        <div class="section" style="border-top:0; margin-top:0; padding-top:0">
+            <h4>Identity</h4>
+            <div class="row">
+                <div>
+                    <label for="targetHost">Target host (our domain, key)</label>
+                    <input id="targetHost" required placeholder="tube-18.xyz" />
+                </div>
+                <div>
+                    <label for="sourceHost">Source host (upstream)</label>
+                    <input id="sourceHost" required placeholder="tube18.sex" />
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="name">Display name (optional)</label>
+                    <input id="name" placeholder="Defaults to first part of source host" />
+                </div>
+                <div>
+                    <label for="sourceUpstreamHost">Source upstream host (optional)</label>
+                    <input id="sourceUpstreamHost" placeholder="www.{sourceHost}" />
+                    <div class="hint">Host header sent to upstream. Leave blank for www.{sourceHost}.</div>
+                </div>
+            </div>
+            <label for="targetHosts">Extra target hosts (optional)</label>
+            <textarea id="targetHosts" rows="2" placeholder="One per line. Leave empty for {target} and www.{target}."></textarea>
+        </div>
+
+        <div class="section">
+            <h4>Proxy behavior</h4>
+            <label class="inline">
+                <input type="checkbox" id="passCookies" checked />
+                Pass cookies (browser ↔ upstream)
+            </label>
+            <div class="hint">Required for JS antibot flows (e.g. Wildberries). Default: on.</div>
+            <label class="inline">
+                <input type="checkbox" id="disableCaching" />
+                Disable disk caching
+            </label>
+            <div class="hint">Skip <code>/_cache</code> lookup and storage for this site.</div>
+        </div>
+
+        <div class="section">
+            <h4>Routing</h4>
+            <div class="row">
+                <div>
+                    <label for="additionsPathPrefix">Local additions path prefix</label>
+                    <input id="additionsPathPrefix" value="/x/" />
+                    <div class="hint">Static files under <code>wwwroot/{targetHost}/</code> served at this prefix.</div>
+                </div>
+                <div>
+                    <label for="externalRedirectUrl">External redirect URL (optional)</label>
+                    <input id="externalRedirectUrl" placeholder="https://example.com/" />
+                    <div class="hint">Where outbound redirect paths send users. Blank = our site root.</div>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="outboundRedirectPathPrefixes">Outbound redirect paths</label>
+                    <textarea id="outboundRedirectPathPrefixes" rows="3" placeholder="/go&#10;/out&#10;/click"></textarea>
+                    <div class="hint">One path prefix per line. Matching requests redirect off-site.</div>
+                </div>
+                <div>
+                    <label for="blockedPathPrefixes">Blocked path prefixes</label>
+                    <textarea id="blockedPathPrefixes" rows="3" placeholder="/admin"></textarea>
+                    <div class="hint">One per line. Upstream requests to these paths are blocked.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h4>Content replacements</h4>
+            <div class="hint">Applied on top of automatic host/URL rewrites (source → target).</div>
+            <table class="dyn-table" id="replacementsTable">
+                <thead>
+                <tr>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Word boundary</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="replacementsBody"></tbody>
+            </table>
+            <button type="button" class="secondary small" id="addReplacementBtn" style="margin-top:8px">Add replacement</button>
+        </div>
+
+        <div class="section">
+            <h4>HTML injections</h4>
+            <div class="hint">Insert snippets into proxied HTML on matching paths. Use <code>*</code> for all pages. Partner tags usually go at <strong>start of &lt;head&gt;</strong> (<code>afterHeadOpen</code>).</div>
+            <table class="dyn-table" id="injectionsTable">
+                <thead>
+                <tr>
+                    <th>Paths (one per line)</th>
+                    <th>Position</th>
+                    <th>Snippet</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="injectionsBody"></tbody>
+            </table>
+            <button type="button" class="secondary small" id="addInjectionBtn" style="margin-top:8px">Add injection</button>
+        </div>
+
+        <div class="section">
+            <h4>Local assets</h4>
+            <div class="hint">Serve files from <code>wwwroot/{targetHost}/</code> instead of upstream.</div>
+            <table class="dyn-table" id="assetsTable">
+                <thead>
+                <tr>
+                    <th>Request path</th>
+                    <th>File (under wwwroot/{targetHost}/)</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="assetsBody"></tbody>
+            </table>
+            <button type="button" class="secondary small" id="addAssetBtn" style="margin-top:8px">Add asset</button>
+        </div>
+
+        <details class="raw-json">
+            <summary>Raw JSON preview</summary>
+            <textarea id="jsonPreview" rows="12" readonly style="margin-top:8px; font-family:ui-monospace,monospace"></textarea>
+        </details>
+
+        <div class="actions" style="margin-top:16px">
+            <button type="button" id="saveBtn">Save</button>
+            <button type="button" class="secondary" id="cancelBtn">Cancel</button>
+        </div>
+    </div>
+</main>
+<script>
+    const apiBase = '@Context.Request.PathBase/api/sites';
+    const maintenanceBase = '@Context.Request.PathBase/api/maintenance';
+    const statusEl = document.getElementById('status');
+    const sitesBody = document.getElementById('sitesBody');
+    const editor = document.getElementById('editor');
+    const codedWarning = document.getElementById('codedWarning');
+    const editorTitle = document.getElementById('editorTitle');
+    const jsonPreview = document.getElementById('jsonPreview');
+    let editingOriginalKey = null;
+    let hasCodedModule = false;
+
+    const fields = {
+        targetHost: document.getElementById('targetHost'),
+        sourceHost: document.getElementById('sourceHost'),
+        name: document.getElementById('name'),
+        sourceUpstreamHost: document.getElementById('sourceUpstreamHost'),
+        targetHosts: document.getElementById('targetHosts'),
+        passCookies: document.getElementById('passCookies'),
+        disableCaching: document.getElementById('disableCaching'),
+        additionsPathPrefix: document.getElementById('additionsPathPrefix'),
+        externalRedirectUrl: document.getElementById('externalRedirectUrl'),
+        outboundRedirectPathPrefixes: document.getElementById('outboundRedirectPathPrefixes'),
+        blockedPathPrefixes: document.getElementById('blockedPathPrefixes')
+    };
+
+    function setStatus(message, kind) {
+        statusEl.textContent = message || '';
+        statusEl.className = kind || '';
+    }
+
+    async function api(url, options) {
+        const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json' },
+            ...options
+        });
+        if (!response.ok) {
+            let error = response.statusText;
+            try {
+                const body = await response.json();
+                error = body.error || JSON.stringify(body);
+            } catch { /* ignored */ }
+            throw new Error(error);
+        }
+        if (response.status === 204) return null;
+        return response.json();
+    }
+
+    function linesToArray(text) {
+        return (text || '')
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+    }
+
+    function arrayToLines(values) {
+        return (values || []).join('\n');
+    }
+
+    function defaultDefinition() {
+        return {
+            disableCaching: false,
+            passCookies: true,
+            outboundRedirectPathPrefixes: [],
+            blockedPathPrefixes: [],
+            additionsPathPrefix: '/x/',
+            contentReplacements: [],
+            localAssets: {}
+        };
+    }
+
+    function normalizeDefinition(def) {
+        const d = { ...defaultDefinition(), ...def };
+        d.passCookies = def.passCookies !== false;
+        d.disableCaching = !!def.disableCaching;
+        d.outboundRedirectPathPrefixes = def.outboundRedirectPathPrefixes || [];
+        d.blockedPathPrefixes = def.blockedPathPrefixes || [];
+        d.additionsPathPrefix = def.additionsPathPrefix || '/x/';
+        d.contentReplacements = def.contentReplacements || [];
+        d.htmlInjections = def.htmlInjections || [];
+        d.localAssets = def.localAssets || {};
+        return d;
+    }
+
+    function addReplacementRow(from = '', to = '', wordBoundaryOnly = false) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="rep-from" value="${escapeAttr(from)}" placeholder="BestOldGames.net" /></td>
+            <td><input type="text" class="rep-to" value="${escapeAttr(to)}" placeholder="veryoldgames.xyz" /></td>
+            <td style="text-align:center"><input type="checkbox" class="rep-wb" ${wordBoundaryOnly ? 'checked' : ''} /></td>
+            <td><button type="button" class="danger small rep-remove">Remove</button></td>`;
+        tr.querySelector('.rep-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
+        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
+        tr.querySelectorAll('input[type=checkbox]').forEach(el => el.addEventListener('change', updateJsonPreview));
+        document.getElementById('replacementsBody').appendChild(tr);
+    }
+
+    function addInjectionRow(paths = '/', position = 'beforeHeadClose', snippet = '') {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><textarea class="inj-paths" rows="2">${escapeAttr(paths)}</textarea></td>
+            <td>
+                <select class="inj-position">
+                    <option value="afterHeadOpen">start of &lt;head&gt; (recommended)</option>
+                    <option value="beforeHeadClose">before &lt;/head&gt;</option>
+                    <option value="beforeBodyClose">before &lt;/body&gt;</option>
+                </select>
+            </td>
+            <td><textarea class="inj-snippet" rows="3">${escapeAttr(snippet)}</textarea></td>
+            <td><button type="button" class="danger small inj-remove">Remove</button></td>`;
+        tr.querySelector('.inj-position').value = position;
+        tr.querySelector('.inj-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
+        tr.querySelectorAll('textarea, select').forEach(el => {
+            el.addEventListener('input', updateJsonPreview);
+            el.addEventListener('change', updateJsonPreview);
+        });
+        document.getElementById('injectionsBody').appendChild(tr);
+    }
+
+    function addAssetRow(path = '', file = '') {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="asset-path" value="${escapeAttr(path)}" placeholder="/img/logo.png" /></td>
+            <td><input type="text" class="asset-file" value="${escapeAttr(file)}" placeholder="img/logo.png" /></td>
+            <td><button type="button" class="danger small asset-remove">Remove</button></td>`;
+        tr.querySelector('.asset-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
+        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
+        document.getElementById('assetsBody').appendChild(tr);
+    }
+
+    function escapeAttr(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;');
+    }
+
+    function collectReplacements() {
+        const rows = [];
+        document.querySelectorAll('#replacementsBody tr').forEach(tr => {
+            const from = tr.querySelector('.rep-from').value.trim();
+            const to = tr.querySelector('.rep-to').value.trim();
+            const wordBoundaryOnly = tr.querySelector('.rep-wb').checked;
+            if (!from && !to) return;
+            const item = { from, to };
+            if (wordBoundaryOnly) item.wordBoundaryOnly = true;
+            rows.push(item);
+        });
+        return rows;
+    }
+
+    function collectHtmlInjections() {
+        const rows = [];
+        document.querySelectorAll('#injectionsBody tr').forEach(tr => {
+            const paths = linesToArray(tr.querySelector('.inj-paths').value);
+            const position = tr.querySelector('.inj-position').value;
+            const snippet = tr.querySelector('.inj-snippet').value.trim();
+            if (!snippet) return;
+            rows.push({
+                paths: paths.length > 0 ? paths : ['/'],
+                position,
+                snippet
+            });
+        });
+        return rows;
+    }
+
+    function collectLocalAssets() {
+        const map = {};
+        document.querySelectorAll('#assetsBody tr').forEach(tr => {
+            const path = tr.querySelector('.asset-path').value.trim();
+            const file = tr.querySelector('.asset-file').value.trim();
+            if (!path || !file) return;
+            map[path] = file;
+        });
+        return map;
+    }
+
+    function buildPayload() {
+        const sourceHost = fields.sourceHost.value.trim();
+        const payload = {
+            sourceHost,
+            disableCaching: fields.disableCaching.checked,
+            passCookies: fields.passCookies.checked,
+            outboundRedirectPathPrefixes: linesToArray(fields.outboundRedirectPathPrefixes.value),
+            blockedPathPrefixes: linesToArray(fields.blockedPathPrefixes.value),
+            additionsPathPrefix: fields.additionsPathPrefix.value.trim() || '/x/'
+        };
+
+        const name = fields.name.value.trim();
+        if (name) payload.name = name;
+
+        const sourceUpstreamHost = fields.sourceUpstreamHost.value.trim();
+        if (sourceUpstreamHost) payload.sourceUpstreamHost = sourceUpstreamHost;
+
+        const targetHosts = linesToArray(fields.targetHosts.value);
+        if (targetHosts.length > 0) payload.targetHosts = targetHosts;
+
+        const externalRedirectUrl = fields.externalRedirectUrl.value.trim();
+        if (externalRedirectUrl) payload.externalRedirectUrl = externalRedirectUrl;
+
+        const replacements = collectReplacements();
+        if (replacements.length > 0) payload.contentReplacements = replacements;
+
+        const injections = collectHtmlInjections();
+        if (injections.length > 0) payload.htmlInjections = injections;
+
+        const assets = collectLocalAssets();
+        if (Object.keys(assets).length > 0) payload.localAssets = assets;
+
+        return payload;
+    }
+
+    function updateJsonPreview() {
+        try {
+            jsonPreview.value = JSON.stringify(buildPayload(), null, 2);
+        } catch {
+            jsonPreview.value = '{}';
+        }
+    }
+
+    function fillForm(definition) {
+        const def = normalizeDefinition(definition);
+        fields.sourceHost.value = def.sourceHost || '';
+        fields.name.value = def.name || '';
+        fields.sourceUpstreamHost.value = def.sourceUpstreamHost || '';
+        fields.targetHosts.value = arrayToLines(def.targetHosts);
+        fields.passCookies.checked = def.passCookies;
+        fields.disableCaching.checked = def.disableCaching;
+        fields.additionsPathPrefix.value = def.additionsPathPrefix;
+        fields.externalRedirectUrl.value = def.externalRedirectUrl || '';
+        fields.outboundRedirectPathPrefixes.value = arrayToLines(def.outboundRedirectPathPrefixes);
+        fields.blockedPathPrefixes.value = arrayToLines(def.blockedPathPrefixes);
+
+        document.getElementById('replacementsBody').innerHTML = '';
+        for (const rep of def.contentReplacements)
+            addReplacementRow(rep.from || '', rep.to || '', !!rep.wordBoundaryOnly);
+
+        document.getElementById('injectionsBody').innerHTML = '';
+        for (const inj of def.htmlInjections)
+            addInjectionRow(arrayToLines(inj.paths), inj.position || 'beforeHeadClose', inj.snippet || '');
+
+        document.getElementById('assetsBody').innerHTML = '';
+        for (const [path, file] of Object.entries(def.localAssets || {}))
+            addAssetRow(path, file);
+
+        updateJsonPreview();
+    }
+
+    function renderSites(data) {
+        document.getElementById('profileBadge').textContent = data.profile || 'default';
+        document.getElementById('jsonPath').textContent = (data.profile ? `profile ${data.profile} · ` : '') + (data.sitesJsonPath || '');
+        sitesBody.innerHTML = '';
+        for (const entry of data.sites) {
+            const def = normalizeDefinition(entry.definition);
+            const cookies = def.passCookies
+                ? '<span class="badge ok">on</span>'
+                : '<span class="badge warn">off</span>';
+            const cache = def.disableCaching
+                ? '<span class="badge warn">off</span>'
+                : '<span class="badge ok">on</span>';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><code>${entry.targetHost}</code></td>
+                <td><code>${def.sourceHost}</code></td>
+                <td>${cookies}</td>
+                <td>${cache}</td>
+                <td>${entry.hasCodedModule ? '<span class="badge">coded</span>' : '<span class="muted">json</span>'}</td>
+                <td class="actions">
+                    <button type="button" data-edit="${entry.targetHost}">Edit</button>
+                    <button type="button" class="danger" data-delete="${entry.targetHost}">Delete</button>
+                </td>`;
+            sitesBody.appendChild(tr);
+        }
+
+        sitesBody.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openEditor(btn.dataset.edit)));
+        sitesBody.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteSite(btn.dataset.delete)));
+    }
+
+    async function loadSites() {
+        const data = await api(apiBase);
+        renderSites(data);
+    }
+
+    async function openEditor(targetHost) {
+        if (targetHost) {
+            const entry = await api(`${apiBase}/${encodeURIComponent(targetHost)}`);
+            editingOriginalKey = entry.targetHost;
+            hasCodedModule = entry.hasCodedModule;
+            editorTitle.textContent = 'Edit site';
+            fields.targetHost.value = entry.targetHost;
+            fields.targetHost.readOnly = true;
+            fillForm(entry.definition);
+        } else {
+            editingOriginalKey = null;
+            hasCodedModule = false;
+            editorTitle.textContent = 'Add site';
+            fields.targetHost.value = '';
+            fields.targetHost.readOnly = false;
+            fillForm(defaultDefinition());
+        }
+        codedWarning.hidden = !hasCodedModule;
+        editor.hidden = false;
+        editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeEditor() {
+        editor.hidden = true;
+        editingOriginalKey = null;
+        hasCodedModule = false;
+    }
+
+    async function saveSite() {
+        const targetHost = fields.targetHost.value.trim();
+        if (!targetHost || !fields.sourceHost.value.trim()) {
+            setStatus('Target host and source host are required.', 'error');
+            return;
+        }
+
+        const payload = buildPayload();
+        try {
+            if (editingOriginalKey) {
+                await api(`${apiBase}/${encodeURIComponent(editingOriginalKey)}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                setStatus(`Updated ${editingOriginalKey} (profile ${document.getElementById('profileBadge').textContent}). Live reload applied.`, 'ok');
+            } else {
+                await api(`${apiBase}/${encodeURIComponent(targetHost)}`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                setStatus(`Created ${targetHost} (profile ${document.getElementById('profileBadge').textContent}). Live reload applied.`, 'ok');
+            }
+            closeEditor();
+            await loadSites();
+        } catch (err) {
+            setStatus(err.message, 'error');
+        }
+    }
+
+    async function deleteSite(targetHost) {
+        if (!confirm(`Delete site ${targetHost}?`)) return;
+        try {
+            await api(`${apiBase}/${encodeURIComponent(targetHost)}`, { method: 'DELETE' });
+            setStatus(`Deleted ${targetHost} (profile ${document.getElementById('profileBadge').textContent}). Live reload applied.`, 'ok');
+            await loadSites();
+        } catch (err) {
+            setStatus(err.message, 'error');
+        }
+    }
+
+    async function clearCache() {
+        if (!confirm('Clear all proxy disk cache for every site?')) return;
+        try {
+            const result = await api(`${maintenanceBase}/clear-cache`, { method: 'POST', body: '{}' });
+            setStatus(`Cleared ${result.removedEntries} cache entr(ies) at ${result.cacheRoot} (profile ${result.profile}).`, 'ok');
+        } catch (err) {
+            setStatus(err.message, 'error');
+        }
+    }
+
+    async function invalidateSites() {
+        try {
+            const result = await api(`${maintenanceBase}/invalidate`, { method: 'POST', body: '{}' });
+            setStatus(`Reloaded ${result.siteCount} site(s) from profile ${result.profile}: ${result.sitesJsonPath}.`, 'ok');
+            await loadSites();
+        } catch (err) {
+            setStatus(err.message, 'error');
+        }
+    }
+
+    document.getElementById('addBtn').addEventListener('click', () => openEditor(null));
+    document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
+    document.getElementById('invalidateBtn').addEventListener('click', invalidateSites);
+    document.getElementById('saveBtn').addEventListener('click', saveSite);
+    document.getElementById('cancelBtn').addEventListener('click', closeEditor);
+    document.getElementById('addReplacementBtn').addEventListener('click', () => { addReplacementRow(); updateJsonPreview(); });
+    document.getElementById('addInjectionBtn').addEventListener('click', () => { addInjectionRow(); updateJsonPreview(); });
+    document.getElementById('addAssetBtn').addEventListener('click', () => { addAssetRow(); updateJsonPreview(); });
+    Object.values(fields).forEach(el => {
+        el.addEventListener('input', updateJsonPreview);
+        if (el.type === 'checkbox') el.addEventListener('change', updateJsonPreview);
+    });
+
+    loadSites().catch(err => setStatus(err.message, 'error'));
+</script>
+</body>
+</html>

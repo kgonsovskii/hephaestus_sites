@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sites.CertMaintenance</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Certes" Version="3.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sites.Modules\Sites.Modules.csproj" />
+    <ProjectReference Include="..\Sites.Web\Sites.Web.csproj" />
+    <ProjectReference Include="..\Sites.Web.Abstractions\Sites.Web.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

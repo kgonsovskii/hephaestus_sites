@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>System — Sites CP</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #1a1a1a; }
+        body { margin: 0; background: #f4f5f7; }
+        header { background: #111827; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        header nav a { color: #cbd5e1; text-decoration: none; margin-right: 14px; }
+        header nav a.active { color: #fff; font-weight: 600; }
+        main { max-width: 900px; margin: 24px auto; padding: 0 16px 40px; }
+        .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+        h2 { margin: 0 0 12px; font-size: 18px; }
+        h3 { margin: 0 0 8px; font-size: 15px; }
+        button, .btn { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font: inherit; }
+        button.secondary { background: #6b7280; }
+        button.danger { background: #dc2626; }
+        input { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+        label { display: block; font-size: 13px; color: #374151; margin: 10px 0 4px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .muted { color: #6b7280; font-size: 13px; }
+        .hint { color: #6b7280; font-size: 12px; margin-top: 4px; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+        .badge.warn { background: #fef3c7; color: #92400e; }
+        .badge.ok { background: #d1fae5; color: #065f46; }
+        #status { min-height: 20px; margin-top: 8px; font-size: 13px; }
+        #status.error { color: #b91c1c; }
+        #status.ok { color: #047857; }
+        pre#gitLog { background: #111827; color: #e5e7eb; padding: 12px; border-radius: 6px; font-size: 12px; min-height: 120px; max-height: 320px; overflow: auto; white-space: pre-wrap; }
+        code { font-size: 12px; background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
+        dl.meta { margin: 0; display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; font-size: 13px; }
+        dl.meta dt { color: #6b7280; margin: 0; }
+        dl.meta dd { margin: 0; word-break: break-all; }
+    </style>
+</head>
+<body>
+@await Html.PartialAsync("_CpNav", "system")
+<main>
+    <div id="status"></div>
+
+    <div class="card">
+        <h2>Profile</h2>
+        <p class="muted">Profile selects <code>profiles/{name}/sites.json</code> and <code>settings.json</code>. Active profile is in <code>../profile.txt</code> beside the repo (not in git; created on install).</p>
+        <dl class="meta" id="profileMeta"></dl>
+        <label for="profileInput">Profile name</label>
+        <input type="text" id="profileInput" autocomplete="off" />
+        <div class="actions">
+            <button type="button" id="saveProfileBtn">Save profile</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Git</h2>
+        <p class="muted">Automatic sync (pull + push) on startup, every <code>Git:SyncInterval</code>, and after sites.json save. PAT: <code>deploy/git-pat.enc</code>.</p>
+        <div id="gitStatus" class="muted">Loading…</div>
+        <div class="actions">
+            <button type="button" id="gitPullBtn">Pull</button>
+            <button type="button" id="gitPushBtn">Push</button>
+            <button type="button" class="secondary" id="gitSyncBtn">Sync (pull + push)</button>
+        </div>
+        <pre id="gitLog"></pre>
+    </div>
+
+    <div class="card">
+        <h2>Clone &amp; self-update</h2>
+        <p class="muted">Remote install to another VPS and self-update this host are on the <a href="@($"{Context.Request.PathBase}/clone")">Clone</a> page (same as Hephaestus CP).</p>
+    </div>
+</main>
+<script>
+(function () {
+    const pathBase = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Context.Request.PathBase.Value ?? ""));
+    const api = (path) => (pathBase.endsWith("/") ? pathBase.slice(0, -1) : pathBase) + path;
+
+    function setStatus(msg, ok) {
+        const el = document.getElementById("status");
+        el.textContent = msg || "";
+        el.className = ok === true ? "ok" : ok === false ? "error" : "";
+    }
+
+    async function loadInfo() {
+        const res = await fetch(api("/api/system/info"), { credentials: "same-origin" });
+        if (!res.ok) throw new Error("Failed to load system info");
+        const info = await res.json();
+        document.getElementById("profileInput").value = info.profile;
+        document.getElementById("profileMeta").innerHTML =
+            "<dt>Current</dt><dd><span class=\"badge\">" + escapeHtml(info.profile) + "</span></dd>" +
+            "<dt>Profile file</dt><dd><code>" + escapeHtml(info.profileFilePath) + "</code></dd>" +
+            "<dt>Profile data</dt><dd><code>" + escapeHtml(info.profileDataDirectory) + "</code></dd>" +
+            "<dt>sites.json</dt><dd><code>" + escapeHtml(info.sitesJsonPath) + "</code></dd>" +
+            "<dt>settings.json</dt><dd><code>" + escapeHtml(info.settingsJsonPath) + "</code></dd>" +
+            "<dt>Repository</dt><dd><code>" + escapeHtml(info.repositoryRoot) + "</code></dd>" +
+            "<dt>Clone dir</dt><dd><code>" + escapeHtml(info.cloneDirectory) + "</code></dd>";
+    }
+
+    async function loadGitStatus() {
+        const res = await fetch(api("/api/system/git/status"), { credentials: "same-origin" });
+        if (!res.ok) {
+            document.getElementById("gitStatus").textContent = "Git status unavailable";
+            return;
+        }
+        const s = await res.json();
+        let html = "Branch: <strong>" + escapeHtml(s.branch || "—") + "</strong>";
+        html += s.hasPat ? " · <span class=\"badge ok\">PAT</span>" : " · <span class=\"badge warn\">no PAT</span>";
+        html += s.hasLocalChanges ? " · <span class=\"badge warn\">local changes</span>" : " · <span class=\"badge ok\">clean</span>";
+        if (s.lastError) html += "<br><span class=\"error\">" + escapeHtml(s.lastError) + "</span>";
+        if (s.changedFiles && s.changedFiles.length)
+            html += "<br><span class=\"muted\">" + s.changedFiles.map(escapeHtml).join(", ") + "</span>";
+        document.getElementById("gitStatus").innerHTML = html;
+    }
+
+    function escapeHtml(v) {
+        return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function runGit(action) {
+        const logEl = document.getElementById("gitLog");
+        logEl.textContent = "Running " + action + "…\n";
+        setStatus("", null);
+        try {
+            const res = await fetch(api("/api/system/git/" + action), { method: "POST", credentials: "same-origin" });
+            const data = await res.json();
+            logEl.textContent = (data.log || []).join("\n") + (data.log && data.log.length ? "\n" : "") + data.message;
+            setStatus(data.message, data.succeeded);
+            await loadGitStatus();
+        } catch (e) {
+            setStatus(String(e), false);
+        }
+    }
+
+    document.getElementById("saveProfileBtn").addEventListener("click", async () => {
+        const profile = document.getElementById("profileInput").value.trim();
+        if (!profile) { setStatus("Profile is required.", false); return; }
+        try {
+            const res = await fetch(api("/api/system/profile"), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ profile })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Save failed");
+            setStatus("Profile saved: " + data.profile, true);
+            await loadInfo();
+        } catch (e) {
+            setStatus(String(e), false);
+        }
+    });
+
+    document.getElementById("gitPullBtn").addEventListener("click", () => runGit("pull"));
+    document.getElementById("gitPushBtn").addEventListener("click", () => runGit("push"));
+    document.getElementById("gitSyncBtn").addEventListener("click", () => runGit("sync"));
+
+    loadInfo().catch(e => setStatus(String(e), false));
+    loadGitStatus().catch(() => {});
+})();
+</script>
+</body>
+</html>

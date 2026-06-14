@@ -1,0 +1,59 @@
+export DEBIAN_FRONTEND=noninteractive
+: "${SITES_GIT_REPO:?SITES_GIT_REPO is required}"
+: "${SITES_SERVICE_NAME:?SITES_SERVICE_NAME is required}"
+
+: "${SITES_PROFILE:?SITES_PROFILE is required for remote install}"
+SITES_CLONE_DIR="${SITES_CLONE_DIR:-${HOME}/hephaestus_sites}"
+SITES_RUNTIME_IDENTIFIER="${SITES_RUNTIME_IDENTIFIER:-linux-x64}"
+SITES_PUBLISH_DIR="${SITES_PUBLISH_DIR:-${SITES_CLONE_DIR}/release}"
+
+PROFILE_FILE="$(dirname "${SITES_CLONE_DIR}")/profile.txt"
+printf '%s\n' "${SITES_PROFILE}" > "${PROFILE_FILE}"
+echo "[sites-deploy] profile ${SITES_PROFILE} -> ${PROFILE_FILE}"
+SITES_GIT_CLONE_URL="${SITES_GIT_CLONE_URL:-${SITES_GIT_REPO}}"
+
+echo "[sites-deploy] clone dir: ${SITES_CLONE_DIR}"
+echo "[sites-deploy] publish dir: ${SITES_PUBLISH_DIR}"
+echo "[sites-deploy] git repo: ${SITES_GIT_REPO}"
+
+wait_for_apt_dpkg_lock
+apt_get update
+apt_get install -y git ca-certificates curl software-properties-common
+
+if ! dpkg-query -W -f='${Status}' dotnet-sdk-10.0 2>/dev/null | grep -q 'install ok installed'; then
+  add-apt-repository -y ppa:dotnet/backports
+  apt_get update
+fi
+
+apt_get install -y dotnet-sdk-10.0 dotnet-runtime-10.0 aspnetcore-runtime-10.0
+apt_get install -y --only-upgrade \
+  dotnet-host \
+  dotnet-runtime-10.0 \
+  aspnetcore-runtime-10.0 \
+  dotnet-sdk-10.0 \
+  2>/dev/null || true
+
+if ! dotnet --list-sdks | grep -q '^10\.'; then
+  echo "[sites-deploy] ERROR: .NET 10 SDK not detected after install." >&2
+  exit 1
+fi
+
+if [ -d "${SITES_CLONE_DIR}/.git" ]; then
+  echo "[sites-deploy] Updating existing clone"
+  git -C "${SITES_CLONE_DIR}" fetch origin
+  branch="$(git -C "${SITES_CLONE_DIR}" rev-parse --abbrev-ref HEAD)"
+  if [ "${branch}" = "HEAD" ]; then
+    git -C "${SITES_CLONE_DIR}" reset --hard origin/HEAD
+  else
+    git -C "${SITES_CLONE_DIR}" reset --hard "origin/${branch}"
+  fi
+  git -C "${SITES_CLONE_DIR}" clean -fd
+else
+  echo "[sites-deploy] Fresh clone from GitHub"
+  rm -rf "${SITES_CLONE_DIR}"
+  git clone --depth 1 "${SITES_GIT_CLONE_URL}" "${SITES_CLONE_DIR}"
+fi
+
+echo "[sites-deploy] local install (publish + systemd)"
+bash "${SITES_CLONE_DIR}/deploy/install-local.sh"
+echo "[sites-deploy] Done. Logs: journalctl -u ${SITES_SERVICE_NAME} -f"

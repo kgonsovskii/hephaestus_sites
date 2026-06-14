@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sites.RemoteDeploy</RootNamespace>
+    <AssemblyName>Sites.RemoteDeploy</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sites.Web.Abstractions\Sites.Web.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

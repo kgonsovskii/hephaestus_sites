@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings — Sites CP</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #1a1a1a; }
+        body { margin: 0; background: #f4f5f7; }
+        header { background: #111827; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        header nav a { color: #cbd5e1; text-decoration: none; margin-right: 14px; }
+        header nav a.active { color: #fff; font-weight: 600; }
+        main { max-width: 900px; margin: 24px auto; padding: 0 16px 40px; }
+        .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+        h2 { margin: 0 0 12px; font-size: 18px; }
+        h3 { margin: 16px 0 8px; font-size: 15px; }
+        button { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font: inherit; }
+        button.secondary { background: #6b7280; }
+        input, textarea { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+        textarea { min-height: 120px; font-family: ui-monospace, monospace; font-size: 12px; }
+        label { display: block; font-size: 13px; color: #374151; margin: 10px 0 4px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .muted { color: #6b7280; font-size: 13px; }
+        .hint { color: #6b7280; font-size: 12px; margin-top: 4px; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        #status { min-height: 20px; margin-bottom: 8px; font-size: 13px; }
+        #status.error { color: #b91c1c; }
+        #status.ok { color: #047857; }
+        code { font-size: 12px; background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
+        dl.meta { margin: 0 0 12px; display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; font-size: 13px; }
+        dl.meta dt { color: #6b7280; margin: 0; }
+        dl.meta dd { margin: 0; word-break: break-all; }
+        .check-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .check-row input { width: auto; }
+    </style>
+</head>
+<body>
+@await Html.PartialAsync("_CpNav", "settings")
+<main>
+    <div id="status"></div>
+
+    <div class="card">
+        <h2>Proxy settings</h2>
+        <p class="muted">Per-profile file: <code>profiles/{profile}/settings.json</code>. Missing files are created from <code>appsettings.json</code> → <code>Sites</code>. Changes apply immediately.</p>
+        <dl class="meta" id="settingsMeta"></dl>
+
+        <h3>Upstream</h3>
+        <label for="upstreamRequestTimeout">Upstream request timeout</label>
+        <input type="text" id="upstreamRequestTimeout" placeholder="00:10:00" />
+        <div class="hint">.NET TimeSpan format, e.g. <code>00:10:00</code> or <code>7.00:00:00</code>.</div>
+
+        <h3>Cache</h3>
+        <div class="row">
+            <div>
+                <label for="cacheTtl">Cache TTL (all non-excluded types)</label>
+                <input type="text" id="cacheTtl" placeholder="7.00:00:00" />
+            </div>
+            <div>
+                <label for="maxEntryBytes">Max entry bytes</label>
+                <input type="number" id="maxEntryBytes" min="1" step="1" />
+            </div>
+        </div>
+        <label for="cacheRootPath">Cache root path</label>
+        <input type="text" id="cacheRootPath" placeholder="(empty = platform default /_cache)" />
+        <div class="check-row">
+            <input type="checkbox" id="rejectRangeRequests" />
+            <label for="rejectRangeRequests" style="margin:0">Reject Range requests (do not cache byte-range GETs)</label>
+        </div>
+        <label for="excludedContentTypes">Excluded content types (one per line)</label>
+        <textarea id="excludedContentTypes" spellcheck="false"></textarea>
+        <div class="hint">Prefix entries ending with <code>/</code> match whole families (e.g. <code>video/</code>). Others are exact media types.</div>
+
+        <div class="actions">
+            <button type="button" id="saveSettingsBtn">Save settings</button>
+            <button type="button" class="secondary" id="reloadSettingsBtn">Reload from disk</button>
+        </div>
+    </div>
+</main>
+<script>
+(function () {
+    const pathBase = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Context.Request.PathBase.Value ?? ""));
+    const api = (path) => (pathBase.endsWith("/") ? pathBase.slice(0, -1) : pathBase) + path;
+
+    function setStatus(msg, ok) {
+        const el = document.getElementById("status");
+        el.textContent = msg || "";
+        el.className = ok === true ? "ok" : ok === false ? "error" : "";
+    }
+
+    function renderMeta(data) {
+        document.getElementById("settingsMeta").innerHTML =
+            `<dt>Profile</dt><dd>${escapeHtml(data.profile)}</dd>` +
+            `<dt>Settings file</dt><dd><code>${escapeHtml(data.settingsJsonPath)}</code></dd>`;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function fillForm(settings) {
+        const sites = settings.sites || settings.Sites || {};
+        const cache = sites.cache || sites.Cache || {};
+        document.getElementById("upstreamRequestTimeout").value = sites.upstreamRequestTimeout || sites.UpstreamRequestTimeout || "";
+        document.getElementById("cacheTtl").value = cache.ttl || cache.Ttl || "";
+        document.getElementById("maxEntryBytes").value = cache.maxEntryBytes ?? cache.MaxEntryBytes ?? "";
+        document.getElementById("cacheRootPath").value = cache.rootPath ?? cache.RootPath ?? "";
+        document.getElementById("rejectRangeRequests").checked = !!(cache.rejectRangeRequests ?? cache.RejectRangeRequests);
+        const excluded = cache.excludedContentTypes || cache.ExcludedContentTypes || [];
+        document.getElementById("excludedContentTypes").value = excluded.join("\n");
+    }
+
+    function readForm() {
+        const excluded = document.getElementById("excludedContentTypes").value
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(Boolean);
+        return {
+            sites: {
+                upstreamRequestTimeout: document.getElementById("upstreamRequestTimeout").value.trim(),
+                cache: {
+                    rootPath: document.getElementById("cacheRootPath").value.trim(),
+                    maxEntryBytes: Number(document.getElementById("maxEntryBytes").value),
+                    ttl: document.getElementById("cacheTtl").value.trim(),
+                    rejectRangeRequests: document.getElementById("rejectRangeRequests").checked,
+                    excludedContentTypes: excluded
+                }
+            }
+        };
+    }
+
+    async function loadSettings() {
+        const res = await fetch(api("/api/settings"), { credentials: "same-origin" });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        renderMeta(data);
+        fillForm(data.settings || {});
+        return data;
+    }
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+        try {
+            const body = readForm();
+            const res = await fetch(api("/api/settings"), {
+                method: "PUT",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            renderMeta(data);
+            fillForm(data.settings || {});
+            setStatus("Settings saved.", true);
+        } catch (e) {
+            setStatus(String(e), false);
+        }
+    });
+
+    document.getElementById("reloadSettingsBtn").addEventListener("click", async () => {
+        try {
+            await loadSettings();
+            setStatus("Reloaded from disk.", true);
+        } catch (e) {
+            setStatus(String(e), false);
+        }
+    });
+
+    loadSettings().catch(e => setStatus(String(e), false));
+})();
+</script>
+</body>
+</html>

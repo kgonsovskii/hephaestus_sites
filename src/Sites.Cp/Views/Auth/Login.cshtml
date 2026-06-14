@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sites CP Login</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #111827; color: #fff; display: grid; place-items: center; min-height: 100vh; margin: 0; }
+        form { background: #1f2937; padding: 24px; border-radius: 10px; width: min(360px, 92vw); }
+        h1 { margin: 0 0 16px; font-size: 20px; }
+        input { width: 100%; box-sizing: border-box; padding: 10px; border-radius: 6px; border: 1px solid #374151; margin-bottom: 12px; }
+        button { width: 100%; padding: 10px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; font: inherit; cursor: pointer; }
+        .error { color: #fca5a5; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<form method="post" action="@($"{Context.Request.PathBase}/auth/login")">
+    <h1>Sites CP</h1>
+    @if (ViewData["Error"] is string error)
+    {
+        <div class="error">@error</div>
+    }
+    <input type="password" name="password" placeholder="Admin password" autofocus required />
+    <input type="hidden" name="returnUrl" value="@Context.Request.Query["returnUrl"]" />
+    <button type="submit">Sign in</button>
+</form>
+</body>
+</html>

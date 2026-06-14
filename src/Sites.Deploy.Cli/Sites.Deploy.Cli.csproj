@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sites.Deploy.Cli</RootNamespace>
+    <AssemblyName>sites-deploy</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sites.RemoteDeploy\Sites.RemoteDeploy.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>sites-deploy.appsettings.json</TargetPath>
+    </None>
+    <None Update="..\..\deploy\install-remote-creds.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>deploy\install-remote-creds.txt</Link>
+    </None>
+    <None Update="..\..\deploy\install-remote.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>deploy\install-remote.txt</Link>
+    </None>
+    <None Update="..\..\deploy\wait.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>deploy\wait.sh</Link>
+    </None>
+    <None Update="..\..\deploy\sites-host.service">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>deploy\sites-host.service</Link>
+    </None>
+  </ItemGroup>
+
+</Project>
+

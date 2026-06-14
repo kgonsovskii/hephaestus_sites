@@ -1,0 +1,20 @@
+@model string?
+@{
+    var active = Model ?? "";
+    var pb = Context.Request.PathBase.Value ?? "";
+    var root = string.IsNullOrEmpty(pb) ? "" : (pb.EndsWith("/") ? pb[..^1] : pb);
+    string Link(string path) => root + path;
+    string NavClass(string tab) => string.Equals(active, tab, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<header>
+    <div><strong>Sites CP</strong></div>
+    <nav>
+        <a href="@Link("/")" class="@NavClass("sites")">Sites</a>
+        <a href="@Link("/settings")" class="@NavClass("settings")">Settings</a>
+        <a href="@Link("/clone")" class="@NavClass("clone")">Clone</a>
+        <a href="@Link("/system")" class="@NavClass("system")">System</a>
+    </nav>
+    <form method="post" action="@Link("/auth/logout")" style="margin:0">
+        <button type="submit" class="secondary">Logout</button>
+    </form>
+</header>

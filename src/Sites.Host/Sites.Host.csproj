@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sites.Host</RootNamespace>
+    <AssemblyName>Sites.Host</AssemblyName>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sites.CertMaintenance\Sites.CertMaintenance.csproj" />
+    <ProjectReference Include="..\Sites.Cp\Sites.Cp.csproj" />
+    <ProjectReference Include="..\Sites.Web\Sites.Web.csproj" />
+    <ProjectReference Include="..\Sites.Modules\Sites.Modules.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\cert\sites.pfx" Link="cert\sites.pfx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\cert\sites.pfx')" />
+    <Content Include="..\..\profiles\**\*" LinkBase="profiles" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\wwwroot\**\*" Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

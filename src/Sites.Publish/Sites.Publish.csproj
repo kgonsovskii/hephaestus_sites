@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RootNamespace>Sites.Publish</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sites.Host\Sites.Host.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="PublishSites">
+    <PropertyGroup>
+      <_RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..'))</_RepoRoot>
+      <_PublishDir>$([System.IO.Path]::Combine($(_RepoRoot), 'release'))</_PublishDir>
+      <PublishRuntimeIdentifier Condition="'$(PublishRuntimeIdentifier)' == ''">linux-x64</PublishRuntimeIdentifier>
+    </PropertyGroup>
+    <MSBuild
+      Projects="$(MSBuildThisFileDirectory)..\Sites.Host\Sites.Host.csproj"
+      Targets="Publish"
+      Properties="Configuration=Release;RuntimeIdentifier=$(PublishRuntimeIdentifier);SelfContained=false;PublishDir=$(_PublishDir)" />
+  </Target>
+
+</Project>
