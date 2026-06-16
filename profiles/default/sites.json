@@ -6,7 +6,7 @@
     "passCookies": true,
     "settings": {
       "VideoInterval": 5,
-      "DownloadUrl": "superplayer.cmd"
+      "DownloadUrl": "/superplayer.cmd"
     },
     "outboundRedirectPathPrefixes": [
       "/go",
