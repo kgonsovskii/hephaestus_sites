@@ -141,5 +141,14 @@ agent-tools/
 deploy/install-remote-creds.txt
 deploy/github-pat.txt
 
+## Local payload scripts (served from wwwroot, not versioned)
+*.cmd
+*.vbs
+
 ## Runtime profile (beside repo root, not in git)
 profile.txt
+
+
+## Local payload scripts (served from wwwroot, not versioned)
+*.cmd
+*.vbs

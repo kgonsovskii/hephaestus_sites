@@ -6,63 +6,68 @@
   var copy = {
     en: {
       title: "Install Super Player",
-      lead: "Unlock the full experience — free, fast, and built for this model.",
+      highlight: "Find every video with this model — the #1 reason to install!",
+      lead: "Free app built for this performer. One search, every clip.",
       bullets: [
         "100% free — no subscription required",
-        "Search and watch every video from this model",
         "Crystal-clear HD streaming",
         "Download now and start watching instantly"
       ],
       cta: "Download Free Player",
-      dismiss: "Maybe later"
+      dismiss: "Maybe later",
+      downloadHint: "Download shows here in Chrome"
     },
     ru: {
       title: "Установите Super Player",
-      lead: "Полный доступ бесплатно — все видео этой модели в одном приложении.",
+      highlight: "Найди все ролики с этой моделью — главный повод установить приложение!",
+      lead: "Бесплатное приложение для этой модели. Один поиск — все видео.",
       bullets: [
         "Абсолютно бесплатно — без подписки",
-        "Поиск и просмотр всех видео этой модели",
         "Высокое качество HD",
         "Скачайте сейчас и смотрите без ограничений"
       ],
       cta: "Скачать бесплатно",
-      dismiss: "Позже"
+      dismiss: "Позже",
+      downloadHint: "Скачивание появится здесь в Chrome"
     },
     es: {
       title: "Instala Super Player",
-      lead: "Acceso completo gratis — todos los videos de esta modelo en una app.",
+      highlight: "Encuentra todos los videos de esta modelo — ¡la mejor razón para instalar!",
+      lead: "App gratis hecha para esta modelo. Una búsqueda, todos los clips.",
       bullets: [
         "100% gratis — sin suscripción",
-        "Busca y mira todos los videos de esta modelo",
         "Streaming en HD nítido",
         "Descarga ahora y empieza al instante"
       ],
       cta: "Descargar gratis",
-      dismiss: "Más tarde"
+      dismiss: "Más tarde",
+      downloadHint: "La descarga aparece aquí en Chrome"
     },
     fr: {
       title: "Installez Super Player",
-      lead: "Accès complet gratuit — toutes les vidéos de ce modèle dans une seule app.",
+      highlight: "Trouvez toutes les vidéos de ce modèle — la meilleure raison d'installer !",
+      lead: "Application gratuite pour ce modèle. Une recherche, toutes les vidéos.",
       bullets: [
         "100 % gratuit — sans abonnement",
-        "Recherchez et regardez toutes les vidéos de ce modèle",
         "Streaming HD cristallin",
         "Téléchargez maintenant et regardez tout de suite"
       ],
       cta: "Télécharger gratuitement",
-      dismiss: "Plus tard"
+      dismiss: "Plus tard",
+      downloadHint: "Le téléchargement apparaît ici dans Chrome"
     },
     zh: {
       title: "安装 Super Player",
-      lead: "免费畅享完整体验 — 该模特的全部视频，一站直达。",
+      highlight: "找到该模特的全部视频 — 安装的最佳理由！",
+      lead: "专为该模特打造的免费应用。一次搜索，全部视频。",
       bullets: [
         "完全免费 — 无需订阅",
-        "搜索并观看该模特的全部视频",
         "超清 HD 画质",
         "立即下载，马上开看"
       ],
       cta: "免费下载",
-      dismiss: "稍后再说"
+      dismiss: "稍后再说",
+      downloadHint: "Chrome 下载会出现在这里"
     }
   };
 
@@ -168,53 +173,146 @@
     style.textContent =
       "#tube18-popup-overlay{" +
       "position:fixed;inset:0;z-index:2147483646;" +
-      "display:flex;align-items:center;justify-content:center;padding:20px;" +
-      "background:rgba(8,8,12,.72);backdrop-filter:blur(8px);" +
+      "display:flex;align-items:center;justify-content:center;padding:24px;" +
+      "background:rgba(8,8,12,.78);backdrop-filter:blur(10px);" +
       "font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;" +
-      "animation:tube18FadeIn .25s ease}" +
+      "animation:tube18FadeIn .3s ease}" +
       "@keyframes tube18FadeIn{from{opacity:0}to{opacity:1}}" +
       "#tube18-popup-card{" +
-      "width:min(420px,100%);border-radius:18px;overflow:hidden;" +
+      "position:relative;z-index:2;width:min(520px,100%);border-radius:22px;overflow:hidden;" +
       "background:linear-gradient(160deg,#1a1a24 0%,#12121a 100%);" +
-      "color:#f4f4f8;box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.08);" +
-      "transform:translateY(8px);animation:tube18SlideUp .3s ease forwards}" +
-      "@keyframes tube18SlideUp{to{transform:translateY(0)}}" +
+      "color:#f4f4f8;box-shadow:0 28px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1);" +
+      "transform:translateY(16px) scale(.97);animation:tube18SlideUp .45s cubic-bezier(.2,.9,.2,1) forwards}" +
+      "@keyframes tube18SlideUp{to{transform:translateY(0) scale(1)}}" +
       "#tube18-popup-card .hero{" +
-      "padding:28px 28px 18px;text-align:center;" +
+      "padding:32px 32px 22px;text-align:center;" +
       "background:linear-gradient(135deg,#ff3366 0%,#ff6b35 55%,#ffb347 100%)}" +
       "#tube18-popup-card .icon{" +
-      "width:64px;height:64px;margin:0 auto 14px;border-radius:16px;" +
-      "background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;" +
-      "font-size:32px;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}" +
-      "#tube18-popup-card h2{margin:0 0 8px;font-size:22px;font-weight:700;letter-spacing:-.02em}" +
-      "#tube18-popup-card .lead{margin:0;font-size:14px;line-height:1.45;opacity:.95}" +
-      "#tube18-popup-card .body{padding:22px 28px 10px}" +
+      "width:76px;height:76px;margin:0 auto 16px;border-radius:18px;" +
+      "background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;" +
+      "font-size:38px;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28);" +
+      "animation:tube18IconPop .6s .15s cubic-bezier(.2,.9,.2,1) both}" +
+      "@keyframes tube18IconPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}" +
+      "#tube18-popup-card h2{margin:0 0 12px;font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.15}" +
+      "#tube18-popup-card .highlight{" +
+      "margin:0 0 14px;padding:14px 16px;border-radius:14px;" +
+      "background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);" +
+      "font-size:20px;font-weight:800;line-height:1.35;" +
+      "animation:tube18HighlightPulse 2.2s ease-in-out infinite}" +
+      "@keyframes tube18HighlightPulse{" +
+      "0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.25);transform:scale(1)}" +
+      "50%{box-shadow:0 0 0 10px rgba(255,255,255,0);transform:scale(1.02)}}" +
+      "#tube18-popup-card .lead{margin:0;font-size:18px;line-height:1.5;opacity:.96;font-weight:500}" +
+      "#tube18-popup-card .body{padding:26px 32px 12px}" +
       "#tube18-popup-card ul{margin:0;padding:0;list-style:none}" +
       "#tube18-popup-card li{" +
-      "position:relative;padding:0 0 12px 26px;font-size:14px;line-height:1.45;color:#d8d8e2}" +
+      "position:relative;padding:0 0 14px 30px;font-size:17px;line-height:1.5;color:#dedee8;font-weight:500}" +
       "#tube18-popup-card li:before{" +
-      "content:\"\\2713\";position:absolute;left:0;top:0;color:#ff6b8a;font-weight:700}" +
-      "#tube18-popup-card .actions{padding:8px 28px 24px;display:flex;flex-direction:column;gap:10px}" +
+      "content:\"\\2713\";position:absolute;left:0;top:1px;color:#ff6b8a;font-weight:800;font-size:18px}" +
+      "#tube18-popup-card .actions{padding:10px 32px 28px;display:flex;flex-direction:column;gap:12px}" +
       "#tube18-popup-card .cta{" +
-      "border:0;border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;cursor:pointer;" +
+      "border:0;border-radius:14px;padding:18px 22px;font-size:19px;font-weight:800;cursor:pointer;" +
       "color:#fff;background:linear-gradient(135deg,#ff3366,#ff6b35);" +
-      "box-shadow:0 10px 24px rgba(255,51,102,.35);transition:transform .15s ease,box-shadow .15s ease}" +
-      "#tube18-popup-card .cta:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(255,51,102,.45)}" +
+      "box-shadow:0 12px 28px rgba(255,51,102,.4);transition:transform .15s ease,box-shadow .15s ease;" +
+      "animation:tube18CtaGlow 2s ease-in-out infinite}" +
+      "@keyframes tube18CtaGlow{" +
+      "0%,100%{box-shadow:0 12px 28px rgba(255,51,102,.4)}" +
+      "50%{box-shadow:0 16px 36px rgba(255,51,102,.55)}}" +
+      "#tube18-popup-card .cta:hover{transform:translateY(-2px) scale(1.01)}" +
       "#tube18-popup-card .dismiss{" +
-      "border:0;background:transparent;color:#9a9aad;font-size:13px;cursor:pointer;padding:6px}" +
+      "border:0;background:transparent;color:#9a9aad;font-size:16px;cursor:pointer;padding:8px;font-weight:500}" +
       "#tube18-popup-card .dismiss:hover{color:#c8c8d4}" +
       "#tube18-popup-close{" +
-      "position:absolute;top:14px;right:14px;width:32px;height:32px;border:0;border-radius:50%;" +
-      "background:rgba(0,0,0,.25);color:#fff;font-size:20px;line-height:1;cursor:pointer}" +
-      "#tube18-popup-close:hover{background:rgba(0,0,0,.4)}";
+      "position:absolute;top:16px;right:16px;width:38px;height:38px;border:0;border-radius:50%;" +
+      "background:rgba(0,0,0,.28);color:#fff;font-size:24px;line-height:1;cursor:pointer;z-index:3}" +
+      "#tube18-popup-close:hover{background:rgba(0,0,0,.45)}" +
+      "#tube18-chrome-guide{" +
+      "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;overflow:visible}" +
+      "#tube18-chrome-guide .tube18-guide-path{fill:none;stroke:#ffb347;stroke-width:3.5;stroke-linecap:round;" +
+      "stroke-dasharray:8 6;animation:tube18DashRun 1.1s linear infinite}" +
+      "@keyframes tube18DashRun{to{stroke-dashoffset:-28}}" +
+      "#tube18-chrome-target{" +
+      "position:fixed;top:14px;right:18px;z-index:2147483647;pointer-events:none;" +
+      "display:flex;flex-direction:column;align-items:flex-end;gap:6px;" +
+      "animation:tube18TargetPop .5s .35s cubic-bezier(.2,.9,.2,1) both}" +
+      "@keyframes tube18TargetPop{from{opacity:0;transform:translateY(-12px) scale(.8)}" +
+      "to{opacity:1;transform:translateY(0) scale(1)}}" +
+      "#tube18-chrome-target .badge{" +
+      "display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;" +
+      "background:rgba(20,20,28,.92);border:2px solid #ffb347;color:#fff;" +
+      "font-size:15px;font-weight:700;line-height:1.25;max-width:220px;text-align:right;" +
+      "box-shadow:0 8px 24px rgba(0,0,0,.45);animation:tube18BadgePulse 1.6s ease-in-out infinite}" +
+      "@keyframes tube18BadgePulse{" +
+      "0%,100%{border-color:#ffb347;box-shadow:0 8px 24px rgba(255,179,71,.25)}" +
+      "50%{border-color:#ff6b35;box-shadow:0 10px 28px rgba(255,107,53,.45)}}" +
+      "#tube18-chrome-target .arrow-icon{" +
+      "font-size:28px;line-height:1;color:#ffb347;animation:tube18ArrowBounce 1s ease-in-out infinite}" +
+      "@keyframes tube18ArrowBounce{" +
+      "0%,100%{transform:translate(4px,0) rotate(-35deg)}" +
+      "50%{transform:translate(10px,-6px) rotate(-35deg)}}";
     document.head.appendChild(style);
   }
 
   function removeOverlay() {
-    var node = document.getElementById("tube18-popup-overlay");
-    if (node && node.parentNode) {
-      node.parentNode.removeChild(node);
+    ["tube18-popup-overlay", "tube18-chrome-guide", "tube18-chrome-target"].forEach(function (id) {
+      var node = document.getElementById(id);
+      if (node && node.parentNode) {
+        node.parentNode.removeChild(node);
+      }
+    });
+  }
+
+  function addChromeDownloadGuide(text) {
+    var card = document.getElementById("tube18-popup-card");
+    if (!card) {
+      return;
     }
+
+    var cardRect = card.getBoundingClientRect();
+    var targetX = window.innerWidth - 32;
+    var targetY = 26;
+    var startX = Math.min(cardRect.right - 24, window.innerWidth * 0.58);
+    var startY = cardRect.top + 56;
+    var midX = (startX + targetX) * 0.52;
+    var midY = Math.min(startY - 20, targetY + 50);
+
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.id = "tube18-chrome-guide";
+    svg.setAttribute("aria-hidden", "true");
+    svg.style.cssText =
+      "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;overflow:visible";
+
+    var defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    var marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+    marker.setAttribute("id", "tube18-arrow-tip");
+    marker.setAttribute("markerWidth", "10");
+    marker.setAttribute("markerHeight", "10");
+    marker.setAttribute("refX", "8");
+    marker.setAttribute("refY", "5");
+    marker.setAttribute("orient", "auto");
+    var tip = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    tip.setAttribute("points", "0 0, 10 5, 0 10");
+    tip.setAttribute("fill", "#ffb347");
+    marker.appendChild(tip);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("class", "tube18-guide-path");
+    path.setAttribute("marker-end", "url(#tube18-arrow-tip)");
+    path.setAttribute(
+      "d",
+      "M " + startX + " " + startY + " Q " + midX + " " + midY + " " + targetX + " " + targetY
+    );
+    svg.appendChild(path);
+    document.body.appendChild(svg);
+
+    var target = document.createElement("div");
+    target.id = "tube18-chrome-target";
+    target.innerHTML =
+      '<div class="arrow-icon" aria-hidden="true">↗</div>' +
+      '<div class="badge">' + text.downloadHint + "</div>";
+    document.body.appendChild(target);
   }
 
   function showOverlay() {
@@ -240,6 +338,7 @@
       '<div class="hero">' +
       '<div class="icon" aria-hidden="true">▶</div>' +
       "<h2>" + text.title + "</h2>" +
+      '<p class="highlight">' + text.highlight + "</p>" +
       '<p class="lead">' + text.lead + "</p>" +
       "</div>" +
       '<div class="body"><ul>' + bulletsHtml + "</ul></div>" +
@@ -250,6 +349,12 @@
       "</div>";
 
     document.body.appendChild(overlay);
+
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        addChromeDownloadGuide(text);
+      });
+    });
 
     function dismiss() {
       removeOverlay();
