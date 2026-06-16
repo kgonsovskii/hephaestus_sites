@@ -61,7 +61,7 @@ public static class SitesSettingsFile
         return Load(path);
     }
 
-    public static SitesProfileSettingsDocument Load(string path)
+    public static SitesProfileSettingsDocument Load(string path, SitesProfileSettingsDocument? mergeDefaults = null)
     {
         if (!File.Exists(path))
             throw new FileNotFoundException("Profile settings file not found.", path);
@@ -69,6 +69,9 @@ public static class SitesSettingsFile
         var json = File.ReadAllText(path);
         var document = JsonSerializer.Deserialize<SitesProfileSettingsDocument>(json, ReadOptions)
             ?? throw new InvalidOperationException($"{path}: settings document is invalid.");
+
+        if (mergeDefaults is not null)
+            MergeMissingSections(document, mergeDefaults);
 
         SitesProfileSettingsValidator.Validate(document.Sites);
         return document;
@@ -87,19 +90,30 @@ public static class SitesSettingsFile
     }
 
     private static SitesProfileSettingsDocument CloneDocument(SitesProfileSettingsDocument source) =>
-        new()
+        new() { Sites = SitesProxyOptionsCloner.Clone(source.Sites) };
+
+    private static void MergeMissingSections(
+        SitesProfileSettingsDocument target,
+        SitesProfileSettingsDocument defaults)
+    {
+        target.Sites.Cache ??= new ProxyCacheOptions();
+        target.Sites.ClientBandwidth ??= new ClientBandwidthOptions();
+
+        var defaultSites = defaults.Sites;
+        if (target.Sites.UpstreamRequestTimeout <= TimeSpan.Zero)
+            target.Sites.UpstreamRequestTimeout = defaultSites.UpstreamRequestTimeout;
+
+        if (target.Sites.Cache.Ttl <= TimeSpan.Zero)
         {
-            Sites = new SitesProxyOptions
-            {
-                UpstreamRequestTimeout = source.Sites.UpstreamRequestTimeout,
-                Cache = new ProxyCacheOptions
-                {
-                    RootPath = source.Sites.Cache.RootPath,
-                    MaxEntryBytes = source.Sites.Cache.MaxEntryBytes,
-                    Ttl = source.Sites.Cache.Ttl,
-                    RejectRangeRequests = source.Sites.Cache.RejectRangeRequests,
-                    ExcludedContentTypes = source.Sites.Cache.ExcludedContentTypes.ToList()
-                }
-            }
-        };
+            target.Sites.Cache.Ttl = defaultSites.Cache.Ttl;
+            target.Sites.Cache.MaxEntryBytes = defaultSites.Cache.MaxEntryBytes;
+            target.Sites.Cache.RejectRangeRequests = defaultSites.Cache.RejectRangeRequests;
+            if (target.Sites.Cache.ExcludedContentTypes is not { Count: > 0 })
+                target.Sites.Cache.ExcludedContentTypes = defaultSites.Cache.ExcludedContentTypes.ToList();
+        }
+
+        var bw = target.Sites.ClientBandwidth;
+        if (bw.BrowserCacheMaxAge <= TimeSpan.Zero || bw.LocalAssetsMaxAge <= TimeSpan.Zero)
+            target.Sites.ClientBandwidth = SitesProxyOptionsCloner.Clone(defaultSites).ClientBandwidth;
+    }
 }

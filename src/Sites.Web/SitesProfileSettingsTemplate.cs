@@ -14,11 +14,11 @@ public sealed class SitesProfileSettingsTemplate
 
     public SitesProfileSettingsTemplate(IConfiguration configuration)
     {
-        _template = Clone(ResolveTemplateOptions(configuration));
+        _template = SitesProxyOptionsCloner.Clone(ResolveTemplateOptions(configuration));
     }
 
     public SitesProfileSettingsDocument CreateDocument() =>
-        new() { Sites = Clone(_template) };
+        new() { Sites = SitesProxyOptionsCloner.Clone(_template) };
 
     private static SitesProxyOptions ResolveTemplateOptions(IConfiguration configuration)
     {
@@ -65,6 +65,7 @@ public sealed class SitesProfileSettingsTemplate
         var options = new SitesProxyOptions();
         section.Bind(options);
         options.Cache ??= new ProxyCacheOptions();
+        options.ClientBandwidth ??= new ClientBandwidthOptions();
         return options;
     }
 
@@ -80,17 +81,4 @@ public sealed class SitesProfileSettingsTemplate
             return false;
         }
     }
-
-    private static SitesProxyOptions Clone(SitesProxyOptions source) => new()
-    {
-        UpstreamRequestTimeout = source.UpstreamRequestTimeout,
-        Cache = new ProxyCacheOptions
-        {
-            RootPath = source.Cache.RootPath,
-            MaxEntryBytes = source.Cache.MaxEntryBytes,
-            Ttl = source.Cache.Ttl,
-            RejectRangeRequests = source.Cache.RejectRangeRequests,
-            ExcludedContentTypes = source.Cache.ExcludedContentTypes.ToList()
-        }
-    };
 }

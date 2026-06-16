@@ -4,8 +4,10 @@ using System.Reflection;
 using Sites.Web.Abstractions;
 using Sites.Web.Caching;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Sites.Web;
 
@@ -45,6 +47,10 @@ public static class SitesProxyExtensions
 
         services.AddSingleton<SitesProfileSettingsTemplate>();
         services.AddSingleton<SitesProfileSettingsService>();
+        services.AddResponseCompression();
+        services.AddSingleton<IConfigureOptions<ResponseCompressionOptions>, SitesResponseCompressionConfigurer>();
+        services.ConfigureOptions<SitesBrotliCompressionConfigurer>();
+        services.ConfigureOptions<SitesGzipCompressionConfigurer>();
         services.AddSingleton<ProxyDiskCache>();
         services.AddSingleton<ProxyCachePolicy>();
 
@@ -65,6 +71,14 @@ public static class SitesProxyExtensions
 
     public static WebApplication UseSitesProxyPipeline(this WebApplication app)
     {
+        app.UseWhen(
+            context => context.RequestServices
+                .GetRequiredService<SitesProfileSettingsService>()
+                .Get()
+                .ClientBandwidth
+                .EnableCompression,
+            branch => branch.UseResponseCompression());
+
         app.UseMiddleware<OversizedCookieMiddleware>();
         app.UseMiddleware<SiteRoutingMiddleware>();
         app.UseMiddleware<RequestLoggingMiddleware>();

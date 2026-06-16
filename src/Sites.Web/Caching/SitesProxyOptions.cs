@@ -7,6 +7,8 @@ public sealed class SitesProxyOptions
     public TimeSpan UpstreamRequestTimeout { get; set; }
 
     public ProxyCacheOptions Cache { get; set; } = new();
+
+    public ClientBandwidthOptions ClientBandwidth { get; set; } = new();
 }
 
 public sealed class ProxyCacheOptions

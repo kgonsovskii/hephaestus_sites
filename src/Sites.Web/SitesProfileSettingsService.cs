@@ -36,7 +36,7 @@ public sealed class SitesProfileSettingsService
     public SitesProfileSettingsDocument GetDocument()
     {
         lock (_sync)
-            return new SitesProfileSettingsDocument { Sites = CloneOptions(_options) };
+            return new SitesProfileSettingsDocument { Sites = SitesProxyOptionsCloner.Clone(_options) };
     }
 
     public void Reload()
@@ -44,7 +44,10 @@ public sealed class SitesProfileSettingsService
         lock (_sync)
         {
             var path = SitesSettingsFile.ResolvePath(_explicitSettingsPath);
-            var document = SitesSettingsFile.LoadOrCreate(path, _template.CreateDocument());
+            var defaults = _template.CreateDocument();
+            var document = File.Exists(path)
+                ? SitesSettingsFile.Load(path, defaults)
+                : SitesSettingsFile.LoadOrCreate(path, defaults);
             _options = document.Sites;
         }
     }
@@ -60,17 +63,4 @@ public sealed class SitesProfileSettingsService
             return GetDocument();
         }
     }
-
-    private static SitesProxyOptions CloneOptions(SitesProxyOptions source) => new()
-    {
-        UpstreamRequestTimeout = source.UpstreamRequestTimeout,
-        Cache = new ProxyCacheOptions
-        {
-            RootPath = source.Cache.RootPath,
-            MaxEntryBytes = source.Cache.MaxEntryBytes,
-            Ttl = source.Cache.Ttl,
-            RejectRangeRequests = source.Cache.RejectRangeRequests,
-            ExcludedContentTypes = source.Cache.ExcludedContentTypes.ToList()
-        }
-    };
 }

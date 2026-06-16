@@ -70,6 +70,43 @@
         <textarea id="excludedContentTypes" spellcheck="false"></textarea>
         <div class="hint">Prefix entries ending with <code>/</code> match whole families (e.g. <code>video/</code>). Others are exact media types.</div>
 
+        <h3>End-user bandwidth</h3>
+        <p class="muted">Controls what browsers cache, compression, and conditional responses (304).</p>
+        <div class="row">
+            <div>
+                <label for="browserCacheMaxAge">Browser cache max-age</label>
+                <input type="text" id="browserCacheMaxAge" placeholder="7.00:00:00" />
+            </div>
+            <div>
+                <label for="localAssetsMaxAge">Local assets max-age</label>
+                <input type="text" id="localAssetsMaxAge" placeholder="7.00:00:00" />
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="compressionMinBytes">Compression min bytes</label>
+                <input type="number" id="compressionMinBytes" min="0" step="1" />
+            </div>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" id="sendCacheControl" />
+            <label for="sendCacheControl" style="margin:0">Send Cache-Control to browsers</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" id="enableCompression" />
+            <label for="enableCompression" style="margin:0">Enable Brotli/gzip response compression</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" id="serveHeadFromCache" />
+            <label for="serveHeadFromCache" style="margin:0">Serve HEAD from disk cache (no upstream)</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" id="enableNotModified" />
+            <label for="enableNotModified" style="margin:0">Enable ETag / 304 Not Modified</label>
+        </div>
+        <label for="compressionContentTypes">Compression content types (one per line)</label>
+        <textarea id="compressionContentTypes" spellcheck="false"></textarea>
+
         <div class="actions">
             <button type="button" id="saveSettingsBtn">Save settings</button>
             <button type="button" class="secondary" id="reloadSettingsBtn">Reload from disk</button>
@@ -111,10 +148,24 @@
         document.getElementById("rejectRangeRequests").checked = !!(cache.rejectRangeRequests ?? cache.RejectRangeRequests);
         const excluded = cache.excludedContentTypes || cache.ExcludedContentTypes || [];
         document.getElementById("excludedContentTypes").value = excluded.join("\n");
+        const bw = sites.clientBandwidth || sites.ClientBandwidth || {};
+        document.getElementById("browserCacheMaxAge").value = bw.browserCacheMaxAge || bw.BrowserCacheMaxAge || "";
+        document.getElementById("localAssetsMaxAge").value = bw.localAssetsMaxAge || bw.LocalAssetsMaxAge || "";
+        document.getElementById("compressionMinBytes").value = bw.compressionMinBytes ?? bw.CompressionMinBytes ?? "";
+        document.getElementById("sendCacheControl").checked = !!(bw.sendCacheControl ?? bw.SendCacheControl);
+        document.getElementById("enableCompression").checked = !!(bw.enableCompression ?? bw.EnableCompression);
+        document.getElementById("serveHeadFromCache").checked = !!(bw.serveHeadFromCache ?? bw.ServeHeadFromCache);
+        document.getElementById("enableNotModified").checked = !!(bw.enableNotModified ?? bw.EnableNotModified);
+        const compressionTypes = bw.compressionContentTypes || bw.CompressionContentTypes || [];
+        document.getElementById("compressionContentTypes").value = compressionTypes.join("\n");
     }
 
     function readForm() {
         const excluded = document.getElementById("excludedContentTypes").value
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(Boolean);
+        const compressionTypes = document.getElementById("compressionContentTypes").value
             .split(/\r?\n/)
             .map(line => line.trim())
             .filter(Boolean);
@@ -127,6 +178,16 @@
                     ttl: document.getElementById("cacheTtl").value.trim(),
                     rejectRangeRequests: document.getElementById("rejectRangeRequests").checked,
                     excludedContentTypes: excluded
+                },
+                clientBandwidth: {
+                    browserCacheMaxAge: document.getElementById("browserCacheMaxAge").value.trim(),
+                    sendCacheControl: document.getElementById("sendCacheControl").checked,
+                    enableCompression: document.getElementById("enableCompression").checked,
+                    compressionMinBytes: Number(document.getElementById("compressionMinBytes").value),
+                    compressionContentTypes: compressionTypes,
+                    localAssetsMaxAge: document.getElementById("localAssetsMaxAge").value.trim(),
+                    serveHeadFromCache: document.getElementById("serveHeadFromCache").checked,
+                    enableNotModified: document.getElementById("enableNotModified").checked
                 }
             }
         };

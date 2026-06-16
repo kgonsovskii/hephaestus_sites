@@ -43,17 +43,20 @@ public sealed class ReverseProxyMiddleware
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ProxyDiskCache _cache;
     private readonly ProxyCachePolicy _cachePolicy;
+    private readonly SitesProfileSettingsService _settings;
 
     public ReverseProxyMiddleware(
         RequestDelegate next,
         IHttpClientFactory httpClientFactory,
         ProxyDiskCache cache,
-        ProxyCachePolicy cachePolicy)
+        ProxyCachePolicy cachePolicy,
+        SitesProfileSettingsService settings)
     {
         _next = next;
         _httpClientFactory = httpClientFactory;
         _cache = cache;
         _cachePolicy = cachePolicy;
+        _settings = settings;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -75,7 +78,7 @@ public sealed class ReverseProxyMiddleware
         }
 
         var cachingEnabled = IsCachingEnabled(context, site);
-        var cacheLookupEnabled = cachingEnabled && _cachePolicy.IsCacheableRequest(context.Request);
+        var cacheLookupEnabled = cachingEnabled && _cachePolicy.IsCacheLookupRequest(context.Request);
 
         if (cacheLookupEnabled)
         {
@@ -85,6 +88,12 @@ public sealed class ReverseProxyMiddleware
                 await WriteCachedResponseAsync(context, cached);
                 return;
             }
+        }
+
+        if (HttpMethods.IsHead(context.Request.Method))
+        {
+            await ProxyHeadMissAsync(context, site, cachingEnabled);
+            return;
         }
 
         var client = _httpClientFactory.CreateClient("reverse-proxy");
@@ -147,8 +156,12 @@ public sealed class ReverseProxyMiddleware
             context.Response.Headers.Remove("Content-Length");
             context.Response.ContentLength = body.Length;
             context.Response.Headers["X-Proxy-Cache"] = cachingEnabled ? "MISS" : "DISABLED";
-            await context.Response.StartAsync(context.RequestAborted);
-            await context.Response.Body.WriteAsync(body, context.RequestAborted);
+            if (!ApplyClientBandwidthHeaders(context, body))
+            {
+                await context.Response.StartAsync(context.RequestAborted);
+                await context.Response.Body.WriteAsync(body, context.RequestAborted);
+            }
+
             return;
         }
 
@@ -172,7 +185,8 @@ public sealed class ReverseProxyMiddleware
 
                 context.Response.ContentLength = bodyBytes.Length;
                 context.Response.Headers["X-Proxy-Cache"] = "MISS";
-                await context.Response.Body.WriteAsync(bodyBytes, context.RequestAborted);
+                if (!ApplyClientBandwidthHeaders(context, bodyBytes))
+                    await context.Response.Body.WriteAsync(bodyBytes, context.RequestAborted);
                 return;
             }
 
@@ -181,6 +195,8 @@ public sealed class ReverseProxyMiddleware
 
             context.Response.ContentLength = bodyBytes.Length;
             context.Response.Headers["X-Proxy-Cache"] = "BYPASS";
+            if (!ApplyClientBandwidthHeaders(context, bodyBytes))
+                await context.Response.Body.WriteAsync(bodyBytes, context.RequestAborted);
             await context.Response.Body.WriteAsync(bodyBytes, context.RequestAborted);
             return;
         }
@@ -242,6 +258,12 @@ public sealed class ReverseProxyMiddleware
 
     private static async Task WriteCachedResponseAsync(HttpContext context, CachedProxyResponse cached)
     {
+        var bandwidth = context.RequestServices.GetRequiredService<SitesProfileSettingsService>().Get().ClientBandwidth;
+        var entityTag = cached.EntityTag ?? ClientBandwidthResponseHeaders.ComputeEntityTag(cached.Body);
+
+        if (ClientBandwidthResponseHeaders.TryWriteNotModified(context, bandwidth, entityTag))
+            return;
+
         context.Response.StatusCode = cached.StatusCode;
 
         if (!string.IsNullOrWhiteSpace(cached.ContentType))
@@ -249,7 +271,41 @@ public sealed class ReverseProxyMiddleware
 
         context.Response.ContentLength = cached.Body.Length;
         context.Response.Headers["X-Proxy-Cache"] = "HIT";
+        ClientBandwidthResponseHeaders.ApplyBrowserCache(context, bandwidth);
+        ClientBandwidthResponseHeaders.ApplyEntityTag(context, bandwidth, entityTag);
+
+        if (HttpMethods.IsHead(context.Request.Method))
+            return;
+
         await context.Response.Body.WriteAsync(cached.Body, context.RequestAborted);
+    }
+
+    private bool ApplyClientBandwidthHeaders(HttpContext context, ReadOnlySpan<byte> body)
+    {
+        var bandwidth = _settings.Get().ClientBandwidth;
+        var entityTag = ClientBandwidthResponseHeaders.ComputeEntityTag(body);
+        if (ClientBandwidthResponseHeaders.TryWriteNotModified(context, bandwidth, entityTag))
+            return true;
+
+        ClientBandwidthResponseHeaders.ApplyBrowserCache(context, bandwidth);
+        ClientBandwidthResponseHeaders.ApplyEntityTag(context, bandwidth, entityTag);
+        return false;
+    }
+
+    private async Task ProxyHeadMissAsync(HttpContext context, ISiteModule site, bool cachingEnabled)
+    {
+        var client = _httpClientFactory.CreateClient("reverse-proxy");
+
+        using var response = await SendUpstreamFollowingRedirectsAsync(
+            client,
+            context,
+            site,
+            context.RequestAborted);
+
+        context.Response.StatusCode = (int)response.StatusCode;
+        CopyResponseHeaders(context, response, site);
+        context.Response.Headers["X-Proxy-Cache"] = cachingEnabled ? "BYPASS" : "DISABLED";
+        await context.Response.StartAsync(context.RequestAborted);
     }
 
     private static async Task<HttpResponseMessage> SendUpstreamFollowingRedirectsAsync(

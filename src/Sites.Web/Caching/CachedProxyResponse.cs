@@ -9,4 +9,6 @@ public sealed class CachedProxyResponse
     public required byte[] Body { get; init; }
 
     public DateTimeOffset ExpiresAt { get; init; }
+
+    public string? EntityTag { get; init; }
 }

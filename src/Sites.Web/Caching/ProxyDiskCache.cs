@@ -53,7 +53,8 @@ public sealed class ProxyDiskCache
             StatusCode = metadata.StatusCode,
             ContentType = metadata.ContentType,
             Body = body,
-            ExpiresAt = metadata.ExpiresAt
+            ExpiresAt = metadata.ExpiresAt,
+            EntityTag = metadata.EntityTag
         };
     }
 
@@ -86,7 +87,8 @@ public sealed class ProxyDiskCache
             StatusCode = statusCode,
             ContentType = contentType,
             ExpiresAt = DateTimeOffset.UtcNow.Add(ttl),
-            BodyLength = body.Length
+            BodyLength = body.Length,
+            EntityTag = ProxyCacheEntityTags.Compute(body)
         };
 
         await File.WriteAllBytesAsync(tempBodyPath, body, cancellationToken);
@@ -141,5 +143,7 @@ public sealed class ProxyDiskCache
         public DateTimeOffset ExpiresAt { get; init; }
 
         public int BodyLength { get; init; }
+
+        public string? EntityTag { get; init; }
     }
 }

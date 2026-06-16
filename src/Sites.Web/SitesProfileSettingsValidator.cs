@@ -21,5 +21,22 @@ public static class SitesProfileSettingsValidator
 
         if (cache.ExcludedContentTypes is not { Count: > 0 })
             throw new InvalidOperationException("Sites.Cache.ExcludedContentTypes must list at least one entry.");
+
+        var client = options.ClientBandwidth ?? throw new InvalidOperationException("Sites.ClientBandwidth is required.");
+
+        if (client.SendCacheControl && client.BrowserCacheMaxAge <= TimeSpan.Zero)
+            throw new InvalidOperationException("Sites.ClientBandwidth.BrowserCacheMaxAge must be greater than zero.");
+
+        if (client.LocalAssetsMaxAge <= TimeSpan.Zero)
+            throw new InvalidOperationException("Sites.ClientBandwidth.LocalAssetsMaxAge must be greater than zero.");
+
+        if (client.EnableCompression)
+        {
+            if (client.CompressionMinBytes < 0)
+                throw new InvalidOperationException("Sites.ClientBandwidth.CompressionMinBytes must be zero or greater.");
+
+            if (client.CompressionContentTypes is not { Count: > 0 })
+                throw new InvalidOperationException("Sites.ClientBandwidth.CompressionContentTypes must list at least one entry.");
+        }
     }
 }

@@ -6,11 +6,16 @@ public sealed class LocalAssetsMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<LocalAssetsMiddleware> _logger;
+    private readonly SitesProfileSettingsService _settings;
 
-    public LocalAssetsMiddleware(RequestDelegate next, ILogger<LocalAssetsMiddleware> logger)
+    public LocalAssetsMiddleware(
+        RequestDelegate next,
+        ILogger<LocalAssetsMiddleware> logger,
+        SitesProfileSettingsService settings)
     {
         _next = next;
         _logger = logger;
+        _settings = settings;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -63,10 +68,7 @@ public sealed class LocalAssetsMiddleware
             requestPath,
             filePath);
 
-        await WriteFileResponseAsync(
-            context,
-            filePath,
-            cacheControl: "no-cache, no-store, must-revalidate");
+        await WriteFileResponseAsync(context, filePath);
 
         return true;
     }
@@ -96,28 +98,35 @@ public sealed class LocalAssetsMiddleware
             requestPath,
             filePath);
 
-        await WriteFileResponseAsync(
-            context,
-            filePath,
-            cacheControl: "public, max-age=3600");
+        await WriteFileResponseAsync(context, filePath);
 
         return true;
     }
 
-    private static async Task WriteFileResponseAsync(
-        HttpContext context,
-        string filePath,
-        string cacheControl)
+    private async Task WriteFileResponseAsync(HttpContext context, string filePath)
     {
+        var bandwidth = _settings.Get().ClientBandwidth;
+        var fileInfo = new FileInfo(filePath);
+        var entityTag =
+            $"\"{fileInfo.LastWriteTimeUtc.Ticks.ToString("x")}-{fileInfo.Length.ToString("x")}\"";
+
+        if (ClientBandwidthResponseHeaders.TryWriteNotModified(
+                context,
+                bandwidth,
+                entityTag,
+                ClientBandwidthResponseHeaders.ApplyLocalAssetsCache))
+            return;
+
         context.Response.StatusCode = StatusCodes.Status200OK;
         context.Response.ContentType = StaticContentTypes.FromFilePath(filePath);
-        context.Response.Headers.CacheControl = cacheControl;
-        context.Response.Headers.Pragma = cacheControl.Contains("no-cache", StringComparison.Ordinal)
-            ? "no-cache"
-            : string.Empty;
-        context.Response.Headers.Expires = cacheControl.Contains("no-cache", StringComparison.Ordinal)
-            ? "0"
-            : string.Empty;
+        ClientBandwidthResponseHeaders.ApplyLocalAssetsCache(context, bandwidth);
+        ClientBandwidthResponseHeaders.ApplyEntityTag(context, bandwidth, entityTag);
+
+        if (HttpMethods.IsHead(context.Request.Method))
+        {
+            context.Response.ContentLength = fileInfo.Length;
+            return;
+        }
 
         await context.Response.SendFileAsync(filePath, context.RequestAborted);
     }

@@ -10,9 +10,28 @@ public sealed class ProxyCachePolicy
 
     private ProxyCacheOptions Options => _settings.Get().Cache;
 
+    private SitesProxyOptions Settings => _settings.Get();
+
     public long MaxEntryBytes => Options.MaxEntryBytes;
 
     public TimeSpan Ttl => Options.Ttl;
+
+    public bool IsCacheLookupRequest(HttpRequest request)
+    {
+        if (HttpMethods.IsGet(request.Method))
+            return IsCacheableRequest(request);
+
+        if (!HttpMethods.IsHead(request.Method))
+            return false;
+
+        if (!Settings.ClientBandwidth.ServeHeadFromCache)
+            return false;
+
+        if (Options.RejectRangeRequests && request.Headers.ContainsKey("Range"))
+            return false;
+
+        return true;
+    }
 
     public bool IsCacheableRequest(HttpRequest request)
     {

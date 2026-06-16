@@ -43,7 +43,7 @@
 
     <div class="card">
         <h2>Profile</h2>
-        <p class="muted">Profile selects <code>profiles/{name}/sites.json</code> and <code>settings.json</code>. Active profile is in <code>../profile.txt</code> beside the repo (not in git; created on install).</p>
+        <p class="muted">Profile selects <code>profiles/{name}/sites.json</code> and <code>settings.json</code>. Active profile is in <code>../profile.txt</code> beside the repo.</p>
         <dl class="meta" id="profileMeta"></dl>
         <label for="profileInput">Profile name</label>
         <input type="text" id="profileInput" autocomplete="off" />
@@ -54,7 +54,7 @@
 
     <div class="card">
         <h2>Git</h2>
-        <p class="muted">Automatic sync (pull + push) on startup, every <code>Git:SyncInterval</code>, and after sites.json save. PAT: <code>deploy/git-pat.enc</code>.</p>
+        <p class="muted">Automatic sync (pull + push) on startup and on schedule.</p>
         <div id="gitStatus" class="muted">Loading…</div>
         <div class="actions">
             <button type="button" id="gitPullBtn">Pull</button>
@@ -103,7 +103,6 @@
         }
         const s = await res.json();
         let html = "Branch: <strong>" + escapeHtml(s.branch || "—") + "</strong>";
-        html += s.hasPat ? " · <span class=\"badge ok\">PAT</span>" : " · <span class=\"badge warn\">no PAT</span>";
         html += s.hasLocalChanges ? " · <span class=\"badge warn\">local changes</span>" : " · <span class=\"badge ok\">clean</span>";
         if (s.lastError) html += "<br><span class=\"error\">" + escapeHtml(s.lastError) + "</span>";
         if (s.changedFiles && s.changedFiles.length)

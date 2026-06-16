@@ -12,6 +12,26 @@
         "application/x-mpegurl",
         "application/dash+xml"
       ]
+    },
+    "clientBandwidth": {
+      "browserCacheMaxAge": "7.00:00:00",
+      "sendCacheControl": true,
+      "enableCompression": true,
+      "compressionMinBytes": 256,
+      "compressionContentTypes": [
+        "text/html",
+        "text/css",
+        "text/javascript",
+        "application/javascript",
+        "application/json",
+        "image/svg+xml",
+        "application/xml",
+        "text/xml",
+        "application/xhtml+xml"
+      ],
+      "localAssetsMaxAge": "7.00:00:00",
+      "serveHeadFromCache": true,
+      "enableNotModified": true
     }
   }
 }
