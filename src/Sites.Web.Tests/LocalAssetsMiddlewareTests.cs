@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Sites.Web.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -89,6 +90,45 @@ public sealed class LocalAssetsMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_ReplacesSettingsPlaceholdersInJs()
+    {
+        LocalJsTransformCache.ClearForTests();
+
+        var webRoot = CreateWebRoot(root =>
+        {
+            WriteFile(root, "tube-18.xyz/videoscript.js", "var interval = $VideoInterval$;");
+        });
+
+        try
+        {
+            var context = CreateContext(
+                "/videoscript.js",
+                webRoot,
+                targetHost: "tube-18.xyz",
+                rules: new SiteProxyRules
+                {
+                    LocalAssets = WwwrootAssetCatalog.Scan(webRoot, "tube-18.xyz"),
+                    Settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["VideoInterval"] = "30"
+                    }
+                });
+
+            await CreateMiddleware(_ => Task.CompletedTask).InvokeAsync(context);
+
+            Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+            context.Response.Body.Position = 0;
+            using var reader = new StreamReader(context.Response.Body);
+            var body = await reader.ReadToEndAsync();
+            Assert.Equal("var interval = 30;", body);
+        }
+        finally
+        {
+            Directory.Delete(webRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public void JsonSiteModule_BuildRules_ScansWwwrootOnConstruction()
     {
         var webRoot = CreateWebRoot(root =>
@@ -103,10 +143,15 @@ public sealed class LocalAssetsMiddlewareTests
                 new SiteDefinition
                 {
                     SourceHost = "tube18.sex",
-                    TargetHost = "tube-18.xyz"
+                    TargetHost = "tube-18.xyz",
+                    Settings = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["VideoInterval"] = JsonSerializer.Deserialize<JsonElement>("30")
+                    }
                 },
                 webRoot);
 
+            Assert.Equal("30", module.Rules.Settings["VideoInterval"]);
             Assert.Equal("videoscript.js", module.Rules.LocalAssets["/videoscript.js"]);
             Assert.Equal("player/kt_player.js", module.Rules.LocalAssets["/player/kt_player.js"]);
         }

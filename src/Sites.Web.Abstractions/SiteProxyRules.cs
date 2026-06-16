@@ -10,6 +10,12 @@ public sealed class SiteProxyRules
     public IReadOnlyList<HtmlInjection> HtmlInjections { get; init; } = [];
 
     public Dictionary<string, string> LocalAssets { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Optional site settings from sites.json (e.g. for $Key$ substitution in local .js assets).
+    /// </summary>
+    public Dictionary<string, string> Settings { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
     public IReadOnlyList<string> BlockedPathPrefixes { get; init; } = [];
 
     public bool EnableOutboundRedirectPaths { get; init; } = true;

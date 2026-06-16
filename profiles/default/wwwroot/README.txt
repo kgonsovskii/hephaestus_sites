@@ -12,4 +12,6 @@ Files are auto-served at matching URL paths on site reload/invalidate:
 Optional localAssets entries in sites.json are aliases only (extra URL -> same file).
 Internal files like *.patch.js and README.txt are not published.
 
+Local .js files: use $SettingName$ placeholders (from sites.json settings) to inject values at serve time, e.g. $VideoInterval$ -> 30.
+
 Local files override upstream when both exist.

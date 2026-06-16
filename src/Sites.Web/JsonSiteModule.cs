@@ -63,6 +63,7 @@ public sealed class JsonSiteModule : ISiteModule
             RedirectForeignRequestsUrl = Definition.RedirectForeignRequestsUrl,
             DisableCaching = Definition.DisableCaching,
             PassCookies = Definition.PassCookies,
-            HtmlInjections = Definition.HtmlInjections ?? []
+            HtmlInjections = Definition.HtmlInjections ?? [],
+            Settings = SiteSettingsConverter.ToStringDictionary(Definition.Settings)
         };
 }

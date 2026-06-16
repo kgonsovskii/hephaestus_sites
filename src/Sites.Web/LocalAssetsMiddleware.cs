@@ -1,4 +1,5 @@
 using Sites.Web.Abstractions;
+using Sites.Web.Caching;
 
 namespace Sites.Web;
 
@@ -55,15 +56,22 @@ public sealed class LocalAssetsMiddleware
             requestPath,
             filePath);
 
-        await WriteFileResponseAsync(context, filePath);
+        await WriteFileResponseAsync(context, site, filePath);
 
         return true;
     }
 
-    private async Task WriteFileResponseAsync(HttpContext context, string filePath)
+    private async Task WriteFileResponseAsync(HttpContext context, ISiteModule site, string filePath)
     {
         var bandwidth = _settings.Get().ClientBandwidth;
         var fileInfo = new FileInfo(filePath);
+
+        if (ShouldTransformJs(site, filePath))
+        {
+            await WriteTransformedJsResponseAsync(context, site, filePath, fileInfo, bandwidth);
+            return;
+        }
+
         var entityTag =
             $"\"{fileInfo.LastWriteTimeUtc.Ticks.ToString("x")}-{fileInfo.Length.ToString("x")}\"";
 
@@ -87,6 +95,53 @@ public sealed class LocalAssetsMiddleware
 
         await context.Response.SendFileAsync(filePath, context.RequestAborted);
     }
+
+    private async Task WriteTransformedJsResponseAsync(
+        HttpContext context,
+        ISiteModule site,
+        string filePath,
+        FileInfo fileInfo,
+        ClientBandwidthOptions bandwidth)
+    {
+        var cacheKey = LocalJsTransformCache.BuildKey(
+            site.TargetHost,
+            filePath,
+            fileInfo,
+            site.Rules.Settings);
+
+        if (!LocalJsTransformCache.TryGet(cacheKey, out var body, out var entityTag))
+        {
+            var source = await File.ReadAllTextAsync(filePath, context.RequestAborted);
+            var transformed = LocalJsSettingsReplacer.Replace(source, site.Rules.Settings);
+            body = System.Text.Encoding.UTF8.GetBytes(transformed);
+            entityTag = ClientBandwidthResponseHeaders.ComputeEntityTag(body);
+            LocalJsTransformCache.Set(cacheKey, body, entityTag);
+        }
+
+        if (ClientBandwidthResponseHeaders.TryWriteNotModified(
+                context,
+                bandwidth,
+                entityTag,
+                ClientBandwidthResponseHeaders.ApplyLocalAssetsCache))
+            return;
+
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        context.Response.ContentType = StaticContentTypes.FromFilePath(filePath);
+        ClientBandwidthResponseHeaders.ApplyLocalAssetsCache(context, bandwidth);
+        ClientBandwidthResponseHeaders.ApplyEntityTag(context, bandwidth, entityTag);
+
+        if (HttpMethods.IsHead(context.Request.Method))
+        {
+            context.Response.ContentLength = body.Length;
+            return;
+        }
+
+        await context.Response.Body.WriteAsync(body, context.RequestAborted);
+    }
+
+    private static bool ShouldTransformJs(ISiteModule site, string filePath) =>
+        site.Rules.Settings.Count > 0
+        && string.Equals(Path.GetExtension(filePath), ".js", StringComparison.OrdinalIgnoreCase);
 
     internal static bool TryResolveUnderWebRoot(string webRootPath, string relativePath, out string fullPath)
     {
