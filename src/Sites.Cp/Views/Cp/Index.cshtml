@@ -215,6 +215,22 @@
             <button type="button" class="secondary small" id="addAssetBtn" style="margin-top:8px">Add asset</button>
         </div>
 
+        <div class="section">
+            <h4>Settings</h4>
+            <div class="hint">Optional key-value pairs stored in sites.json for future use. Values can be plain text, numbers, or JSON.</div>
+            <table class="dyn-table" id="settingsTable">
+                <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="settingsBody"></tbody>
+            </table>
+            <button type="button" class="secondary small" id="addSettingBtn" style="margin-top:8px">Add setting</button>
+        </div>
+
         <details class="raw-json">
             <summary>Raw JSON preview</summary>
             <textarea id="jsonPreview" rows="12" readonly style="margin-top:8px; font-family:ui-monospace,monospace"></textarea>
@@ -296,7 +312,8 @@
             redirectForeignRequests: true,
             blockedPathPrefixes: [],
             contentReplacements: [],
-            localAssets: {}
+            localAssets: {},
+            settings: {}
         };
     }
 
@@ -311,6 +328,7 @@
         d.contentReplacements = def.contentReplacements || [];
         d.htmlInjections = def.htmlInjections || [];
         d.localAssets = def.localAssets || {};
+        d.settings = def.settings || {};
         return d;
     }
 
@@ -358,6 +376,36 @@
         tr.querySelector('.asset-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
         tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
         document.getElementById('assetsBody').appendChild(tr);
+    }
+
+    function formatSettingValue(value) {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'object') return JSON.stringify(value);
+        return String(value);
+    }
+
+    function parseSettingValue(raw) {
+        const text = (raw || '').trim();
+        if (!text) return '';
+        if (text === 'true') return true;
+        if (text === 'false') return false;
+        if (/^-?\d+$/.test(text)) return parseInt(text, 10);
+        if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(text)) return parseFloat(text);
+        if ((text.startsWith('{') && text.endsWith('}')) || (text.startsWith('[') && text.endsWith(']'))) {
+            try { return JSON.parse(text); } catch { /* fall through */ }
+        }
+        return text;
+    }
+
+    function addSettingRow(key = '', value = '') {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="setting-key" value="${escapeAttr(key)}" placeholder="VideoInterval" /></td>
+            <td><input type="text" class="setting-value" value="${escapeAttr(value)}" placeholder="30" /></td>
+            <td><button type="button" class="danger small setting-remove">Remove</button></td>`;
+        tr.querySelector('.setting-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
+        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
+        document.getElementById('settingsBody').appendChild(tr);
     }
 
     function escapeAttr(value) {
@@ -408,6 +456,17 @@
         return map;
     }
 
+    function collectSettings() {
+        const map = {};
+        document.querySelectorAll('#settingsBody tr').forEach(tr => {
+            const key = tr.querySelector('.setting-key').value.trim();
+            const raw = tr.querySelector('.setting-value').value;
+            if (!key) return;
+            map[key] = parseSettingValue(raw);
+        });
+        return map;
+    }
+
     function buildPayload() {
         const sourceHost = fields.sourceHost.value.trim();
         const payload = {
@@ -443,6 +502,9 @@
 
         const assets = collectLocalAssets();
         if (Object.keys(assets).length > 0) payload.localAssets = assets;
+
+        const settings = collectSettings();
+        if (Object.keys(settings).length > 0) payload.settings = settings;
 
         return payload;
     }
@@ -481,6 +543,10 @@
         document.getElementById('assetsBody').innerHTML = '';
         for (const [path, file] of Object.entries(def.localAssets || {}))
             addAssetRow(path, file);
+
+        document.getElementById('settingsBody').innerHTML = '';
+        for (const [key, value] of Object.entries(def.settings || {}))
+            addSettingRow(key, formatSettingValue(value));
 
         updateJsonPreview();
     }
@@ -627,6 +693,7 @@
     document.getElementById('addReplacementBtn').addEventListener('click', () => { addReplacementRow(); updateJsonPreview(); });
     document.getElementById('addInjectionBtn').addEventListener('click', () => { addInjectionRow(); updateJsonPreview(); });
     document.getElementById('addAssetBtn').addEventListener('click', () => { addAssetRow(); updateJsonPreview(); });
+    document.getElementById('addSettingBtn').addEventListener('click', () => { addSettingRow(); updateJsonPreview(); });
     Object.values(fields).forEach(el => {
         el.addEventListener('input', updateJsonPreview);
         if (el.type === 'checkbox') el.addEventListener('change', updateJsonPreview);

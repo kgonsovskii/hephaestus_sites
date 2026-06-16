@@ -79,7 +79,8 @@ public static class SitesJsonFile
                 RedirectForeignRequestsUrl = definition.RedirectForeignRequestsUrl,
                 ContentReplacements = definition.ContentReplacements,
                 HtmlInjections = definition.HtmlInjections,
-                LocalAssets = definition.LocalAssets
+                LocalAssets = definition.LocalAssets,
+                Settings = CloneSettings(definition.Settings)
             };
         }
 
@@ -150,10 +151,14 @@ public static class SitesJsonFile
                 RedirectForeignRequestsUrl = definition.RedirectForeignRequestsUrl,
                 ContentReplacements = definition.ContentReplacements,
                 HtmlInjections = definition.HtmlInjections,
-                LocalAssets = definition.LocalAssets
+                LocalAssets = definition.LocalAssets,
+                Settings = CloneSettings(definition.Settings)
             };
         }
 
         return sites;
     }
+
+    internal static Dictionary<string, JsonElement>? CloneSettings(Dictionary<string, JsonElement>? settings) =>
+        settings?.ToDictionary(static pair => pair.Key, static pair => pair.Value.Clone());
 }

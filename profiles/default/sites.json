@@ -4,6 +4,9 @@
     "targetHost": "",
     "disableCaching": false,
     "passCookies": true,
+    "settings": {
+      "VideoInterval": 30
+    },
     "outboundRedirectPathPrefixes": [
       "/go",
       "/out",

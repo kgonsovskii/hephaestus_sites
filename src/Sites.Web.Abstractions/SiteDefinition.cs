@@ -1,5 +1,7 @@
 namespace Sites.Web.Abstractions;
 
+using System.Text.Json;
+
 public sealed class SiteDefinition
 {
     public string SourceHost { get; init; } = string.Empty;
@@ -39,4 +41,9 @@ public sealed class SiteDefinition
     /// Optional URL-path aliases to files under wwwroot/{targetHost}/. Files on disk are served automatically.
     /// </summary>
     public Dictionary<string, string>? LocalAssets { get; init; }
+
+    /// <summary>
+    /// Optional key-value settings stored in sites.json for future use (not interpreted by the proxy).
+    /// </summary>
+    public Dictionary<string, JsonElement>? Settings { get; init; }
 }

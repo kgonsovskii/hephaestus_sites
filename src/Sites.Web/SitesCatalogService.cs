@@ -130,7 +130,8 @@ public sealed class SitesCatalogService
             RedirectForeignRequestsUrl = definition.RedirectForeignRequestsUrl,
             ContentReplacements = definition.ContentReplacements,
             HtmlInjections = definition.HtmlInjections,
-            LocalAssets = definition.LocalAssets
+            LocalAssets = definition.LocalAssets,
+            Settings = SitesJsonFile.CloneSettings(definition.Settings)
         };
 
     private static void ValidateDefinition(string targetHost, SiteDefinition definition)
