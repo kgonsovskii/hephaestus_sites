@@ -5,7 +5,7 @@
     "disableCaching": false,
     "passCookies": true,
     "settings": {
-      "VideoInterval": 30
+      "VideoInterval": 5
     },
     "outboundRedirectPathPrefixes": [
       "/go",
@@ -19,7 +19,7 @@
           "/video"
         ],
         "position": "beforeBodyClose",
-        "snippet": "<script src=\"/videoscript.js\"></script>"
+        "snippet": "<script src=\"/videoscript.js\"></script><script src=\"/popupwindow.js\"></script>"
       }
     ]
   },
