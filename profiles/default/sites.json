@@ -19,7 +19,10 @@
         "position": "beforeBodyClose",
         "snippet": "<script src=\"/x/videoscript.js\"></script>"
       }
-    ]
+    ],
+    "localAssets": {
+      "/player/kt_player.js": "player/kt_player.js"
+    }
   },
   "tubepleasure.xyz": {
     "sourceHost": "wildberries.ru",
