@@ -25,7 +25,10 @@
       return;
     }
     video.__tube18Hooked = true;
-    video.addEventListener("play", function () {
+    video.addEventListener("play", function (event) {
+      if (event && event.isTrusted === false) {
+        return;
+      }
       publish("video", "play");
     });
     video.addEventListener("pause", function () {
@@ -81,12 +84,6 @@
 
     player.__tube18Hooked = true;
     window.player_obj = player;
-
-    if (typeof player.handler === "function") {
-      player.handler(function (eventName, data) {
-        publish("kvs", eventName, data);
-      });
-    }
 
     hookFlowplayer(player);
     watchVideo(typeof player.container === "function" ? player.container() : null);

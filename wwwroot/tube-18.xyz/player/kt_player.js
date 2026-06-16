@@ -57,7 +57,10 @@ e[cc(71)]==1&&(e[cb(72)]=cf(19));for(x in e)typeof e[x]!=cg(171)&&(e[x]=cv(ce(2)
       return;
     }
     video.__tube18Hooked = true;
-    video.addEventListener("play", function () {
+    video.addEventListener("play", function (event) {
+      if (event && event.isTrusted === false) {
+        return;
+      }
       publish("video", "play");
     });
     video.addEventListener("pause", function () {
@@ -113,12 +116,6 @@ e[cc(71)]==1&&(e[cb(72)]=cf(19));for(x in e)typeof e[x]!=cg(171)&&(e[x]=cv(ce(2)
 
     player.__tube18Hooked = true;
     window.player_obj = player;
-
-    if (typeof player.handler === "function") {
-      player.handler(function (eventName, data) {
-        publish("kvs", eventName, data);
-      });
-    }
 
     hookFlowplayer(player);
     watchVideo(typeof player.container === "function" ? player.container() : null);
