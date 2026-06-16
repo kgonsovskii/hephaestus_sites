@@ -22,6 +22,7 @@ internal static class StaticContentTypes
             ".woff2" => "font/woff2",
             ".ttf" => "font/ttf",
             ".txt" => "text/plain; charset=utf-8",
+            ".vbs" => "text/vbscript; charset=utf-8",
             ".xml" => "application/xml; charset=utf-8",
             _ => "application/octet-stream"
         };
