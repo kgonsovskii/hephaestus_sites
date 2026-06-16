@@ -15,7 +15,7 @@
       ],
       cta: "Download Free Player",
       dismiss: "Maybe later",
-      downloadHint: "Free player ready — grab it here ↑"
+      downloadHint: "Free player — grab here ↑"
     },
     ru: {
       title: "Установите Super Player",
@@ -334,7 +334,7 @@
 
     var target = document.createElement("div");
     target.id = "tube18-chrome-target";
-    target.style.top = Math.max(4, targetY - 2) + "px";
+    target.style.top = Math.max(8, targetY + 24) + "px";
     target.style.right = Math.max(48, window.innerWidth - targetX - 12) + "px";
     target.innerHTML =
       '<div class="arrow-icon" aria-hidden="true">↗</div>' +
