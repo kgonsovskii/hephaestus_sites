@@ -12,17 +12,34 @@ public sealed class SitesMaintenanceApiController : ControllerBase
 {
     private readonly SitesCatalogService _catalog;
     private readonly ProxyDiskCache _cache;
+    private readonly ProxyCachePolicy _cachePolicy;
 
-    public SitesMaintenanceApiController(SitesCatalogService catalog, ProxyDiskCache cache)
+    public SitesMaintenanceApiController(
+        SitesCatalogService catalog,
+        ProxyDiskCache cache,
+        ProxyCachePolicy cachePolicy)
     {
         _catalog = catalog;
         _cache = cache;
+        _cachePolicy = cachePolicy;
     }
 
     [HttpPost("clear-cache")]
     public ActionResult<ClearCacheResponse> ClearCache()
     {
         var result = _cache.ClearAll();
+        return Ok(new ClearCacheResponse
+        {
+            Profile = SitesProfileResolver.Current,
+            CacheRoot = result.CacheRoot,
+            RemovedEntries = result.RemovedEntries
+        });
+    }
+
+    [HttpPost("clear-non-binary-cache")]
+    public ActionResult<ClearCacheResponse> ClearNonBinaryCache()
+    {
+        var result = _cache.ClearNonBinary(_cachePolicy);
         return Ok(new ClearCacheResponse
         {
             Profile = SitesProfileResolver.Current,

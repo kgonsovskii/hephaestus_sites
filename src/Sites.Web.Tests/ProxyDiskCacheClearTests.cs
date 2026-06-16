@@ -32,4 +32,48 @@ public sealed class ProxyDiskCacheClearTests
                 Directory.Delete(root, recursive: true);
         }
     }
+
+    [Fact]
+    public void ClearNonBinary_RemovesTextEntries_KeepsVideo()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "sites-cache-clear-nb-" + Guid.NewGuid().ToString("N"));
+        var siteDir = Path.Combine(root, "tube18.sex", "ab");
+        Directory.CreateDirectory(siteDir);
+
+        WriteEntry(siteDir, "html1", "text/html", "<html></html>");
+        WriteEntry(siteDir, "js1", "application/javascript", "console.log(1)");
+        WriteEntry(siteDir, "vid1", "video/mp4", "binary");
+
+        var settingsPath = Path.Combine(root, "settings.json");
+        var template = TestSitesProxyOptions.CreateTemplate(options => options.Cache.RootPath = root);
+        var settings = new SitesProfileSettingsService(template, settingsPath);
+        var cache = new ProxyDiskCache(settings);
+        var policy = new ProxyCachePolicy(settings);
+
+        try
+        {
+            var result = cache.ClearNonBinary(policy);
+
+            Assert.Equal(root, result.CacheRoot);
+            Assert.Equal(2, result.RemovedEntries);
+            Assert.False(File.Exists(Path.Combine(siteDir, "html1.meta")));
+            Assert.False(File.Exists(Path.Combine(siteDir, "js1.meta")));
+            Assert.True(File.Exists(Path.Combine(siteDir, "vid1.meta")));
+            Assert.True(File.Exists(Path.Combine(siteDir, "vid1.body")));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static void WriteEntry(string siteDir, string key, string contentType, string body)
+    {
+        var metaPath = Path.Combine(siteDir, $"{key}.meta");
+        var bodyPath = Path.Combine(siteDir, $"{key}.body");
+        File.WriteAllText(metaPath,
+            $$"""{"statusCode":200,"contentType":"{{contentType}}","expiresAt":"2099-01-01T00:00:00Z","bodyLength":1}""");
+        File.WriteAllText(bodyPath, body);
+    }
 }

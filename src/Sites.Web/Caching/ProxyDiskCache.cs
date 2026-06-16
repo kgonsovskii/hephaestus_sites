@@ -128,6 +128,54 @@ public sealed class ProxyDiskCache
         return new ProxyCacheClearResult(cacheRoot, removed);
     }
 
+    public ProxyCacheClearResult ClearNonBinary(ProxyCachePolicy policy)
+    {
+        var cacheRoot = ProxyCacheRoot.Resolve(RootOverride);
+        if (!Directory.Exists(cacheRoot))
+            return new ProxyCacheClearResult(cacheRoot, 0);
+
+        var removed = 0;
+        foreach (var metaPath in Directory.EnumerateFiles(cacheRoot, "*.meta", SearchOption.AllDirectories))
+        {
+            CacheEntryMetadata? metadata;
+            try
+            {
+                var json = File.ReadAllText(metaPath);
+                metadata = JsonSerializer.Deserialize<CacheEntryMetadata>(json, JsonOptions);
+            }
+            catch (IOException)
+            {
+                continue;
+            }
+            catch (JsonException)
+            {
+                continue;
+            }
+
+            if (metadata is null || !policy.MightBeCacheableContentType(metadata.ContentType))
+                continue;
+
+            var bodyPath = metaPath[..^".meta".Length] + ".body";
+            TryDeleteFile(metaPath);
+            TryDeleteFile(bodyPath);
+            removed++;
+        }
+
+        return new ProxyCacheClearResult(cacheRoot, removed);
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch (IOException)
+        {
+        }
+    }
+
     private static string GetMetaPath(string siteDirectory, string cacheKey) =>
         Path.Combine(siteDirectory, cacheKey[..2], $"{cacheKey}.meta");
 

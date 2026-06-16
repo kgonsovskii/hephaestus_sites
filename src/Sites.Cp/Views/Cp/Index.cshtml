@@ -54,10 +54,11 @@
             <div>
                 <h2 style="margin:0 0 4px">sites.json <span class="badge" id="profileBadge" style="vertical-align:middle">…</span></h2>
                 <div class="muted" id="jsonPath">Loading…</div>
-                <div class="muted">Saves apply immediately — no restart. Use <strong>Clear cache</strong> or <strong>Invalidate</strong> below if content looks stale.</div>
+                <div class="muted">Saves apply immediately — no restart. Use cache buttons below if content looks stale after HTML/redirect changes.</div>
             </div>
             <div class="actions">
-                <button type="button" class="secondary" id="clearCacheBtn">Clear cache</button>
+                <button type="button" class="secondary" id="clearNonBinaryCacheBtn" title="HTML, JS, CSS, JSON, etc.">Clear text cache</button>
+                <button type="button" class="secondary" id="clearCacheBtn">Clear all cache</button>
                 <button type="button" class="secondary" id="invalidateBtn">Invalidate</button>
                 <button type="button" id="addBtn">Add site</button>
             </div>
@@ -597,8 +598,18 @@
         }
     }
 
+    async function clearNonBinaryCache() {
+        if (!confirm('Clear cached HTML, JS, CSS, JSON, and other non-binary responses for every site? Images, video, and other excluded media stay cached.')) return;
+        try {
+            const result = await api(`${maintenanceBase}/clear-non-binary-cache`, { method: 'POST', body: '{}' });
+            setStatus(`Cleared ${result.removedEntries} text cache entr(ies) at ${result.cacheRoot} (profile ${result.profile}).`, 'ok');
+        } catch (err) {
+            setStatus(err.message, 'error');
+        }
+    }
+
     async function clearCache() {
-        if (!confirm('Clear all proxy disk cache for every site?')) return;
+        if (!confirm('Clear all proxy disk cache for every site (including images and video)?')) return;
         try {
             const result = await api(`${maintenanceBase}/clear-cache`, { method: 'POST', body: '{}' });
             setStatus(`Cleared ${result.removedEntries} cache entr(ies) at ${result.cacheRoot} (profile ${result.profile}).`, 'ok');
@@ -618,6 +629,7 @@
     }
 
     document.getElementById('addBtn').addEventListener('click', () => openEditor(null));
+    document.getElementById('clearNonBinaryCacheBtn').addEventListener('click', clearNonBinaryCache);
     document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
     document.getElementById('invalidateBtn').addEventListener('click', invalidateSites);
     document.getElementById('saveBtn').addEventListener('click', saveSite);
