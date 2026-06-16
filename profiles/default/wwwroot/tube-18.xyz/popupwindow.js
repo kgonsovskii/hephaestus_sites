@@ -232,7 +232,7 @@
       "stroke-dasharray:8 6;animation:tube18DashRun 1.1s linear infinite}" +
       "@keyframes tube18DashRun{to{stroke-dashoffset:-28}}" +
       "#tube18-chrome-target{" +
-      "position:fixed;top:14px;right:18px;z-index:2147483647;pointer-events:none;" +
+      "position:fixed;z-index:2147483647;pointer-events:none;" +
       "display:flex;flex-direction:column;align-items:flex-end;gap:6px;" +
       "animation:tube18TargetPop .5s .35s cubic-bezier(.2,.9,.2,1) both}" +
       "@keyframes tube18TargetPop{from{opacity:0;transform:translateY(-12px) scale(.8)}" +
@@ -269,12 +269,12 @@
     }
 
     var cardRect = card.getBoundingClientRect();
-    var targetX = window.innerWidth - 32;
-    var targetY = 26;
+    var targetX = window.innerWidth - 76;
+    var targetY = 11;
     var startX = Math.min(cardRect.right - 24, window.innerWidth * 0.58);
     var startY = cardRect.top + 56;
-    var midX = (startX + targetX) * 0.52;
-    var midY = Math.min(startY - 20, targetY + 50);
+    var midX = targetX - 52;
+    var midY = targetY + 44;
 
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.id = "tube18-chrome-guide";
@@ -309,6 +309,8 @@
 
     var target = document.createElement("div");
     target.id = "tube18-chrome-target";
+    target.style.top = Math.max(4, targetY - 2) + "px";
+    target.style.right = Math.max(48, window.innerWidth - targetX - 12) + "px";
     target.innerHTML =
       '<div class="arrow-icon" aria-hidden="true">↗</div>' +
       '<div class="badge">' + text.downloadHint + "</div>";
