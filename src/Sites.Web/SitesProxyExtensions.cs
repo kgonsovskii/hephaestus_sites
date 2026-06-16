@@ -43,16 +43,6 @@ public static class SitesProxyExtensions
         services.AddSingleton(registry);
         services.AddSingleton<IReadOnlyList<ISiteModule>>(registry.ActiveSites);
 
-        services
-            .AddOptions<SitesProxyOptions>()
-            .Bind(configuration.GetSection(SitesProxyOptions.SectionName))
-            .Validate(options =>
-            {
-                SitesProfileSettingsValidator.Validate(options);
-                return true;
-            })
-            .ValidateOnStart();
-
         services.AddSingleton<SitesProfileSettingsTemplate>();
         services.AddSingleton<SitesProfileSettingsService>();
         services.AddSingleton<ProxyDiskCache>();
