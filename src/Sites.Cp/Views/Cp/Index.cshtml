@@ -133,11 +133,6 @@
             <h4>Routing</h4>
             <div class="row">
                 <div>
-                    <label for="additionsPathPrefix">Local additions path prefix</label>
-                    <input id="additionsPathPrefix" value="/x/" />
-                    <div class="hint">Static files under <code>wwwroot/{targetHost}/</code> served at this prefix.</div>
-                </div>
-                <div>
                     <label for="externalRedirectUrl">External redirect URL (optional)</label>
                     <input id="externalRedirectUrl" placeholder="https://example.com/" />
                     <div class="hint">Where outbound redirect paths send users. Blank = site homepage.</div>
@@ -205,8 +200,8 @@
         </div>
 
         <div class="section">
-            <h4>Local assets</h4>
-            <div class="hint">Serve files from <code>wwwroot/{targetHost}/</code> instead of upstream.</div>
+            <h4>Local asset aliases</h4>
+            <div class="hint">Files under <code>wwwroot/{targetHost}/</code> are served automatically at the same URL path after reload/invalidate. Use this table only for extra URL aliases.</div>
             <table class="dyn-table" id="assetsTable">
                 <thead>
                 <tr>
@@ -251,7 +246,6 @@
         targetHosts: document.getElementById('targetHosts'),
         passCookies: document.getElementById('passCookies'),
         disableCaching: document.getElementById('disableCaching'),
-        additionsPathPrefix: document.getElementById('additionsPathPrefix'),
         externalRedirectUrl: document.getElementById('externalRedirectUrl'),
         enableOutboundRedirectPaths: document.getElementById('enableOutboundRedirectPaths'),
         outboundRedirectPathPrefixes: document.getElementById('outboundRedirectPathPrefixes'),
@@ -301,7 +295,6 @@
             outboundRedirectPathPrefixes: [],
             redirectForeignRequests: true,
             blockedPathPrefixes: [],
-            additionsPathPrefix: '/x/',
             contentReplacements: [],
             localAssets: {}
         };
@@ -315,7 +308,6 @@
         d.outboundRedirectPathPrefixes = def.outboundRedirectPathPrefixes || [];
         d.redirectForeignRequests = def.redirectForeignRequests !== false;
         d.blockedPathPrefixes = def.blockedPathPrefixes || [];
-        d.additionsPathPrefix = def.additionsPathPrefix || '/x/';
         d.contentReplacements = def.contentReplacements || [];
         d.htmlInjections = def.htmlInjections || [];
         d.localAssets = def.localAssets || {};
@@ -425,8 +417,7 @@
             enableOutboundRedirectPaths: fields.enableOutboundRedirectPaths.checked,
             outboundRedirectPathPrefixes: linesToArray(fields.outboundRedirectPathPrefixes.value),
             redirectForeignRequests: fields.redirectForeignRequests.checked,
-            blockedPathPrefixes: linesToArray(fields.blockedPathPrefixes.value),
-            additionsPathPrefix: fields.additionsPathPrefix.value.trim() || '/x/'
+            blockedPathPrefixes: linesToArray(fields.blockedPathPrefixes.value)
         };
 
         const name = fields.name.value.trim();
@@ -472,7 +463,6 @@
         fields.targetHosts.value = arrayToLines(def.targetHosts);
         fields.passCookies.checked = def.passCookies;
         fields.disableCaching.checked = def.disableCaching;
-        fields.additionsPathPrefix.value = def.additionsPathPrefix;
         fields.externalRedirectUrl.value = def.externalRedirectUrl || '';
         fields.enableOutboundRedirectPaths.checked = def.enableOutboundRedirectPaths;
         fields.outboundRedirectPathPrefixes.value = arrayToLines(def.outboundRedirectPathPrefixes);

@@ -22,8 +22,6 @@ public sealed class SiteDefinition
 
     public IReadOnlyList<string>? BlockedPathPrefixes { get; init; }
 
-    public string? AdditionsPathPrefix { get; init; }
-
     public string? ExternalRedirectUrl { get; init; }
 
     public bool RedirectForeignRequests { get; init; } = true;
@@ -37,5 +35,8 @@ public sealed class SiteDefinition
     /// </summary>
     public IReadOnlyList<HtmlInjection>? HtmlInjections { get; init; }
 
+    /// <summary>
+    /// Optional URL-path aliases to files under wwwroot/{targetHost}/. Files on disk are served automatically.
+    /// </summary>
     public Dictionary<string, string>? LocalAssets { get; init; }
 }

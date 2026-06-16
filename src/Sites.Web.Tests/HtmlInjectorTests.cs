@@ -98,12 +98,12 @@ public sealed class HtmlInjectorTests
             {
                 Paths = ["/video"],
                 Position = HtmlInjectionPosition.BeforeHeadClose,
-                Snippet = "<script src=\"/x/videoscript.js\"></script>"
+                Snippet = "<script src=\"/videoscript.js\"></script>"
             }
         };
 
         var result = HtmlInjector.Inject(html, "/video/8230/step-sista/", injections);
 
-        Assert.Contains("<script src=\"/x/videoscript.js\"></script></head>", result);
+        Assert.Contains("<script src=\"/videoscript.js\"></script></head>", result);
     }
 }

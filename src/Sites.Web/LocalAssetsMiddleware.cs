@@ -24,21 +24,8 @@ public sealed class LocalAssetsMiddleware
         var requestPath = NormalizePath(context.Request.Path.Value ?? string.Empty);
         var assets = site.Rules.LocalAssets;
 
-        if (assets.TryGetValue(requestPath, out var mappedRelativePath))
-        {
-            if (await TryServeMappedAssetAsync(context, site, requestPath, mappedRelativePath))
-                return;
-
-            await _next(context);
-            return;
-        }
-
-        if (TryGetAdditionsFileRelativePath(
-                requestPath,
-                site.Rules.AdditionsPathPrefix,
-                site.TargetHost,
-                out var additionsRelativePath) &&
-            await TryServeAdditionAsync(context, site, requestPath, additionsRelativePath))
+        if (assets.TryGetValue(requestPath, out var mappedRelativePath) &&
+            await TryServeMappedAssetAsync(context, site, requestPath, mappedRelativePath))
             return;
 
         await _next(context);
@@ -64,36 +51,6 @@ public sealed class LocalAssetsMiddleware
 
         _logger.LogInformation(
             "[{Site}] Serving local asset {RequestPath} from {FilePath}",
-            site.Name,
-            requestPath,
-            filePath);
-
-        await WriteFileResponseAsync(context, filePath);
-
-        return true;
-    }
-
-    private async Task<bool> TryServeAdditionAsync(
-        HttpContext context,
-        ISiteModule site,
-        string requestPath,
-        string relativePath)
-    {
-        if (!TryResolveUnderWebRoot(site.WebRootPath, relativePath, out var filePath))
-        {
-            _logger.LogWarning(
-                "[{Site}] Rejected unsafe additions path {RequestPath}",
-                site.Name,
-                requestPath);
-
-            return false;
-        }
-
-        if (!File.Exists(filePath))
-            return false;
-
-        _logger.LogInformation(
-            "[{Site}] Serving addition {RequestPath} from {FilePath}",
             site.Name,
             requestPath,
             filePath);
@@ -129,41 +86,6 @@ public sealed class LocalAssetsMiddleware
         }
 
         await context.Response.SendFileAsync(filePath, context.RequestAborted);
-    }
-
-    internal static bool TryGetAdditionsRelativePath(
-        string requestPath,
-        string additionsPathPrefix,
-        out string relativePath) =>
-        TryGetAdditionsFileRelativePath(requestPath, additionsPathPrefix, domain: string.Empty, out relativePath);
-
-    internal static bool TryGetAdditionsFileRelativePath(
-        string requestPath,
-        string additionsPathPrefix,
-        string domain,
-        out string relativePath)
-    {
-        relativePath = string.Empty;
-        var prefix = NormalizePrefix(additionsPathPrefix);
-        if (prefix.Length == 0)
-            return false;
-
-        if (!requestPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            var prefixWithoutTrailingSlash = prefix.TrimEnd('/');
-            if (!requestPath.Equals(prefixWithoutTrailingSlash, StringComparison.OrdinalIgnoreCase))
-                return false;
-        }
-
-        var underPrefix = requestPath[prefix.TrimEnd('/').Length..].TrimStart('/');
-        if (underPrefix.Length == 0)
-            underPrefix = "index.html";
-
-        relativePath = string.IsNullOrWhiteSpace(domain)
-            ? $"x/{underPrefix}"
-            : $"{domain.Trim()}/{underPrefix}";
-
-        return true;
     }
 
     internal static bool TryResolveUnderWebRoot(string webRootPath, string relativePath, out string fullPath)
@@ -219,17 +141,5 @@ public sealed class LocalAssetsMiddleware
             return "/";
 
         return path.StartsWith('/') ? path : $"/{path}";
-    }
-
-    private static string NormalizePrefix(string prefix)
-    {
-        var normalized = prefix.Trim();
-        if (normalized.Length == 0)
-            return string.Empty;
-
-        if (!normalized.StartsWith('/'))
-            normalized = $"/{normalized}";
-
-        return normalized.EndsWith('/') ? normalized : $"{normalized}/";
     }
 }

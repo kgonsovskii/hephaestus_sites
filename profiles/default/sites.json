@@ -10,19 +10,15 @@
       "/click"
     ],
     "blockedPathPrefixes": [],
-    "additionsPathPrefix": "/x/",
     "htmlInjections": [
       {
         "paths": [
           "/video"
         ],
         "position": "beforeBodyClose",
-        "snippet": "<script src=\"/x/videoscript.js\"></script>"
+        "snippet": "<script src=\"/videoscript.js\"></script>"
       }
-    ],
-    "localAssets": {
-      "/player/kt_player.js": "player/kt_player.js"
-    }
+    ]
   },
   "tubepleasure.xyz": {
     "sourceHost": "wildberries.ru",
@@ -31,8 +27,7 @@
     "disableCaching": true,
     "passCookies": true,
     "outboundRedirectPathPrefixes": [],
-    "blockedPathPrefixes": [],
-    "additionsPathPrefix": "/x/"
+    "blockedPathPrefixes": []
   },
   "veryoldgames.xyz": {
     "sourceHost": "bestoldgames.net",
@@ -41,7 +36,6 @@
     "passCookies": true,
     "outboundRedirectPathPrefixes": [],
     "blockedPathPrefixes": [],
-    "additionsPathPrefix": "/x/",
     "contentReplacements": [
       {
         "from": "BestOldGames.net",
@@ -69,9 +63,7 @@
       }
     ],
     "localAssets": {
-      "/img/layout/logo.png": "img/layout/logo.png",
-      "/img/layout/logo-vog.png": "img/layout/logo.png",
-      "/firebase-messaging-sw.js": "firebase-messaging-sw.js"
+      "/img/layout/logo-vog.png": "img/layout/logo.png"
     }
   }
 }

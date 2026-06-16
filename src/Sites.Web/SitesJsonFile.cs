@@ -74,7 +74,6 @@ public static class SitesJsonFile
                 EnableOutboundRedirectPaths = definition.EnableOutboundRedirectPaths,
                 OutboundRedirectPathPrefixes = definition.OutboundRedirectPathPrefixes,
                 BlockedPathPrefixes = definition.BlockedPathPrefixes,
-                AdditionsPathPrefix = definition.AdditionsPathPrefix,
                 ExternalRedirectUrl = definition.ExternalRedirectUrl,
                 RedirectForeignRequests = definition.RedirectForeignRequests,
                 RedirectForeignRequestsUrl = definition.RedirectForeignRequestsUrl,
@@ -144,7 +143,6 @@ public static class SitesJsonFile
                 EnableOutboundRedirectPaths = definition.EnableOutboundRedirectPaths,
                 OutboundRedirectPathPrefixes = definition.OutboundRedirectPathPrefixes,
                 BlockedPathPrefixes = definition.BlockedPathPrefixes,
-                AdditionsPathPrefix = definition.AdditionsPathPrefix,
                 ExternalRedirectUrl = definition.ExternalRedirectUrl,
                 RedirectForeignRequests = redirectForeignRequestsOverrides.TryGetValue(key, out var redirectForeignRequests)
                     ? redirectForeignRequests

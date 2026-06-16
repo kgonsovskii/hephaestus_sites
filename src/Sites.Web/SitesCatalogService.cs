@@ -124,7 +124,6 @@ public sealed class SitesCatalogService
             PassCookies = definition.PassCookies,
             OutboundRedirectPathPrefixes = definition.OutboundRedirectPathPrefixes,
             BlockedPathPrefixes = definition.BlockedPathPrefixes,
-            AdditionsPathPrefix = definition.AdditionsPathPrefix,
             ExternalRedirectUrl = definition.ExternalRedirectUrl,
             EnableOutboundRedirectPaths = definition.EnableOutboundRedirectPaths,
             RedirectForeignRequests = definition.RedirectForeignRequests,

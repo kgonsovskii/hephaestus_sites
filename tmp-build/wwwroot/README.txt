@@ -1,14 +1,15 @@
-Static additions for proxied sites (repo-root `wwwroot/`).
+Static files for proxied sites (repo-root `wwwroot/`).
 
-URL path              -> file on disk
-/x/                   -> wwwroot/{domain}/index.html
-/x/js/app.js          -> wwwroot/{domain}/js/app.js
-
-Domain folders (our publish domains):
+Each site has a folder named after its publish domain:
   tube-18.xyz/
   tubepleasure.xyz/
   veryoldgames.xyz/
 
-Local asset overrides (sites.json localAssets) also live under wwwroot/{domain}/.
+Files are auto-served at matching URL paths on site reload/invalidate:
+  wwwroot/tube-18.xyz/player/kt_player.js  ->  GET /player/kt_player.js
+  wwwroot/tube-18.xyz/videoscript.js       ->  GET /videoscript.js
 
-Reference in HTML/JS as /x/your-file.js — resolved against the current site's domain folder.
+Optional localAssets entries in sites.json are aliases only (extra URL -> same file).
+Internal files like *.patch.js and README.txt are not published.
+
+Local files override upstream when both exist.

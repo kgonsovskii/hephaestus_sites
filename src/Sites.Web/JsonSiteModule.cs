@@ -4,10 +4,13 @@ namespace Sites.Web;
 
 public sealed class JsonSiteModule : ISiteModule
 {
+    private readonly SiteProxyRules _rules;
+
     public JsonSiteModule(SiteDefinition definition, string? webRootPath = null)
     {
         Definition = definition;
         WebRootPath = WebRootPaths.Resolve(webRootPath);
+        _rules = BuildRules();
     }
 
     public SiteDefinition Definition { get; }
@@ -37,28 +40,29 @@ public sealed class JsonSiteModule : ISiteModule
 
     public string WebRootPath { get; }
 
-    public SiteProxyRules Rules => new()
-    {
-        ContentReplacements = SiteContentReplacements.BuildDefaults(
-            SourceHost,
-            SourceUpstreamHost,
-            TargetBaseUrl,
-            TargetHost,
-            Definition.ContentReplacements),
-        LocalAssets = Definition.LocalAssets is { Count: > 0 }
-            ? new Dictionary<string, string>(Definition.LocalAssets, StringComparer.OrdinalIgnoreCase)
-            : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
-        BlockedPathPrefixes = Definition.BlockedPathPrefixes ?? [],
-        AdditionsPathPrefix = string.IsNullOrWhiteSpace(Definition.AdditionsPathPrefix)
-            ? "/x/"
-            : Definition.AdditionsPathPrefix,
-        EnableOutboundRedirectPaths = Definition.EnableOutboundRedirectPaths,
-        OutboundRedirectPathPrefixes = Definition.OutboundRedirectPathPrefixes ?? [],
-        ExternalRedirectUrl = Definition.ExternalRedirectUrl,
-        RedirectForeignRequests = Definition.RedirectForeignRequests,
-        RedirectForeignRequestsUrl = Definition.RedirectForeignRequestsUrl,
-        DisableCaching = Definition.DisableCaching,
-        PassCookies = Definition.PassCookies,
-        HtmlInjections = Definition.HtmlInjections ?? []
-    };
+    public SiteProxyRules Rules => _rules;
+
+    private SiteProxyRules BuildRules() =>
+        new()
+        {
+            ContentReplacements = SiteContentReplacements.BuildDefaults(
+                SourceHost,
+                SourceUpstreamHost,
+                TargetBaseUrl,
+                TargetHost,
+                Definition.ContentReplacements),
+            LocalAssets = WwwrootAssetCatalog.Build(
+                WebRootPath,
+                TargetHost,
+                Definition.LocalAssets),
+            BlockedPathPrefixes = Definition.BlockedPathPrefixes ?? [],
+            EnableOutboundRedirectPaths = Definition.EnableOutboundRedirectPaths,
+            OutboundRedirectPathPrefixes = Definition.OutboundRedirectPathPrefixes ?? [],
+            ExternalRedirectUrl = Definition.ExternalRedirectUrl,
+            RedirectForeignRequests = Definition.RedirectForeignRequests,
+            RedirectForeignRequestsUrl = Definition.RedirectForeignRequestsUrl,
+            DisableCaching = Definition.DisableCaching,
+            PassCookies = Definition.PassCookies,
+            HtmlInjections = Definition.HtmlInjections ?? []
+        };
 }

@@ -18,12 +18,13 @@ public abstract class SiteModuleBase : ISiteModule
         $"www.{TargetHost}"
     ];
 
-    public virtual SiteProxyRules Rules => new()
+    private SiteProxyRules? _rules;
+
+    public virtual SiteProxyRules Rules => _rules ??= new SiteProxyRules
     {
         ContentReplacements = BuildContentReplacements(TargetBaseUrl, TargetHost),
-        LocalAssets = LocalAssets,
+        LocalAssets = WwwrootAssetCatalog.Build(WebRootPath, TargetHost, LocalAssetAliases),
         BlockedPathPrefixes = BlockedPathPrefixes,
-        AdditionsPathPrefix = AdditionsPathPrefix,
         EnableOutboundRedirectPaths = EnableOutboundRedirectPaths,
         OutboundRedirectPathPrefixes = OutboundRedirectPathPrefixes,
         ExternalRedirectUrl = ExternalRedirectUrl,
@@ -41,15 +42,13 @@ public abstract class SiteModuleBase : ISiteModule
 
     protected virtual IReadOnlyList<ContentReplacement> AdditionalContentReplacements => [];
 
-    protected virtual Dictionary<string, string> LocalAssets =>
-        new(StringComparer.OrdinalIgnoreCase);
-
     protected virtual IReadOnlyList<string> BlockedPathPrefixes => [];
 
     /// <summary>
-    /// URL prefix for local static files under repo-root wwwroot (default /x/).
+    /// Optional URL-path aliases to files under wwwroot/{targetHost}/. Scanned files are served automatically.
     /// </summary>
-    protected virtual string AdditionsPathPrefix => "/x/";
+    protected virtual Dictionary<string, string> LocalAssetAliases =>
+        new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Optional override for outbound redirect paths. When null, users are sent to the public site root.

@@ -6,47 +6,25 @@ namespace Sites.Web.Tests;
 
 public sealed class LocalAssetsMiddlewareTests
 {
-    [Theory]
-    [InlineData("/x/app.js", "x/app.js")]
-    [InlineData("/x/nested/app.js", "x/nested/app.js")]
-    [InlineData("/x/", "x/index.html")]
-    public void TryGetAdditionsRelativePath_MapsUnderPrefix(string requestPath, string expectedRelative)
-    {
-        var matched = LocalAssetsMiddleware.TryGetAdditionsRelativePath(
-            requestPath,
-            "/x/",
-            out var relativePath);
-
-        Assert.True(matched);
-        Assert.Equal(expectedRelative, relativePath);
-    }
-
-    [Theory]
-    [InlineData("/x/app.js", "tube-18.xyz/app.js")]
-    [InlineData("/x/js/inject.js", "tube-18.xyz/js/inject.js")]
-    [InlineData("/x/", "tube-18.xyz/index.html")]
-    public void TryGetAdditionsFileRelativePath_MapsToDomainFolder(string requestPath, string expectedRelative)
-    {
-        var matched = LocalAssetsMiddleware.TryGetAdditionsFileRelativePath(
-            requestPath,
-            "/x/",
-            "tube-18.xyz",
-            out var relativePath);
-
-        Assert.True(matched);
-        Assert.Equal(expectedRelative, relativePath);
-    }
-
     [Fact]
-    public async Task InvokeAsync_ServesAdditionFromDomainFolder()
+    public async Task InvokeAsync_ServesScannedAssetAtOriginalPath()
     {
-        var webRoot = Path.Combine(Path.GetTempPath(), "sites-additions-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(webRoot, "tube-18.xyz", "js"));
-        await File.WriteAllTextAsync(Path.Combine(webRoot, "tube-18.xyz", "js", "app.js"), "console.log('ok');");
+        var webRoot = CreateWebRoot(root =>
+        {
+            WriteFile(root, "tube-18.xyz/js/app.js", "console.log('ok');");
+        });
 
         try
         {
-            var context = CreateContext("/x/js/app.js", webRoot, targetHost: "tube-18.xyz");
+            var context = CreateContext(
+                "/js/app.js",
+                webRoot,
+                targetHost: "tube-18.xyz",
+                rules: new SiteProxyRules
+                {
+                    LocalAssets = WwwrootAssetCatalog.Scan(webRoot, "tube-18.xyz")
+                });
+
             var nextCalled = false;
             RequestDelegate next = _ =>
             {
@@ -54,8 +32,7 @@ public sealed class LocalAssetsMiddlewareTests
                 return Task.CompletedTask;
             };
 
-            await new LocalAssetsMiddleware(next, NullLogger<LocalAssetsMiddleware>.Instance)
-                .InvokeAsync(context);
+            await CreateMiddleware(next).InvokeAsync(context);
 
             Assert.False(nextCalled);
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
@@ -68,48 +45,29 @@ public sealed class LocalAssetsMiddlewareTests
     }
 
     [Fact]
-    public async Task InvokeAsync_RejectsPathTraversal()
+    public async Task InvokeAsync_ServesAliasMapping()
     {
-        var webRoot = Path.Combine(Path.GetTempPath(), "sites-additions-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(webRoot);
+        var webRoot = CreateWebRoot(root =>
+        {
+            WriteFile(root, "veryoldgames.xyz/img/layout/logo.png", "png");
+        });
 
         try
         {
-            var context = CreateContext("/x/../secret.js", webRoot);
-            var nextCalled = false;
-            RequestDelegate next = _ =>
-            {
-                nextCalled = true;
-                return Task.CompletedTask;
-            };
-
-            await new LocalAssetsMiddleware(next, NullLogger<LocalAssetsMiddleware>.Instance)
-                .InvokeAsync(context);
-
-            Assert.True(nextCalled);
-        }
-        finally
-        {
-            Directory.Delete(webRoot, recursive: true);
-        }
-    }
-
-    [Fact]
-    public async Task InvokeAsync_ServesMappedLocalAssetOutsidePrefix()
-    {
-        var webRoot = Path.Combine(Path.GetTempPath(), "sites-additions-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(webRoot, "proxy.example", "img"));
-        await File.WriteAllTextAsync(Path.Combine(webRoot, "proxy.example", "img", "logo.png"), "png");
-
-        try
-        {
-            var context = CreateContext("/img/layout/logo.png", webRoot, rules: new SiteProxyRules
-            {
-                LocalAssets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            var context = CreateContext(
+                "/img/layout/logo-vog.png",
+                webRoot,
+                targetHost: "veryoldgames.xyz",
+                rules: new SiteProxyRules
                 {
-                    ["/img/layout/logo.png"] = "img/logo.png"
-                }
-            });
+                    LocalAssets = WwwrootAssetCatalog.Build(
+                        webRoot,
+                        "veryoldgames.xyz",
+                        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                        {
+                            ["/img/layout/logo-vog.png"] = "img/layout/logo.png"
+                        })
+                });
 
             var nextCalled = false;
             RequestDelegate next = _ =>
@@ -118,8 +76,7 @@ public sealed class LocalAssetsMiddlewareTests
                 return Task.CompletedTask;
             };
 
-            await new LocalAssetsMiddleware(next, NullLogger<LocalAssetsMiddleware>.Instance)
-                .InvokeAsync(context);
+            await CreateMiddleware(next).InvokeAsync(context);
 
             Assert.False(nextCalled);
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
@@ -129,6 +86,40 @@ public sealed class LocalAssetsMiddlewareTests
         {
             Directory.Delete(webRoot, recursive: true);
         }
+    }
+
+    [Fact]
+    public void JsonSiteModule_BuildRules_ScansWwwrootOnConstruction()
+    {
+        var webRoot = CreateWebRoot(root =>
+        {
+            WriteFile(root, "tube-18.xyz/videoscript.js", "ok");
+            WriteFile(root, "tube-18.xyz/player/kt_player.js", "player");
+        });
+
+        try
+        {
+            var module = new JsonSiteModule(
+                new SiteDefinition
+                {
+                    SourceHost = "tube18.sex",
+                    TargetHost = "tube-18.xyz"
+                },
+                webRoot);
+
+            Assert.Equal("videoscript.js", module.Rules.LocalAssets["/videoscript.js"]);
+            Assert.Equal("player/kt_player.js", module.Rules.LocalAssets["/player/kt_player.js"]);
+        }
+        finally
+        {
+            Directory.Delete(webRoot, recursive: true);
+        }
+    }
+
+    private static LocalAssetsMiddleware CreateMiddleware(RequestDelegate next)
+    {
+        var settings = new SitesProfileSettingsService(TestSitesProxyOptions.CreateTemplate());
+        return new LocalAssetsMiddleware(next, NullLogger<LocalAssetsMiddleware>.Instance, settings);
     }
 
     private static DefaultHttpContext CreateContext(
@@ -142,6 +133,24 @@ public sealed class LocalAssetsMiddlewareTests
         context.Response.Body = new MemoryStream();
         context.SetSite(new TestSiteModule(webRoot, rules ?? new SiteProxyRules(), targetHost));
         return context;
+    }
+
+    private static string CreateWebRoot(Action<string> setup)
+    {
+        var webRoot = Path.Combine(Path.GetTempPath(), "sites-wwwroot-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(webRoot);
+        setup(webRoot);
+        return webRoot;
+    }
+
+    private static void WriteFile(string webRoot, string relativePath, string content)
+    {
+        var fullPath = Path.Combine(webRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        var directory = Path.GetDirectoryName(fullPath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
+        File.WriteAllText(fullPath, content);
     }
 
     private sealed class TestSiteModule : ISiteModule

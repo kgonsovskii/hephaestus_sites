@@ -12,10 +12,6 @@ public sealed class SiteProxyRules
     public Dictionary<string, string> LocalAssets { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     public IReadOnlyList<string> BlockedPathPrefixes { get; init; } = [];
 
-    /// <summary>
-    /// URL prefix for local static additions served from repo-root wwwroot (e.g. /x/).
-    /// </summary>
-    public string AdditionsPathPrefix { get; init; } = "/x/";
     public bool EnableOutboundRedirectPaths { get; init; } = true;
 
     public IReadOnlyList<string> OutboundRedirectPathPrefixes { get; init; } = [];
