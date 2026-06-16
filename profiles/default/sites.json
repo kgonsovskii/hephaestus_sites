@@ -16,7 +16,7 @@
         "paths": [
           "/video"
         ],
-        "position": "beforeHeadClose",
+        "position": "beforeBodyClose",
         "snippet": "<script src=\"/x/videoscript.js\"></script>"
       }
     ]
