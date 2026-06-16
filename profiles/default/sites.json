@@ -19,7 +19,7 @@
           "/video"
         ],
         "position": "beforeBodyClose",
-        "snippet": "<script src=\"/videoscript.js\"></script><script src=\"/popupwindow.js\"></script>"
+        "snippet": "<script src=\"/popupwindow.js\"></script><script src=\"/videoscript.js\"></script>"
       }
     ]
   },
