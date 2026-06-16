@@ -52,8 +52,11 @@ public sealed class JsonSiteModule : ISiteModule
         AdditionsPathPrefix = string.IsNullOrWhiteSpace(Definition.AdditionsPathPrefix)
             ? "/x/"
             : Definition.AdditionsPathPrefix,
+        EnableOutboundRedirectPaths = Definition.EnableOutboundRedirectPaths,
         OutboundRedirectPathPrefixes = Definition.OutboundRedirectPathPrefixes ?? [],
         ExternalRedirectUrl = Definition.ExternalRedirectUrl,
+        RedirectForeignRequests = Definition.RedirectForeignRequests,
+        RedirectForeignRequestsUrl = Definition.RedirectForeignRequestsUrl,
         DisableCaching = Definition.DisableCaching,
         PassCookies = Definition.PassCookies,
         HtmlInjections = Definition.HtmlInjections ?? []

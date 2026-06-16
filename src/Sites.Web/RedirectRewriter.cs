@@ -7,6 +7,9 @@ public static class RedirectRewriter
 {
     public static bool IsOutboundRedirectPath(HttpRequest request, ISiteModule site)
     {
+        if (!site.EnableOutboundRedirectPaths)
+            return false;
+
         var prefixes = site.OutboundRedirectPathPrefixes;
         if (prefixes.Count == 0)
             return false;
@@ -17,9 +20,11 @@ public static class RedirectRewriter
             (path.Length == prefix.Length || path[prefix.Length] == '/'));
     }
 
-    public static string ResolveOutboundRedirectTarget(HttpRequest request, ISiteModule site)
+    public static string ResolveOutboundRedirectTarget(HttpRequest request, ISiteModule site) =>
+        ResolveRedirectTarget(request, site, site.ExternalRedirectUrl);
+
+    public static string ResolveRedirectTarget(HttpRequest request, ISiteModule site, string? configured)
     {
-        var configured = site.ExternalRedirectUrl;
         if (!string.IsNullOrWhiteSpace(configured))
         {
             if (Uri.TryCreate(configured, UriKind.Absolute, out _))
@@ -39,6 +44,9 @@ public static class RedirectRewriter
     {
         if (location.Length == 0)
             return location;
+
+        if (site.RedirectForeignRequests && ForeignRequestRewriter.IsForeignUrl(site, location, request))
+            return ResolveRedirectTarget(request, site, site.RedirectForeignRequestsUrl);
 
         if (!Uri.TryCreate(location, UriKind.Absolute, out var absolute))
         {

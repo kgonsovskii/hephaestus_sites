@@ -17,7 +17,13 @@ public interface ISiteModule
     /// </summary>
     string? ExternalRedirectUrl => Rules.ExternalRedirectUrl;
 
+    bool EnableOutboundRedirectPaths => Rules.EnableOutboundRedirectPaths;
+
     IReadOnlyList<string> OutboundRedirectPathPrefixes => Rules.OutboundRedirectPathPrefixes;
+
+    bool RedirectForeignRequests => Rules.RedirectForeignRequests;
+
+    string? RedirectForeignRequestsUrl => Rules.RedirectForeignRequestsUrl;
 
     bool DisableCaching => Rules.DisableCaching;
 

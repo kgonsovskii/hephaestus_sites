@@ -16,6 +16,8 @@ public sealed class SiteDefinition
 
     public bool PassCookies { get; init; } = true;
 
+    public bool EnableOutboundRedirectPaths { get; init; } = true;
+
     public IReadOnlyList<string>? OutboundRedirectPathPrefixes { get; init; }
 
     public IReadOnlyList<string>? BlockedPathPrefixes { get; init; }
@@ -23,6 +25,10 @@ public sealed class SiteDefinition
     public string? AdditionsPathPrefix { get; init; }
 
     public string? ExternalRedirectUrl { get; init; }
+
+    public bool RedirectForeignRequests { get; init; }
+
+    public string? RedirectForeignRequestsUrl { get; init; }
 
     public IReadOnlyList<ContentReplacement>? ContentReplacements { get; init; }
 

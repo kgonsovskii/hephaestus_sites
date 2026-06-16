@@ -16,12 +16,24 @@ public sealed class SiteProxyRules
     /// URL prefix for local static additions served from repo-root wwwroot (e.g. /x/).
     /// </summary>
     public string AdditionsPathPrefix { get; init; } = "/x/";
+    public bool EnableOutboundRedirectPaths { get; init; } = true;
+
     public IReadOnlyList<string> OutboundRedirectPathPrefixes { get; init; } = [];
 
     /// <summary>
     /// Optional override for outbound redirect paths. When null, users are sent to the public site root.
     /// </summary>
     public string? ExternalRedirectUrl { get; init; }
+
+    /// <summary>
+    /// When true, off-site links and upstream redirects to other domains are rewritten to stay on this site.
+    /// </summary>
+    public bool RedirectForeignRequests { get; init; }
+
+    /// <summary>
+    /// Optional override for foreign redirects. When null, users are sent to the public site root.
+    /// </summary>
+    public string? RedirectForeignRequestsUrl { get; init; }
 
     /// <summary>
     /// When true, disk cache lookup and storage are skipped for this site.

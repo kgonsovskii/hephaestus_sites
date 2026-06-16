@@ -1,0 +1,8 @@
+/* Example extra stylesheet — https://tube-18.xyz/x/css/extra.css */
+body::after {
+  content: "tube-18.xyz static addition loaded";
+  display: block;
+  font: 12px/1.4 sans-serif;
+  color: #666;
+  padding: 8px;
+}

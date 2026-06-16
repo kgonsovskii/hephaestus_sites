@@ -113,7 +113,8 @@ public sealed class ReverseProxyMiddleware
         {
             var replacements = GetContentReplacements(site, context.Request);
             var injections = site.Rules.HtmlInjections;
-            if (replacements.Count == 0 && injections.Count == 0)
+            var rewriteForeignLinks = site.RedirectForeignRequests;
+            if (replacements.Count == 0 && injections.Count == 0 && !rewriteForeignLinks)
             {
                 context.Response.Headers["X-Proxy-Cache"] = cachingEnabled ? "BYPASS" : "DISABLED";
                 await context.Response.StartAsync(context.RequestAborted);
@@ -137,6 +138,15 @@ public sealed class ReverseProxyMiddleware
                     contentType,
                     context.Request.Path.Value ?? "/",
                     injections);
+            }
+
+            if (rewriteForeignLinks)
+            {
+                var encoding = ContentRewriter.GetEncoding(contentType);
+                var text = encoding.GetString(body);
+                var rewritten = ForeignRequestRewriter.RewriteForeignLinks(text, context.Request, site);
+                if (!ReferenceEquals(text, rewritten) && text != rewritten)
+                    body = encoding.GetBytes(rewritten);
             }
 
             if (cachingEnabled &&

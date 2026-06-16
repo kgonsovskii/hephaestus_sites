@@ -126,6 +126,9 @@ public sealed class SitesCatalogService
             BlockedPathPrefixes = definition.BlockedPathPrefixes,
             AdditionsPathPrefix = definition.AdditionsPathPrefix,
             ExternalRedirectUrl = definition.ExternalRedirectUrl,
+            EnableOutboundRedirectPaths = definition.EnableOutboundRedirectPaths,
+            RedirectForeignRequests = definition.RedirectForeignRequests,
+            RedirectForeignRequestsUrl = definition.RedirectForeignRequestsUrl,
             ContentReplacements = definition.ContentReplacements,
             HtmlInjections = definition.HtmlInjections,
             LocalAssets = definition.LocalAssets

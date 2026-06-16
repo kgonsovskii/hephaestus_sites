@@ -71,10 +71,13 @@ public static class SitesJsonFile
                 TargetHosts = definition.TargetHosts,
                 DisableCaching = definition.DisableCaching,
                 PassCookies = definition.PassCookies,
+                EnableOutboundRedirectPaths = definition.EnableOutboundRedirectPaths,
                 OutboundRedirectPathPrefixes = definition.OutboundRedirectPathPrefixes,
                 BlockedPathPrefixes = definition.BlockedPathPrefixes,
                 AdditionsPathPrefix = definition.AdditionsPathPrefix,
                 ExternalRedirectUrl = definition.ExternalRedirectUrl,
+                RedirectForeignRequests = definition.RedirectForeignRequests,
+                RedirectForeignRequestsUrl = definition.RedirectForeignRequestsUrl,
                 ContentReplacements = definition.ContentReplacements,
                 HtmlInjections = definition.HtmlInjections,
                 LocalAssets = definition.LocalAssets
@@ -137,10 +140,13 @@ public static class SitesJsonFile
                 PassCookies = passCookiesOverrides.TryGetValue(key, out var passCookies)
                     ? passCookies
                     : true,
+                EnableOutboundRedirectPaths = definition.EnableOutboundRedirectPaths,
                 OutboundRedirectPathPrefixes = definition.OutboundRedirectPathPrefixes,
                 BlockedPathPrefixes = definition.BlockedPathPrefixes,
                 AdditionsPathPrefix = definition.AdditionsPathPrefix,
                 ExternalRedirectUrl = definition.ExternalRedirectUrl,
+                RedirectForeignRequests = definition.RedirectForeignRequests,
+                RedirectForeignRequestsUrl = definition.RedirectForeignRequestsUrl,
                 ContentReplacements = definition.ContentReplacements,
                 HtmlInjections = definition.HtmlInjections,
                 LocalAssets = definition.LocalAssets

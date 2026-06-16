@@ -139,14 +139,19 @@
                 <div>
                     <label for="externalRedirectUrl">External redirect URL (optional)</label>
                     <input id="externalRedirectUrl" placeholder="https://example.com/" />
-                    <div class="hint">Where outbound redirect paths send users. Blank = our site root.</div>
+                    <div class="hint">Where outbound redirect paths send users. Blank = site homepage.</div>
                 </div>
             </div>
+            <label class="inline">
+                <input type="checkbox" id="enableOutboundRedirectPaths" checked />
+                Enable outbound redirect paths
+            </label>
+            <div class="hint">When on, visits to listed path prefixes (e.g. <code>/go</code>, <code>/out</code>) leave the proxied site and redirect to External redirect URL or your homepage.</div>
             <div class="row">
                 <div>
                     <label for="outboundRedirectPathPrefixes">Outbound redirect paths</label>
                     <textarea id="outboundRedirectPathPrefixes" rows="3" placeholder="/go&#10;/out&#10;/click"></textarea>
-                    <div class="hint">One path prefix per line. Matching requests redirect off-site.</div>
+                    <div class="hint">One path prefix per line. Only used when enabled above.</div>
                 </div>
                 <div>
                     <label for="blockedPathPrefixes">Blocked path prefixes</label>
@@ -154,6 +159,14 @@
                     <div class="hint">One per line. Upstream requests to these paths are blocked.</div>
                 </div>
             </div>
+            <label class="inline">
+                <input type="checkbox" id="redirectForeignRequests" />
+                Redirect foreign requests
+            </label>
+            <div class="hint">When on, off-site links (e.g. affiliate URLs like <code>go.rmhfrtnd.com</code>) and upstream redirects to other domains are rewritten to your site instead of leaving.</div>
+            <label for="redirectForeignRequestsUrl">Foreign redirect URL (optional)</label>
+            <input id="redirectForeignRequestsUrl" placeholder="/ or https://example.com/" />
+            <div class="hint">Target when blocking foreign navigation. Blank = site homepage. Relative paths stay on this host.</div>
         </div>
 
         <div class="section">
@@ -239,7 +252,10 @@
         disableCaching: document.getElementById('disableCaching'),
         additionsPathPrefix: document.getElementById('additionsPathPrefix'),
         externalRedirectUrl: document.getElementById('externalRedirectUrl'),
+        enableOutboundRedirectPaths: document.getElementById('enableOutboundRedirectPaths'),
         outboundRedirectPathPrefixes: document.getElementById('outboundRedirectPathPrefixes'),
+        redirectForeignRequests: document.getElementById('redirectForeignRequests'),
+        redirectForeignRequestsUrl: document.getElementById('redirectForeignRequestsUrl'),
         blockedPathPrefixes: document.getElementById('blockedPathPrefixes')
     };
 
@@ -280,7 +296,9 @@
         return {
             disableCaching: false,
             passCookies: true,
+            enableOutboundRedirectPaths: true,
             outboundRedirectPathPrefixes: [],
+            redirectForeignRequests: false,
             blockedPathPrefixes: [],
             additionsPathPrefix: '/x/',
             contentReplacements: [],
@@ -292,7 +310,9 @@
         const d = { ...defaultDefinition(), ...def };
         d.passCookies = def.passCookies !== false;
         d.disableCaching = !!def.disableCaching;
+        d.enableOutboundRedirectPaths = def.enableOutboundRedirectPaths !== false;
         d.outboundRedirectPathPrefixes = def.outboundRedirectPathPrefixes || [];
+        d.redirectForeignRequests = !!def.redirectForeignRequests;
         d.blockedPathPrefixes = def.blockedPathPrefixes || [];
         d.additionsPathPrefix = def.additionsPathPrefix || '/x/';
         d.contentReplacements = def.contentReplacements || [];
@@ -401,7 +421,9 @@
             sourceHost,
             disableCaching: fields.disableCaching.checked,
             passCookies: fields.passCookies.checked,
+            enableOutboundRedirectPaths: fields.enableOutboundRedirectPaths.checked,
             outboundRedirectPathPrefixes: linesToArray(fields.outboundRedirectPathPrefixes.value),
+            redirectForeignRequests: fields.redirectForeignRequests.checked,
             blockedPathPrefixes: linesToArray(fields.blockedPathPrefixes.value),
             additionsPathPrefix: fields.additionsPathPrefix.value.trim() || '/x/'
         };
@@ -417,6 +439,9 @@
 
         const externalRedirectUrl = fields.externalRedirectUrl.value.trim();
         if (externalRedirectUrl) payload.externalRedirectUrl = externalRedirectUrl;
+
+        const redirectForeignRequestsUrl = fields.redirectForeignRequestsUrl.value.trim();
+        if (redirectForeignRequestsUrl) payload.redirectForeignRequestsUrl = redirectForeignRequestsUrl;
 
         const replacements = collectReplacements();
         if (replacements.length > 0) payload.contentReplacements = replacements;
@@ -448,7 +473,10 @@
         fields.disableCaching.checked = def.disableCaching;
         fields.additionsPathPrefix.value = def.additionsPathPrefix;
         fields.externalRedirectUrl.value = def.externalRedirectUrl || '';
+        fields.enableOutboundRedirectPaths.checked = def.enableOutboundRedirectPaths;
         fields.outboundRedirectPathPrefixes.value = arrayToLines(def.outboundRedirectPathPrefixes);
+        fields.redirectForeignRequests.checked = def.redirectForeignRequests;
+        fields.redirectForeignRequestsUrl.value = def.redirectForeignRequestsUrl || '';
         fields.blockedPathPrefixes.value = arrayToLines(def.blockedPathPrefixes);
 
         document.getElementById('replacementsBody').innerHTML = '';

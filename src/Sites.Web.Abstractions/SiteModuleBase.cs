@@ -24,8 +24,11 @@ public abstract class SiteModuleBase : ISiteModule
         LocalAssets = LocalAssets,
         BlockedPathPrefixes = BlockedPathPrefixes,
         AdditionsPathPrefix = AdditionsPathPrefix,
+        EnableOutboundRedirectPaths = EnableOutboundRedirectPaths,
         OutboundRedirectPathPrefixes = OutboundRedirectPathPrefixes,
         ExternalRedirectUrl = ExternalRedirectUrl,
+        RedirectForeignRequests = RedirectForeignRequests,
+        RedirectForeignRequestsUrl = RedirectForeignRequestsUrl,
         DisableCaching = DisableCaching
     };
 
@@ -53,7 +56,13 @@ public abstract class SiteModuleBase : ISiteModule
     /// </summary>
     protected virtual string? ExternalRedirectUrl => null;
 
+    protected virtual bool EnableOutboundRedirectPaths => OutboundRedirectPathPrefixes.Count > 0;
+
     protected virtual IReadOnlyList<string> OutboundRedirectPathPrefixes => [];
+
+    protected virtual bool RedirectForeignRequests => false;
+
+    protected virtual string? RedirectForeignRequestsUrl => null;
 
     private IReadOnlyList<ContentReplacement> BuildContentReplacements(
         string targetBaseUrl,
