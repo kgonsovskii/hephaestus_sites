@@ -84,6 +84,8 @@ public sealed class LocalAssetsMiddleware
 
         context.Response.StatusCode = StatusCodes.Status200OK;
         context.Response.ContentType = StaticContentTypes.FromFilePath(filePath);
+        if (StaticContentTypes.IsForcedDownload(filePath))
+            context.Response.Headers.ContentDisposition = StaticContentTypes.BuildAttachmentDisposition(filePath);
         ClientBandwidthResponseHeaders.ApplyLocalAssetsCache(context, bandwidth);
         ClientBandwidthResponseHeaders.ApplyEntityTag(context, bandwidth, entityTag);
 

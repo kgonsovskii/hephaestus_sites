@@ -119,10 +119,53 @@ public sealed class LocalAssetsMiddlewareTests
 
             Assert.False(nextCalled);
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
-            Assert.Equal("text/vbscript; charset=utf-8", context.Response.ContentType);
+            Assert.Equal("application/octet-stream", context.Response.ContentType);
+            Assert.Equal("attachment; filename=\"launcher.vbs\"", context.Response.Headers.ContentDisposition.ToString());
             context.Response.Body.Position = 0;
             using var reader = new StreamReader(context.Response.Body);
             Assert.Equal("WScript.Echo \"ok\"", await reader.ReadToEndAsync());
+        }
+        finally
+        {
+            Directory.Delete(webRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ServesCmdWithPlainTextContentType()
+    {
+        var webRoot = CreateWebRoot(root =>
+        {
+            WriteFile(root, "example.xyz/download/install.cmd", "@echo off\r\necho ok");
+        });
+
+        try
+        {
+            var context = CreateContext(
+                "/download/install.cmd",
+                webRoot,
+                targetHost: "example.xyz",
+                rules: new SiteProxyRules
+                {
+                    LocalAssets = WwwrootAssetCatalog.Scan(webRoot, "example.xyz")
+                });
+
+            var nextCalled = false;
+            RequestDelegate next = _ =>
+            {
+                nextCalled = true;
+                return Task.CompletedTask;
+            };
+
+            await CreateMiddleware(next).InvokeAsync(context);
+
+            Assert.False(nextCalled);
+            Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+            Assert.Equal("application/octet-stream", context.Response.ContentType);
+            Assert.Equal("attachment; filename=\"install.cmd\"", context.Response.Headers.ContentDisposition.ToString());
+            context.Response.Body.Position = 0;
+            using var reader = new StreamReader(context.Response.Body);
+            Assert.Equal("@echo off\r\necho ok", await reader.ReadToEndAsync());
         }
         finally
         {
