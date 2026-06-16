@@ -63,3 +63,10 @@ public sealed class CloneStatusResponse
 
     public IReadOnlyList<string> Log { get; init; } = [];
 }
+
+public sealed class RebootServerResponse
+{
+    public bool Succeeded { get; init; }
+
+    public string Message { get; init; } = string.Empty;
+}

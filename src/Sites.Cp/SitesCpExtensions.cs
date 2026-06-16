@@ -32,6 +32,7 @@ public static class SitesCpExtensions
         services.AddSingleton<SitesCloneRunStore>();
         services.AddScoped<SitesCloneService>();
         services.AddSingleton<SitesUpdateService>();
+        services.AddSingleton<SitesRebootService>();
 
         services.AddSingleton(sp =>
         {

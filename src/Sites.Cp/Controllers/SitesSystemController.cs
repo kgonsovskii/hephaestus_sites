@@ -21,6 +21,7 @@ public sealed class SitesSystemApiController : ControllerBase
     private readonly Sites.Cp.Services.SitesCloneService _clone;
     private readonly Sites.Cp.Services.SitesCloneRunStore _cloneRuns;
     private readonly Sites.Cp.Services.SitesUpdateService _update;
+    private readonly Sites.Cp.Services.SitesRebootService _reboot;
     private readonly SitesProfileSettingsService _settings;
 
     public SitesSystemApiController(
@@ -29,6 +30,7 @@ public sealed class SitesSystemApiController : ControllerBase
         Sites.Cp.Services.SitesCloneService clone,
         Sites.Cp.Services.SitesCloneRunStore cloneRuns,
         Sites.Cp.Services.SitesUpdateService update,
+        Sites.Cp.Services.SitesRebootService reboot,
         SitesProfileSettingsService settings)
     {
         _git = git;
@@ -36,6 +38,7 @@ public sealed class SitesSystemApiController : ControllerBase
         _clone = clone;
         _cloneRuns = cloneRuns;
         _update = update;
+        _reboot = reboot;
         _settings = settings;
     }
 
@@ -141,4 +144,15 @@ public sealed class SitesSystemApiController : ControllerBase
     [HttpPost("update")]
     public ActionResult<Sites.Cp.Services.SitesUpdateResult> ScheduleUpdate() =>
         Ok(_update.ScheduleUpdate());
+
+    [HttpPost("reboot")]
+    public ActionResult<RebootServerResponse> Reboot()
+    {
+        var result = _reboot.ScheduleReboot();
+        return Ok(new RebootServerResponse
+        {
+            Succeeded = result.Succeeded,
+            Message = result.Message
+        });
+    }
 }

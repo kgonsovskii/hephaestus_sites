@@ -68,6 +68,14 @@
         <h2>Clone &amp; self-update</h2>
         <p class="muted">Remote install to another VPS and self-update this host are on the <a href="@($"{Context.Request.PathBase}/clone")">Clone</a> page (same as Hephaestus CP).</p>
     </div>
+
+    <div class="card">
+        <h2>Server</h2>
+        <p class="muted">Reboot this Linux host immediately. All sites and CP will go offline until the machine is back.</p>
+        <div class="actions">
+            <button type="button" class="danger" id="rebootBtn">Reboot server</button>
+        </div>
+    </div>
 </main>
 <script>
 (function () {
@@ -93,6 +101,11 @@
             "<dt>settings.json</dt><dd><code>" + escapeHtml(info.settingsJsonPath) + "</code></dd>" +
             "<dt>Repository</dt><dd><code>" + escapeHtml(info.repositoryRoot) + "</code></dd>" +
             "<dt>Clone dir</dt><dd><code>" + escapeHtml(info.cloneDirectory) + "</code></dd>";
+        const rebootBtn = document.getElementById("rebootBtn");
+        if (rebootBtn) {
+            rebootBtn.disabled = !info.isLinux;
+            rebootBtn.title = info.isLinux ? "" : "Reboot is only available on Linux hosts.";
+        }
     }
 
     async function loadGitStatus() {
@@ -151,6 +164,18 @@
     document.getElementById("gitPullBtn").addEventListener("click", () => runGit("pull"));
     document.getElementById("gitPushBtn").addEventListener("click", () => runGit("push"));
     document.getElementById("gitSyncBtn").addEventListener("click", () => runGit("sync"));
+
+    document.getElementById("rebootBtn").addEventListener("click", async () => {
+        if (!confirm("Reboot this server now? All traffic will stop until the host is back online.")) return;
+        setStatus("Sending reboot…", null);
+        try {
+            const res = await fetch(api("/api/system/reboot"), { method: "POST", credentials: "same-origin" });
+            const data = await res.json();
+            setStatus(data.message || "Reboot requested.", data.succeeded);
+        } catch (e) {
+            setStatus(String(e), false);
+        }
+    });
 
     loadInfo().catch(e => setStatus(String(e), false));
     loadGitStatus().catch(() => {});
