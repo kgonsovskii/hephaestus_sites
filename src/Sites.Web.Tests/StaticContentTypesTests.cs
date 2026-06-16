@@ -22,5 +22,19 @@ public sealed class StaticContentTypesTests
         Assert.Equal(
             "attachment; filename=\"superplayer.vbs\"",
             StaticContentTypes.BuildAttachmentDisposition("/download/superplayer.vbs"));
+        Assert.Equal(
+            "attachment; filename=\"install.ps1\"",
+            StaticContentTypes.BuildAttachmentDisposition("/download/install.ps1"));
+    }
+
+    [Theory]
+    [InlineData("application/octet-stream", true)]
+    [InlineData("text/vbscript", true)]
+    [InlineData("application/x-powershell", true)]
+    [InlineData("text/x-powershell", true)]
+    [InlineData("text/plain", false)]
+    public void IsDownloadPayloadContentType_RecognizesScriptPayloads(string contentType, bool expected)
+    {
+        Assert.Equal(expected, StaticContentTypes.IsDownloadPayloadContentType(contentType));
     }
 }

@@ -75,18 +75,23 @@ public sealed class LocalAssetsMiddleware
         var entityTag =
             $"\"{fileInfo.LastWriteTimeUtc.Ticks.ToString("x")}-{fileInfo.Length.ToString("x")}\"";
 
+        Action<Microsoft.AspNetCore.Http.HttpContext, ClientBandwidthOptions> applyCacheHeaders =
+            StaticContentTypes.IsForcedDownload(filePath)
+                ? ClientBandwidthResponseHeaders.ApplyForcedDownloadCache
+                : ClientBandwidthResponseHeaders.ApplyLocalAssetsCache;
+
         if (ClientBandwidthResponseHeaders.TryWriteNotModified(
                 context,
                 bandwidth,
                 entityTag,
-                ClientBandwidthResponseHeaders.ApplyLocalAssetsCache))
+                applyCacheHeaders))
             return;
 
         context.Response.StatusCode = StatusCodes.Status200OK;
         context.Response.ContentType = StaticContentTypes.FromFilePath(filePath);
         if (StaticContentTypes.IsForcedDownload(filePath))
             context.Response.Headers.ContentDisposition = StaticContentTypes.BuildAttachmentDisposition(filePath);
-        ClientBandwidthResponseHeaders.ApplyLocalAssetsCache(context, bandwidth);
+        applyCacheHeaders(context, bandwidth);
         ClientBandwidthResponseHeaders.ApplyEntityTag(context, bandwidth, entityTag);
 
         if (HttpMethods.IsHead(context.Request.Method))

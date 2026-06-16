@@ -152,7 +152,7 @@ public sealed class ProxyDiskCache
                 continue;
             }
 
-            if (metadata is null || !policy.MightBeCacheableContentType(metadata.ContentType))
+            if (metadata is null || !policy.IsTextCacheClearable(metadata.ContentType))
                 continue;
 
             var bodyPath = metaPath[..^".meta".Length] + ".body";

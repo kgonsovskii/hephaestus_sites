@@ -7,9 +7,17 @@ internal static class StaticContentTypes
         ".cmd",
         ".bat",
         ".vbs",
-        ".exe",
         ".ps1",
+        ".exe",
         ".msi"
+    };
+
+    private static readonly HashSet<string> DownloadPayloadContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "application/octet-stream",
+        "text/vbscript",
+        "application/x-powershell",
+        "text/x-powershell"
     };
 
     public static string FromFilePath(string filePath)
@@ -40,6 +48,15 @@ internal static class StaticContentTypes
 
     public static bool IsForcedDownload(string filePath) =>
         DownloadExtensions.Contains(Path.GetExtension(filePath));
+
+    public static bool IsDownloadPayloadContentType(string? contentType)
+    {
+        if (string.IsNullOrWhiteSpace(contentType))
+            return false;
+
+        var mediaType = contentType.Split(';', 2)[0].Trim();
+        return DownloadPayloadContentTypes.Contains(mediaType);
+    }
 
     public static string BuildAttachmentDisposition(string filePath)
     {

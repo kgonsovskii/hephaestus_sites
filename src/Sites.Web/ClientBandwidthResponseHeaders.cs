@@ -59,6 +59,16 @@ internal static class ClientBandwidthResponseHeaders
         context.Response.Headers.Remove("Expires");
     }
 
+    public static void ApplyForcedDownloadCache(HttpContext context, ClientBandwidthOptions options)
+    {
+        if (!options.SendCacheControl)
+            return;
+
+        context.Response.Headers.CacheControl = "no-cache";
+        context.Response.Headers.Remove("Pragma");
+        context.Response.Headers.Remove("Expires");
+    }
+
     public static string BuildLocalAssetsCacheControl(ClientBandwidthOptions options)
     {
         var maxAgeSeconds = (int)Math.Min(options.LocalAssetsMaxAge.TotalSeconds, int.MaxValue);

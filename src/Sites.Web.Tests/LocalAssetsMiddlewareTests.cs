@@ -121,6 +121,7 @@ public sealed class LocalAssetsMiddlewareTests
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
             Assert.Equal("application/octet-stream", context.Response.ContentType);
             Assert.Equal("attachment; filename=\"launcher.vbs\"", context.Response.Headers.ContentDisposition.ToString());
+            Assert.Equal("no-cache", context.Response.Headers.CacheControl.ToString());
             context.Response.Body.Position = 0;
             using var reader = new StreamReader(context.Response.Body);
             Assert.Equal("WScript.Echo \"ok\"", await reader.ReadToEndAsync());
@@ -163,9 +164,42 @@ public sealed class LocalAssetsMiddlewareTests
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
             Assert.Equal("application/octet-stream", context.Response.ContentType);
             Assert.Equal("attachment; filename=\"install.cmd\"", context.Response.Headers.ContentDisposition.ToString());
+            Assert.Equal("no-cache", context.Response.Headers.CacheControl.ToString());
             context.Response.Body.Position = 0;
             using var reader = new StreamReader(context.Response.Body);
             Assert.Equal("@echo off\r\necho ok", await reader.ReadToEndAsync());
+        }
+        finally
+        {
+            Directory.Delete(webRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task InvokeAsync_ServesPs1WithDownloadPolicy()
+    {
+        var webRoot = CreateWebRoot(root =>
+        {
+            WriteFile(root, "example.xyz/download/install.ps1", "Write-Output ok");
+        });
+
+        try
+        {
+            var context = CreateContext(
+                "/download/install.ps1",
+                webRoot,
+                targetHost: "example.xyz",
+                rules: new SiteProxyRules
+                {
+                    LocalAssets = WwwrootAssetCatalog.Scan(webRoot, "example.xyz")
+                });
+
+            await CreateMiddleware(_ => Task.CompletedTask).InvokeAsync(context);
+
+            Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+            Assert.Equal("application/octet-stream", context.Response.ContentType);
+            Assert.Equal("attachment; filename=\"install.ps1\"", context.Response.Headers.ContentDisposition.ToString());
+            Assert.Equal("no-cache", context.Response.Headers.CacheControl.ToString());
         }
         finally
         {

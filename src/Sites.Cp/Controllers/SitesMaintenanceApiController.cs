@@ -39,6 +39,7 @@ public sealed class SitesMaintenanceApiController : ControllerBase
     [HttpPost("clear-non-binary-cache")]
     public ActionResult<ClearCacheResponse> ClearNonBinaryCache()
     {
+        SitesMaintenanceCaches.ClearJsTransformCache();
         var result = _cache.ClearNonBinary(_cachePolicy);
         return Ok(new ClearCacheResponse
         {

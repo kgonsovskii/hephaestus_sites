@@ -47,6 +47,22 @@ public sealed class ProxyCachePolicy
     public bool MightBeCacheableContentType(string? contentType) =>
         !IsExcludedContentType(contentType);
 
+    public bool IsTextCacheClearable(string? contentType)
+    {
+        if (IsExcludedContentType(contentType))
+            return false;
+
+        if (string.IsNullOrWhiteSpace(contentType))
+            return true;
+
+        var mediaType = contentType.Split(';', 2)[0].Trim();
+
+        if (StaticContentTypes.IsDownloadPayloadContentType(mediaType))
+            return true;
+
+        return MightBeCacheableContentType(contentType);
+    }
+
     public bool IsCacheableResponse(
         HttpRequest request,
         int statusCode,

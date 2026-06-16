@@ -51,6 +51,22 @@ public sealed class ProxyCachePolicyTests
     [InlineData("image/jpeg", true)]
     [InlineData("text/css", true)]
     [InlineData("text/html", true)]
+    [InlineData("application/octet-stream", true)]
+    [InlineData("text/vbscript", true)]
+    [InlineData("application/x-powershell", true)]
+    [InlineData("text/x-powershell", true)]
+    public void IsTextCacheClearable_UsesExcludedContentTypesFromSettings(string contentType, bool expected)
+    {
+        var policy = CreatePolicy();
+        Assert.Equal(expected, policy.IsTextCacheClearable(contentType));
+    }
+
+    [Theory]
+    [InlineData("video/mp4", false)]
+    [InlineData("application/vnd.apple.mpegurl", false)]
+    [InlineData("image/jpeg", true)]
+    [InlineData("text/css", true)]
+    [InlineData("text/html", true)]
     public void MightBeCacheableContentType_UsesExcludedContentTypesFromSettings(string contentType, bool expected)
     {
         var policy = CreatePolicy();

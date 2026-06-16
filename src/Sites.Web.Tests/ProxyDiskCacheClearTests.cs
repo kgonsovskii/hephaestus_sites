@@ -68,6 +68,40 @@ public sealed class ProxyDiskCacheClearTests
         }
     }
 
+    [Theory]
+    [InlineData("application/octet-stream", "vbs1")]
+    [InlineData("text/vbscript", "vbsLegacy")]
+    [InlineData("application/x-powershell", "ps1Legacy")]
+    public void ClearNonBinary_RemovesDownloadPayloadEntries(string contentType, string key)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "sites-cache-clear-dl-" + Guid.NewGuid().ToString("N"));
+        var siteDir = Path.Combine(root, "tube18.sex", "ab");
+        Directory.CreateDirectory(siteDir);
+
+        WriteEntry(siteDir, key, contentType, "payload");
+        WriteEntry(siteDir, "vid1", "video/mp4", "binary");
+
+        var settingsPath = Path.Combine(root, "settings.json");
+        var template = TestSitesProxyOptions.CreateTemplate(options => options.Cache.RootPath = root);
+        var cache = new ProxyDiskCache(new SitesProfileSettingsService(template, settingsPath));
+        var policy = new ProxyCachePolicy(new SitesProfileSettingsService(template, settingsPath));
+
+        try
+        {
+            var result = cache.ClearNonBinary(policy);
+
+            Assert.Equal(1, result.RemovedEntries);
+            Assert.False(File.Exists(Path.Combine(siteDir, $"{key}.meta")));
+            Assert.False(File.Exists(Path.Combine(siteDir, $"{key}.body")));
+            Assert.True(File.Exists(Path.Combine(siteDir, "vid1.meta")));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static void WriteEntry(string siteDir, string key, string contentType, string body)
     {
         var metaPath = Path.Combine(siteDir, $"{key}.meta");

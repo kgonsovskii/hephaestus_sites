@@ -54,4 +54,6 @@ internal static class LocalJsTransformCache
     }
 
     internal static void ClearForTests() => Entries.Clear();
+
+    public static void Clear() => Entries.Clear();
 }
