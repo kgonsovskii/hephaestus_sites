@@ -26,7 +26,7 @@ public sealed class SiteDefinition
 
     public string? ExternalRedirectUrl { get; init; }
 
-    public bool RedirectForeignRequests { get; init; }
+    public bool RedirectForeignRequests { get; init; } = true;
 
     public string? RedirectForeignRequestsUrl { get; init; }
 

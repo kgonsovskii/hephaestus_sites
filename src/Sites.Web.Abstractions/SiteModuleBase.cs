@@ -60,7 +60,7 @@ public abstract class SiteModuleBase : ISiteModule
 
     protected virtual IReadOnlyList<string> OutboundRedirectPathPrefixes => [];
 
-    protected virtual bool RedirectForeignRequests => false;
+    protected virtual bool RedirectForeignRequests => true;
 
     protected virtual string? RedirectForeignRequestsUrl => null;
 

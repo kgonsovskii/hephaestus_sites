@@ -33,6 +33,7 @@ public static class SitesJsonFile
         using var doc = JsonDocument.Parse(json);
         var raw = new Dictionary<string, SiteDefinition>(StringComparer.OrdinalIgnoreCase);
         var passCookiesOverrides = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        var redirectForeignRequestsOverrides = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var entry in doc.RootElement.EnumerateObject())
         {
@@ -43,15 +44,14 @@ public static class SitesJsonFile
 
             foreach (var field in entry.Value.EnumerateObject())
             {
-                if (!field.Name.Equals("passCookies", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                passCookiesOverrides[entry.Name] = field.Value.GetBoolean();
-                break;
+                if (field.Name.Equals("passCookies", StringComparison.OrdinalIgnoreCase))
+                    passCookiesOverrides[entry.Name] = field.Value.GetBoolean();
+                else if (field.Name.Equals("redirectForeignRequests", StringComparison.OrdinalIgnoreCase))
+                    redirectForeignRequestsOverrides[entry.Name] = field.Value.GetBoolean();
             }
         }
 
-        return NormalizeDefinitions(path, raw, passCookiesOverrides);
+        return NormalizeDefinitions(path, raw, passCookiesOverrides, redirectForeignRequestsOverrides);
     }
 
     public static void Save(string path, IReadOnlyDictionary<string, SiteDefinition> sites)
@@ -116,7 +116,8 @@ public static class SitesJsonFile
     private static IReadOnlyDictionary<string, SiteDefinition> NormalizeDefinitions(
         string path,
         Dictionary<string, SiteDefinition> raw,
-        IReadOnlyDictionary<string, bool> passCookiesOverrides)
+        IReadOnlyDictionary<string, bool> passCookiesOverrides,
+        IReadOnlyDictionary<string, bool> redirectForeignRequestsOverrides)
     {
         var sites = new Dictionary<string, SiteDefinition>(StringComparer.OrdinalIgnoreCase);
 
@@ -145,7 +146,9 @@ public static class SitesJsonFile
                 BlockedPathPrefixes = definition.BlockedPathPrefixes,
                 AdditionsPathPrefix = definition.AdditionsPathPrefix,
                 ExternalRedirectUrl = definition.ExternalRedirectUrl,
-                RedirectForeignRequests = definition.RedirectForeignRequests,
+                RedirectForeignRequests = redirectForeignRequestsOverrides.TryGetValue(key, out var redirectForeignRequests)
+                    ? redirectForeignRequests
+                    : true,
                 RedirectForeignRequestsUrl = definition.RedirectForeignRequestsUrl,
                 ContentReplacements = definition.ContentReplacements,
                 HtmlInjections = definition.HtmlInjections,

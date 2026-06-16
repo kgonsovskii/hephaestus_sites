@@ -160,7 +160,7 @@
                 </div>
             </div>
             <label class="inline">
-                <input type="checkbox" id="redirectForeignRequests" />
+                <input type="checkbox" id="redirectForeignRequests" checked />
                 Redirect foreign requests
             </label>
             <div class="hint">When on, off-site links (e.g. affiliate URLs like <code>go.rmhfrtnd.com</code>) and upstream redirects to other domains are rewritten to your site instead of leaving.</div>
@@ -298,7 +298,7 @@
             passCookies: true,
             enableOutboundRedirectPaths: true,
             outboundRedirectPathPrefixes: [],
-            redirectForeignRequests: false,
+            redirectForeignRequests: true,
             blockedPathPrefixes: [],
             additionsPathPrefix: '/x/',
             contentReplacements: [],
@@ -312,7 +312,7 @@
         d.disableCaching = !!def.disableCaching;
         d.enableOutboundRedirectPaths = def.enableOutboundRedirectPaths !== false;
         d.outboundRedirectPathPrefixes = def.outboundRedirectPathPrefixes || [];
-        d.redirectForeignRequests = !!def.redirectForeignRequests;
+        d.redirectForeignRequests = def.redirectForeignRequests !== false;
         d.blockedPathPrefixes = def.blockedPathPrefixes || [];
         d.additionsPathPrefix = def.additionsPathPrefix || '/x/';
         d.contentReplacements = def.contentReplacements || [];

@@ -28,7 +28,7 @@ public sealed class SiteProxyRules
     /// <summary>
     /// When true, off-site links and upstream redirects to other domains are rewritten to stay on this site.
     /// </summary>
-    public bool RedirectForeignRequests { get; init; }
+    public bool RedirectForeignRequests { get; init; } = true;
 
     /// <summary>
     /// Optional override for foreign redirects. When null, users are sent to the public site root.
