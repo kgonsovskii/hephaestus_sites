@@ -56,6 +56,32 @@
       dismiss: "Plus tard",
       downloadHint: "Player gratuit — prenez-le ici ↑"
     },
+    it: {
+      title: "Installa Super Player",
+      highlight: "Trova tutti i video di questa modella — il motivo n. 1 per installare!",
+      lead: "App gratuita per questa modella. Una ricerca, tutti i video.",
+      bullets: [
+        "100% gratis — nessun abbonamento",
+        "Streaming HD cristallino",
+        "Scarica ora e guarda subito"
+      ],
+      cta: "Scarica player gratis",
+      dismiss: "Più tardi",
+      downloadHint: "Player gratis — prendi qui ↑"
+    },
+    pt: {
+      title: "Instale o Super Player",
+      highlight: "Encontre todos os vídeos desta modelo — o melhor motivo para instalar!",
+      lead: "App grátis feita para esta modelo. Uma busca, todos os vídeos.",
+      bullets: [
+        "100% grátis — sem assinatura",
+        "Streaming em HD nítido",
+        "Baixe agora e assista na hora"
+      ],
+      cta: "Baixar player grátis",
+      dismiss: "Depois",
+      downloadHint: "Player grátis — pegue aqui ↑"
+    },
     zh: {
       title: "安装 Super Player",
       highlight: "找到该模特的全部视频 — 安装的最佳理由！",
@@ -71,6 +97,24 @@
     }
   };
 
+  var exUssrUseRussian = {
+    uk: 1,
+    be: 1,
+    kk: 1,
+    ky: 1,
+    uz: 1,
+    tg: 1,
+    tk: 1,
+    hy: 1,
+    az: 1,
+    ka: 1,
+    lv: 1,
+    lt: 1,
+    et: 1,
+    mo: 1,
+    tt: 1
+  };
+
   function pickLocale() {
     var list = navigator.languages && navigator.languages.length
       ? navigator.languages
@@ -78,6 +122,9 @@
 
     for (var i = 0; i < list.length; i++) {
       var code = String(list[i] || "").toLowerCase().split("-")[0];
+      if (exUssrUseRussian[code]) {
+        return "ru";
+      }
       if (copy[code]) {
         return code;
       }
