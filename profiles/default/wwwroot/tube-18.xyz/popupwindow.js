@@ -229,27 +229,45 @@
       "#tube18-chrome-guide{" +
       "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2147483647;overflow:visible}" +
       "#tube18-chrome-guide .tube18-guide-path{fill:none;stroke:#ffb347;stroke-width:3.5;stroke-linecap:round;" +
-      "stroke-dasharray:8 6;animation:tube18DashRun 1.1s linear infinite}" +
+      "stroke-dasharray:8 6;animation:tube18DashRun 1.1s linear infinite,tube18GuidePulse 2.2s ease-in-out infinite}" +
       "@keyframes tube18DashRun{to{stroke-dashoffset:-28}}" +
+      "@keyframes tube18GuidePulse{" +
+      "0%,100%{stroke:#ffb347;stroke-width:3.5;opacity:.88;" +
+      "filter:drop-shadow(0 0 3px rgba(255,179,71,.35))}" +
+      "50%{stroke:#ff3366;stroke-width:4.8;opacity:1;" +
+      "filter:drop-shadow(0 0 14px rgba(255,107,53,.85)) drop-shadow(0 0 6px rgba(255,51,102,.55))}}" +
+      "#tube18-chrome-guide .tube18-arrow-tip-fill{" +
+      "animation:tube18GuidePulseFill 2.2s ease-in-out infinite}" +
+      "@keyframes tube18GuidePulseFill{" +
+      "0%,100%{fill:#ffb347}50%{fill:#ff3366}}" +
       "#tube18-chrome-target{" +
       "position:fixed;z-index:2147483647;pointer-events:none;" +
       "display:flex;flex-direction:column;align-items:flex-end;gap:6px;" +
-      "animation:tube18TargetPop .5s .35s cubic-bezier(.2,.9,.2,1) both}" +
+      "animation:tube18TargetPop .5s .35s cubic-bezier(.2,.9,.2,1) both,tube18TargetPulse 2.2s ease-in-out .85s infinite}" +
       "@keyframes tube18TargetPop{from{opacity:0;transform:translateY(-12px) scale(.8)}" +
       "to{opacity:1;transform:translateY(0) scale(1)}}" +
+      "@keyframes tube18TargetPulse{" +
+      "0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 rgba(255,179,71,0))}" +
+      "50%{transform:scale(1.05);filter:drop-shadow(0 0 10px rgba(255,107,53,.55))}}" +
       "#tube18-chrome-target .badge{" +
       "display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;" +
-      "background:rgba(20,20,28,.92);border:2px solid #ffb347;color:#fff;" +
+      "background:linear-gradient(135deg,rgba(28,22,32,.95),rgba(18,18,26,.95));" +
+      "border:2px solid #ffb347;color:#fff;" +
       "font-size:15px;font-weight:700;line-height:1.25;max-width:240px;text-align:right;" +
-      "box-shadow:0 8px 24px rgba(0,0,0,.45);animation:tube18BadgePulse 1.6s ease-in-out infinite}" +
+      "box-shadow:0 8px 24px rgba(0,0,0,.45);animation:tube18BadgePulse 2.2s ease-in-out infinite}" +
       "@keyframes tube18BadgePulse{" +
-      "0%,100%{border-color:#ffb347;box-shadow:0 8px 24px rgba(255,179,71,.25)}" +
-      "50%{border-color:#ff6b35;box-shadow:0 10px 28px rgba(255,107,53,.45)}}" +
+      "0%,100%{border-color:#ffb347;background:linear-gradient(135deg,rgba(28,22,32,.95),rgba(18,18,26,.95));" +
+      "box-shadow:0 8px 20px rgba(255,179,71,.22),0 0 0 0 rgba(255,179,71,.25);transform:scale(1)}" +
+      "50%{border-color:#ff6b35;background:linear-gradient(135deg,rgba(48,24,36,.96),rgba(22,18,30,.96));" +
+      "box-shadow:0 10px 28px rgba(255,107,53,.45),0 0 0 8px rgba(255,107,53,0);transform:scale(1.03)}}" +
       "#tube18-chrome-target .arrow-icon{" +
-      "font-size:28px;line-height:1;color:#ffb347;animation:tube18ArrowBounce 1s ease-in-out infinite}" +
+      "font-size:28px;line-height:1;color:#ffb347;" +
+      "animation:tube18ArrowBounce 1s ease-in-out infinite,tube18ArrowIconPulse 2.2s ease-in-out infinite}" +
       "@keyframes tube18ArrowBounce{" +
       "0%,100%{transform:translate(4px,0) rotate(-35deg)}" +
-      "50%{transform:translate(10px,-6px) rotate(-35deg)}}";
+      "50%{transform:translate(10px,-6px) rotate(-35deg)}}" +
+      "@keyframes tube18ArrowIconPulse{0%,100%{color:#ffb347;text-shadow:0 0 0 rgba(255,179,71,0)}" +
+      "50%{color:#ff6b35;text-shadow:0 0 12px rgba(255,107,53,.75)}}";
     document.head.appendChild(style);
   }
 
@@ -294,6 +312,7 @@
     marker.setAttribute("refY", "5");
     marker.setAttribute("orient", "auto");
     var tip = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    tip.setAttribute("class", "tube18-arrow-tip-fill");
     tip.setAttribute("points", "0 0, 10 5, 0 10");
     tip.setAttribute("fill", "#ffb347");
     marker.appendChild(tip);
