@@ -41,7 +41,7 @@
 
     <div class="card">
         <h2>Proxy settings</h2>
-        <p class="muted">Per-profile file: <code>profiles/{profile}/settings.json</code>. Missing files are created from <code>appsettings.json</code> → <code>Sites</code>. Changes apply immediately.</p>
+        <p class="muted">Per-profile file: <code>profiles/{profile}/settings.json</code>. Missing files are created from <code>appsettings.json</code> → <code>Sites</code>. Changes apply immediately and clear text cache.</p>
         <dl class="meta" id="settingsMeta"></dl>
 
         <h3>Upstream</h3>
@@ -215,7 +215,7 @@
             if (!res.ok) throw new Error(data.error || res.statusText);
             renderMeta(data);
             fillForm(data.settings || {});
-            setStatus("Settings saved.", true);
+            setStatus("Settings saved. Text cache cleared.", true);
         } catch (e) {
             setStatus(String(e), false);
         }
