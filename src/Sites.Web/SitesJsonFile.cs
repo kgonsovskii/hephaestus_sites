@@ -22,6 +22,17 @@ public static class SitesJsonFile
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
+    public static void ConfigureApiJsonOptions(JsonSerializerOptions options)
+    {
+        options.PropertyNameCaseInsensitive = true;
+        options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.ReadCommentHandling = JsonCommentHandling.Skip;
+        options.AllowTrailingCommas = true;
+
+        if (!options.Converters.OfType<JsonStringEnumConverter>().Any())
+            options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+    }
+
     public const string DefaultFileName = "sites.json";
 
     public static IReadOnlyDictionary<string, SiteDefinition> Load(string path)

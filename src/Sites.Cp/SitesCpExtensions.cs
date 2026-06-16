@@ -56,7 +56,8 @@ public static class SitesCpExtensions
 
         services.AddAuthorization();
         services.AddControllersWithViews()
-            .AddApplicationPart(typeof(SitesCpExtensions).Assembly);
+            .AddApplicationPart(typeof(SitesCpExtensions).Assembly)
+            .AddJsonOptions(options => SitesJsonFile.ConfigureApiJsonOptions(options.JsonSerializerOptions));
 
         return services;
     }
