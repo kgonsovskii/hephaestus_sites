@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Sites.Cp.Models;
 using Sites.Web;
 using Sites.Web.Abstractions;
+using Sites.Web.Caching;
 using Sites.Web.Git;
 
 namespace Sites.Cp.Controllers;
@@ -12,11 +13,19 @@ public sealed class SitesApiController : ControllerBase
 {
     private readonly SitesCatalogService _catalog;
     private readonly SitesCatalogChangedSignal _catalogChanged;
+    private readonly ProxyDiskCache _cache;
+    private readonly ProxyCachePolicy _cachePolicy;
 
-    public SitesApiController(SitesCatalogService catalog, SitesCatalogChangedSignal catalogChanged)
+    public SitesApiController(
+        SitesCatalogService catalog,
+        SitesCatalogChangedSignal catalogChanged,
+        ProxyDiskCache cache,
+        ProxyCachePolicy cachePolicy)
     {
         _catalog = catalog;
         _catalogChanged = catalogChanged;
+        _cache = cache;
+        _cachePolicy = cachePolicy;
     }
 
     [HttpGet]
@@ -58,6 +67,7 @@ public sealed class SitesApiController : ControllerBase
         {
             var created = _catalog.Create(targetHost, definition);
             _catalogChanged.NotifyCatalogChanged();
+            ClearTextCacheAfterSiteChange();
             return CreatedAtAction(nameof(Get), new { targetHost = created.TargetHost }, ToResponse(created));
         }
         catch (InvalidOperationException ex)
@@ -77,6 +87,7 @@ public sealed class SitesApiController : ControllerBase
         {
             var updated = _catalog.Update(targetHost, definition);
             _catalogChanged.NotifyCatalogChanged();
+            ClearTextCacheAfterSiteChange();
             return Ok(ToResponse(updated));
         }
         catch (KeyNotFoundException)
@@ -96,6 +107,7 @@ public sealed class SitesApiController : ControllerBase
         {
             _catalog.Delete(targetHost);
             _catalogChanged.NotifyCatalogChanged();
+            ClearTextCacheAfterSiteChange();
             return NoContent();
         }
         catch (KeyNotFoundException)
@@ -111,4 +123,7 @@ public sealed class SitesApiController : ControllerBase
             Definition = definition,
             HasCodedModule = _catalog.GetCodedSourceHosts().Contains(definition.SourceHost, StringComparer.OrdinalIgnoreCase)
         };
+
+    private void ClearTextCacheAfterSiteChange() =>
+        SitesMaintenanceCaches.ClearTextCache(_cache, _cachePolicy);
 }

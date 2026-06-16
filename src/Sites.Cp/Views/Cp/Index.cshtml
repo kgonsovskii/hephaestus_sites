@@ -55,7 +55,7 @@
                 <h2 style="margin:0 0 4px">sites.json <span class="badge" id="profileBadge" style="vertical-align:middle">…</span></h2>
                 <div class="muted" id="jsonPath">Loading…</div>
                 <div class="muted" id="webFtpLine" hidden></div>
-                <div class="muted">Saves apply immediately — no restart. Use cache buttons below if content looks stale after HTML/redirect changes.</div>
+                <div class="muted">Saves apply immediately, reload the site registry, and clear text cache — no restart.</div>
             </div>
             <div class="actions">
                 <button type="button" class="secondary" id="clearNonBinaryCacheBtn" title="HTML, JS, CSS, JSON, VBS, CMD, PS1, etc.">Clear text cache</button>
@@ -630,13 +630,13 @@
                     method: 'PUT',
                     body: JSON.stringify(payload)
                 });
-                setStatus(`Updated ${editingOriginalKey} (profile ${document.getElementById('profileBadge').textContent}). Live reload applied.`, 'ok');
+                setStatus(`Updated ${editingOriginalKey} (profile ${document.getElementById('profileBadge').textContent}). Live reload and text cache clear applied.`, 'ok');
             } else {
                 await api(`${apiBase}/${encodeURIComponent(targetHost)}`, {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-                setStatus(`Created ${targetHost} (profile ${document.getElementById('profileBadge').textContent}). Live reload applied.`, 'ok');
+                setStatus(`Created ${targetHost} (profile ${document.getElementById('profileBadge').textContent}). Live reload and text cache clear applied.`, 'ok');
             }
             closeEditor();
             await loadSites();
@@ -649,7 +649,7 @@
         if (!confirm(`Delete site ${targetHost}?`)) return;
         try {
             await api(`${apiBase}/${encodeURIComponent(targetHost)}`, { method: 'DELETE' });
-            setStatus(`Deleted ${targetHost} (profile ${document.getElementById('profileBadge').textContent}). Live reload applied.`, 'ok');
+            setStatus(`Deleted ${targetHost} (profile ${document.getElementById('profileBadge').textContent}). Live reload and text cache clear applied.`, 'ok');
             await loadSites();
         } catch (err) {
             setStatus(err.message, 'error');
