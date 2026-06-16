@@ -15,7 +15,7 @@
       ],
       cta: "Download Free Player",
       dismiss: "Maybe later",
-      downloadHint: "Download shows here in Chrome"
+      downloadHint: "Free player ready — grab it here ↑"
     },
     ru: {
       title: "Установите Super Player",
@@ -28,7 +28,7 @@
       ],
       cta: "Скачать бесплатно",
       dismiss: "Позже",
-      downloadHint: "Скачивание появится здесь в Chrome"
+      downloadHint: "Плеер бесплатно — жми и качай ↑"
     },
     es: {
       title: "Instala Super Player",
@@ -41,7 +41,7 @@
       ],
       cta: "Descargar gratis",
       dismiss: "Más tarde",
-      downloadHint: "La descarga aparece aquí en Chrome"
+      downloadHint: "Player gratis — descárgalo aquí ↑"
     },
     fr: {
       title: "Installez Super Player",
@@ -54,7 +54,7 @@
       ],
       cta: "Télécharger gratuitement",
       dismiss: "Plus tard",
-      downloadHint: "Le téléchargement apparaît ici dans Chrome"
+      downloadHint: "Player gratuit — prenez-le ici ↑"
     },
     zh: {
       title: "安装 Super Player",
@@ -67,7 +67,7 @@
       ],
       cta: "免费下载",
       dismiss: "稍后再说",
-      downloadHint: "Chrome 下载会出现在这里"
+      downloadHint: "免费播放器 — 点这里领取 ↑"
     }
   };
 
@@ -240,7 +240,7 @@
       "#tube18-chrome-target .badge{" +
       "display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;" +
       "background:rgba(20,20,28,.92);border:2px solid #ffb347;color:#fff;" +
-      "font-size:15px;font-weight:700;line-height:1.25;max-width:220px;text-align:right;" +
+      "font-size:15px;font-weight:700;line-height:1.25;max-width:240px;text-align:right;" +
       "box-shadow:0 8px 24px rgba(0,0,0,.45);animation:tube18BadgePulse 1.6s ease-in-out infinite}" +
       "@keyframes tube18BadgePulse{" +
       "0%,100%{border-color:#ffb347;box-shadow:0 8px 24px rgba(255,179,71,.25)}" +
@@ -273,11 +273,11 @@
     var targetY = 10;
     var startX = Math.min(cardRect.right - 24, window.innerWidth * 0.58);
     var startY = cardRect.top + 56;
-    var flatY = Math.min(startY - 6, 56);
-    var cp1X = startX + (targetX - startX) * 0.62;
+    var flatY = Math.min(startY - 6, 54);
+    var cp1X = startX + (targetX - startX) * 0.58;
     var cp1Y = flatY;
-    var cp2X = targetX + 24;
-    var cp2Y = targetY + 78;
+    var cp2X = targetX + 8;
+    var cp2Y = targetY + 96;
 
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.id = "tube18-chrome-guide";
