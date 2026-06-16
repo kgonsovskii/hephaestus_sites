@@ -4,8 +4,6 @@
   var videoIntervalSec = $VideoInterval$;
   var timer = null;
 
-  console.log("[tube-18] VideoInterval", videoIntervalSec, "seconds");
-
   function clearTimer() {
     if (timer !== null) {
       clearTimeout(timer);
@@ -13,9 +11,16 @@
     }
   }
 
-  function showPopup(message) {
+  function resetPopupCycle() {
+    window.tube18PopupShown = false;
+    if (typeof window.tube18PopupDismiss === "function") {
+      window.tube18PopupDismiss();
+    }
+  }
+
+  function showPopup() {
     if (typeof window.tube18PopupWindow === "function") {
-      window.tube18PopupWindow(message);
+      window.tube18PopupWindow();
     }
   }
 
@@ -33,20 +38,21 @@
   }
 
   function onPlayStart() {
+    resetPopupCycle();
     clearTimer();
     var ms = Number(videoIntervalSec) * 1000;
     if (!(ms > 0)) {
       return;
     }
+
     timer = setTimeout(function () {
       timer = null;
-      showPopup("OnPlayStart (+" + videoIntervalSec + "s)\n" + window.location.href);
+      showPopup();
     }, ms);
   }
 
   function onPause() {
     clearTimer();
-    showPopup("OnPause\n" + window.location.href);
   }
 
   document.addEventListener("tube18:player", function (event) {
