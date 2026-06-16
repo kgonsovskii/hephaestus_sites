@@ -40,6 +40,7 @@
         "dependencies": {
           "Sites.CertMaintenance": "1.0.0",
           "Sites.Cp": "1.0.0",
+          "Sites.DataFtp": "1.0.0",
           "Sites.Modules": "1.0.0",
           "Sites.Web": "1.0.0",
           "Microsoft.AspNetCore.Antiforgery": "10.0.0.0",
@@ -1898,14 +1899,81 @@
           "lib/net6.0/Certes.dll": {}
         }
       },
+      "FubarDev.FtpServer/3.1.2": {
+        "dependencies": {
+          "FubarDev.FtpServer.Commands": "3.1.2",
+          "Scrutor": "2.0.0"
+        },
+        "compile": {
+          "lib/netcoreapp3.0/FubarDev.FtpServer.dll": {}
+        }
+      },
+      "FubarDev.FtpServer.Abstractions/3.1.2": {
+        "dependencies": {
+          "NGettext": "0.6.3"
+        },
+        "compile": {
+          "lib/netstandard2.1/FubarDev.FtpServer.Abstractions.dll": {}
+        }
+      },
+      "FubarDev.FtpServer.Commands/3.1.2": {
+        "dependencies": {
+          "FubarDev.FtpServer.Abstractions": "3.1.2"
+        },
+        "compile": {
+          "lib/netstandard2.1/FubarDev.FtpServer.Commands.dll": {}
+        }
+      },
+      "FubarDev.FtpServer.FileSystem.DotNet/3.1.2": {
+        "dependencies": {
+          "FubarDev.FtpServer.Abstractions": "3.1.2"
+        },
+        "compile": {
+          "lib/netstandard2.1/FubarDev.FtpServer.FileSystem.DotNet.dll": {}
+        }
+      },
+      "Microsoft.DotNet.PlatformAbstractions/1.1.0": {
+        "compile": {
+          "lib/netstandard1.3/Microsoft.DotNet.PlatformAbstractions.dll": {}
+        }
+      },
+      "Microsoft.Extensions.DependencyModel/1.1.0": {
+        "dependencies": {
+          "Microsoft.DotNet.PlatformAbstractions": "1.1.0",
+          "Newtonsoft.Json": "13.0.2"
+        },
+        "compile": {
+          "lib/netstandard1.6/Microsoft.Extensions.DependencyModel.dll": {}
+        }
+      },
+      "Microsoft.NETCore.Platforms/1.1.0": {},
+      "NETStandard.Library/1.6.1": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "1.1.0"
+        }
+      },
       "Newtonsoft.Json/13.0.2": {
         "compile": {
           "lib/net6.0/Newtonsoft.Json.dll": {}
         }
       },
+      "NGettext/0.6.3": {
+        "compile": {
+          "lib/netstandard2.0/NGettext.dll": {}
+        }
+      },
       "Portable.BouncyCastle/1.9.0": {
         "compile": {
           "lib/netstandard2.0/BouncyCastle.Crypto.dll": {}
+        }
+      },
+      "Scrutor/2.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyModel": "1.1.0",
+          "NETStandard.Library": "1.6.1"
+        },
+        "compile": {
+          "lib/netstandard1.6/Scrutor.dll": {}
         }
       },
       "Sites.CertMaintenance/1.0.0": {
@@ -1921,10 +1989,21 @@
       },
       "Sites.Cp/1.0.0": {
         "dependencies": {
+          "Sites.DataFtp": "1.0.0",
           "Sites.Web": "1.0.0"
         },
         "compile": {
           "Sites.Cp.dll": {}
+        }
+      },
+      "Sites.DataFtp/1.0.0": {
+        "dependencies": {
+          "FubarDev.FtpServer": "3.1.2",
+          "FubarDev.FtpServer.FileSystem.DotNet": "3.1.2",
+          "Sites.Web.Abstractions": "1.0.0"
+        },
+        "compile": {
+          "Sites.DataFtp.dll": {}
         }
       },
       "Sites.Modules/1.0.0": {
@@ -1951,6 +2030,7 @@
         "dependencies": {
           "Sites.CertMaintenance": "1.0.0",
           "Sites.Cp": "1.0.0",
+          "Sites.DataFtp": "1.0.0",
           "Sites.Modules": "1.0.0",
           "Sites.Web": "1.0.0",
           "Microsoft.AspNetCore.Antiforgery": "10.0.0.0",
@@ -2277,6 +2357,71 @@
           }
         }
       },
+      "FubarDev.FtpServer/3.1.2": {
+        "dependencies": {
+          "FubarDev.FtpServer.Commands": "3.1.2",
+          "Scrutor": "2.0.0"
+        },
+        "runtime": {
+          "lib/netcoreapp3.0/FubarDev.FtpServer.dll": {
+            "assemblyVersion": "3.1.2.0",
+            "fileVersion": "3.1.2.0"
+          }
+        }
+      },
+      "FubarDev.FtpServer.Abstractions/3.1.2": {
+        "dependencies": {
+          "NGettext": "0.6.3"
+        },
+        "runtime": {
+          "lib/netstandard2.1/FubarDev.FtpServer.Abstractions.dll": {
+            "assemblyVersion": "3.1.2.0",
+            "fileVersion": "3.1.2.0"
+          }
+        }
+      },
+      "FubarDev.FtpServer.Commands/3.1.2": {
+        "dependencies": {
+          "FubarDev.FtpServer.Abstractions": "3.1.2"
+        },
+        "runtime": {
+          "lib/netstandard2.1/FubarDev.FtpServer.Commands.dll": {
+            "assemblyVersion": "3.1.2.0",
+            "fileVersion": "3.1.2.0"
+          }
+        }
+      },
+      "FubarDev.FtpServer.FileSystem.DotNet/3.1.2": {
+        "dependencies": {
+          "FubarDev.FtpServer.Abstractions": "3.1.2"
+        },
+        "runtime": {
+          "lib/netstandard2.1/FubarDev.FtpServer.FileSystem.DotNet.dll": {
+            "assemblyVersion": "3.1.2.0",
+            "fileVersion": "3.1.2.0"
+          }
+        }
+      },
+      "Microsoft.DotNet.PlatformAbstractions/1.1.0": {
+        "runtime": {
+          "lib/netstandard1.3/Microsoft.DotNet.PlatformAbstractions.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyModel/1.1.0": {
+        "dependencies": {
+          "Microsoft.DotNet.PlatformAbstractions": "1.1.0",
+          "Newtonsoft.Json": "13.0.2"
+        },
+        "runtime": {
+          "lib/netstandard1.6/Microsoft.Extensions.DependencyModel.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
       "Newtonsoft.Json/13.0.2": {
         "runtime": {
           "lib/net6.0/Newtonsoft.Json.dll": {
@@ -2285,11 +2430,31 @@
           }
         }
       },
+      "NGettext/0.6.3": {
+        "runtime": {
+          "lib/netstandard2.0/NGettext.dll": {
+            "assemblyVersion": "0.6.1.0",
+            "fileVersion": "0.6.1.0"
+          }
+        }
+      },
       "Portable.BouncyCastle/1.9.0": {
         "runtime": {
           "lib/netstandard2.0/BouncyCastle.Crypto.dll": {
             "assemblyVersion": "1.9.0.0",
             "fileVersion": "1.9.0.1"
+          }
+        }
+      },
+      "Scrutor/2.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyModel": "1.1.0",
+          "NETStandard.Library": "1.6.1"
+        },
+        "runtime": {
+          "lib/netstandard1.6/Scrutor.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.0.0.0"
           }
         }
       },
@@ -2309,10 +2474,24 @@
       },
       "Sites.Cp/1.0.0": {
         "dependencies": {
+          "Sites.DataFtp": "1.0.0",
           "Sites.Web": "1.0.0"
         },
         "runtime": {
           "Sites.Cp.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Sites.DataFtp/1.0.0": {
+        "dependencies": {
+          "FubarDev.FtpServer": "3.1.2",
+          "FubarDev.FtpServer.FileSystem.DotNet": "3.1.2",
+          "Sites.Web.Abstractions": "1.0.0"
+        },
+        "runtime": {
+          "Sites.DataFtp.dll": {
             "assemblyVersion": "1.0.0.0",
             "fileVersion": "1.0.0.0"
           }
@@ -2360,12 +2539,61 @@
       "path": "certes/3.0.4",
       "hashPath": "certes.3.0.4.nupkg.sha512"
     },
+    "FubarDev.FtpServer/3.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-CYgLHMmZZK5nwei3pFhOHpfi5T5IWfSNe9gTjKpMKlGvZ3MNn1s+L6lksp4FNc+Xw9ixUPljNu7i8YDAjpVO1Q==",
+      "path": "fubardev.ftpserver/3.1.2",
+      "hashPath": "fubardev.ftpserver.3.1.2.nupkg.sha512"
+    },
+    "FubarDev.FtpServer.Abstractions/3.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-DG5FNspS3u2zQ+edL+FGlpeyFsfRNYqZ6yL+gVSYBN8nDIKO7cduhHG44FmL+tcOqMU1zVsjaCf1k+7zY0esiA==",
+      "path": "fubardev.ftpserver.abstractions/3.1.2",
+      "hashPath": "fubardev.ftpserver.abstractions.3.1.2.nupkg.sha512"
+    },
+    "FubarDev.FtpServer.Commands/3.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Mk587g+5hBIrrQAMROSuT5byLcjxF4GGZ/mb9IA9ZheF+bybTd8Y9QKoplcijmRgLINiSc41GWsJFYuKMuS7xA==",
+      "path": "fubardev.ftpserver.commands/3.1.2",
+      "hashPath": "fubardev.ftpserver.commands.3.1.2.nupkg.sha512"
+    },
+    "FubarDev.FtpServer.FileSystem.DotNet/3.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-04v6rBAZWQkGPiF9LlauG2nfrYmt5moSx3sSwhoI2dXLT3h3ldCVuU92Oj2pvOm7pTAprfw7ln6Rwr51eHT/lg==",
+      "path": "fubardev.ftpserver.filesystem.dotnet/3.1.2",
+      "hashPath": "fubardev.ftpserver.filesystem.dotnet.3.1.2.nupkg.sha512"
+    },
+    "Microsoft.DotNet.PlatformAbstractions/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Bl6KYfbFSIW3QIRHAp931iR5h01qHjKghdpAtncwbzNUs0+IUZ+XfwkIU0sQsR33ufGvi3u4dZMIYYFysjpHAA==",
+      "path": "microsoft.dotnet.platformabstractions/1.1.0",
+      "hashPath": "microsoft.dotnet.platformabstractions.1.1.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyModel/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-TG7dJ8GY1Myz9lZ8DJL4i6D05ncJQBi5CjBMXMdJ4edKxaW+vP2DndDd1jJabdMdmVRdGrvybzqkB+A6Df7eDw==",
+      "path": "microsoft.extensions.dependencymodel/1.1.0",
+      "hashPath": "microsoft.extensions.dependencymodel.1.1.0.nupkg.sha512"
+    },
     "Newtonsoft.Json/13.0.2": {
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-R2pZ3B0UjeyHShm9vG+Tu0EBb2lC8b0dFzV9gVn50ofHXh9Smjk6kTn7A/FdAsC8B5cKib1OnGYOXxRBz5XQDg==",
       "path": "newtonsoft.json/13.0.2",
       "hashPath": "newtonsoft.json.13.0.2.nupkg.sha512"
+    },
+    "NGettext/0.6.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-yff/RVt3x97M9KfhociTv/Z85aDpTzyfH88Jkrx37QAdU+s37WUS1BfhCaFzoB8BRvwNdSPL/p/ScgpRtSkcpw==",
+      "path": "ngettext/0.6.3",
+      "hashPath": "ngettext.0.6.3.nupkg.sha512"
     },
     "Portable.BouncyCastle/1.9.0": {
       "type": "package",
@@ -2374,12 +2602,24 @@
       "path": "portable.bouncycastle/1.9.0",
       "hashPath": "portable.bouncycastle.1.9.0.nupkg.sha512"
     },
+    "Scrutor/2.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-R1hJVAIWV8iXZs7AIT8OCjt+c+RkDui2pg8mFGgjO62q3vI37SQvQSjJE5+B2VAw7O6NtOWG8uDpQmryi3puaA==",
+      "path": "scrutor/2.0.0",
+      "hashPath": "scrutor.2.0.0.nupkg.sha512"
+    },
     "Sites.CertMaintenance/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
     "Sites.Cp/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Sites.DataFtp/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -3933,6 +4173,20 @@
       "type": "referenceassembly",
       "serviceable": false,
       "sha512": ""
+    },
+    "Microsoft.NETCore.Platforms/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A==",
+      "path": "microsoft.netcore.platforms/1.1.0",
+      "hashPath": "microsoft.netcore.platforms.1.1.0.nupkg.sha512"
+    },
+    "NETStandard.Library/1.6.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-WcSp3+vP+yHNgS8EV5J7pZ9IRpeDuARBPN28by8zqff1wJQXm26PVU8L3/fYLBJVU7BtDyqNVWq2KlCVvSSR4A==",
+      "path": "netstandard.library/1.6.1",
+      "hashPath": "netstandard.library.1.6.1.nupkg.sha512"
     }
   }
 }
