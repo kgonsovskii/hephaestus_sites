@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Sites.Cp.Models;
+using Sites.DataFtp;
 using Sites.Web;
 using Sites.Web.Abstractions;
 using Sites.Web.Git;
@@ -22,6 +23,7 @@ public sealed class SitesSystemApiController : ControllerBase
     private readonly Sites.Cp.Services.SitesCloneRunStore _cloneRuns;
     private readonly Sites.Cp.Services.SitesUpdateService _update;
     private readonly Sites.Cp.Services.SitesRebootService _reboot;
+    private readonly ISitesDataFtpUrlProvider _dataFtpUrl;
     private readonly SitesProfileSettingsService _settings;
 
     public SitesSystemApiController(
@@ -31,6 +33,7 @@ public sealed class SitesSystemApiController : ControllerBase
         Sites.Cp.Services.SitesCloneRunStore cloneRuns,
         Sites.Cp.Services.SitesUpdateService update,
         Sites.Cp.Services.SitesRebootService reboot,
+        ISitesDataFtpUrlProvider dataFtpUrl,
         SitesProfileSettingsService settings)
     {
         _git = git;
@@ -39,6 +42,7 @@ public sealed class SitesSystemApiController : ControllerBase
         _cloneRuns = cloneRuns;
         _update = update;
         _reboot = reboot;
+        _dataFtpUrl = dataFtpUrl;
         _settings = settings;
     }
 
@@ -55,7 +59,9 @@ public sealed class SitesSystemApiController : ControllerBase
             ProfileDataDirectory = SitesProfileResolver.ResolveProfileDirectory(repoRoot),
             SitesJsonPath = _catalog.SitesJsonPath,
             SettingsJsonPath = _settings.SettingsJsonPath,
-            IsLinux = OperatingSystem.IsLinux()
+            IsLinux = OperatingSystem.IsLinux(),
+            WebRootFullPath = _dataFtpUrl.WebRootFullPath,
+            WebFtpUrl = _dataFtpUrl.BuildUrl(Request.Host.Host)
         });
     }
 

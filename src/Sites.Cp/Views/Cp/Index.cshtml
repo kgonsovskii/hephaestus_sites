@@ -54,6 +54,7 @@
             <div>
                 <h2 style="margin:0 0 4px">sites.json <span class="badge" id="profileBadge" style="vertical-align:middle">…</span></h2>
                 <div class="muted" id="jsonPath">Loading…</div>
+                <div class="muted" id="webFtpLine" hidden></div>
                 <div class="muted">Saves apply immediately — no restart. Use cache buttons below if content looks stale after HTML/redirect changes.</div>
             </div>
             <div class="actions">
@@ -201,12 +202,12 @@
 
         <div class="section">
             <h4>Local asset aliases</h4>
-            <div class="hint">Files under <code>wwwroot/{targetHost}/</code> are served automatically at the same URL path after reload/invalidate. Use this table only for extra URL aliases.</div>
+            <div class="hint">Files under <code>profiles/{profile}/wwwroot/{targetHost}/</code> are served automatically at the same URL path after reload/invalidate. Use this table only for extra URL aliases.</div>
             <table class="dyn-table" id="assetsTable">
                 <thead>
                 <tr>
                     <th>Request path</th>
-                    <th>File (under wwwroot/{targetHost}/)</th>
+                    <th>File (under profiles/{profile}/wwwroot/{targetHost}/)</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -245,6 +246,7 @@
 <script>
     const apiBase = '@Context.Request.PathBase/api/sites';
     const maintenanceBase = '@Context.Request.PathBase/api/maintenance';
+    const systemBase = '@Context.Request.PathBase/api/system';
     const statusEl = document.getElementById('status');
     const sitesBody = document.getElementById('sitesBody');
     const editor = document.getElementById('editor');
@@ -684,6 +686,22 @@
         }
     }
 
+    async function loadFtpInfo() {
+        try {
+            const info = await api(`${systemBase}/info`);
+            const line = document.getElementById('webFtpLine');
+            if (!info.webFtpUrl) {
+                line.hidden = true;
+                return;
+            }
+            line.hidden = false;
+            line.innerHTML = 'Web FTP (root <code>' + escapeAttr(info.webRootFullPath || '') + '</code>): '
+                + '<a href="' + escapeAttr(info.webFtpUrl) + '" class="font-monospace user-select-all">' + escapeAttr(info.webFtpUrl) + '</a>';
+        } catch {
+            document.getElementById('webFtpLine').hidden = true;
+        }
+    }
+
     document.getElementById('addBtn').addEventListener('click', () => openEditor(null));
     document.getElementById('clearNonBinaryCacheBtn').addEventListener('click', clearNonBinaryCache);
     document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
@@ -700,6 +718,7 @@
     });
 
     loadSites().catch(err => setStatus(err.message, 'error'));
+    loadFtpInfo();
 </script>
 </body>
 </html>

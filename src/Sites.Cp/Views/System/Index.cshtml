@@ -70,6 +70,15 @@
     </div>
 
     <div class="card">
+        <h2>Web FTP</h2>
+        <p class="muted">FTP access to <code>profiles/{profile}/wwwroot</code> (same credentials as Hephaestus: <code>ftp</code> / <code>ftp123</code>).</p>
+        <dl class="meta" id="ftpMeta">
+            <dt>Root</dt><dd id="webRootPath">…</dd>
+            <dt>URL</dt><dd id="webFtpUrl">…</dd>
+        </dl>
+    </div>
+
+    <div class="card">
         <h2>Server</h2>
         <p class="muted">Reboot this Linux host immediately. All sites and CP will go offline until the machine is back.</p>
         <div class="actions">
@@ -101,6 +110,11 @@
             "<dt>settings.json</dt><dd><code>" + escapeHtml(info.settingsJsonPath) + "</code></dd>" +
             "<dt>Repository</dt><dd><code>" + escapeHtml(info.repositoryRoot) + "</code></dd>" +
             "<dt>Clone dir</dt><dd><code>" + escapeHtml(info.cloneDirectory) + "</code></dd>";
+        document.getElementById("webRootPath").innerHTML = "<code>" + escapeHtml(info.webRootFullPath || "—") + "</code>";
+        const ftpUrl = info.webFtpUrl || "";
+        document.getElementById("webFtpUrl").innerHTML = ftpUrl
+            ? "<a href=\"" + escapeHtml(ftpUrl) + "\" class=\"font-monospace user-select-all\">" + escapeHtml(ftpUrl) + "</a>"
+            : "—";
         const rebootBtn = document.getElementById("rebootBtn");
         if (rebootBtn) {
             rebootBtn.disabled = !info.isLinux;

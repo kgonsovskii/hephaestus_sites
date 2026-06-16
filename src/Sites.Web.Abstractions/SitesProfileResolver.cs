@@ -50,6 +50,28 @@ public static class SitesProfileResolver
     public static string ResolveSettingsJsonPath(string repositoryRoot, string? profile = null) =>
         Path.Combine(ResolveProfileDirectory(repositoryRoot, profile), SettingsJsonFileName);
 
+    public static string ResolveWebRootPath(string? repositoryRoot = null, string? profile = null)
+    {
+        profile ??= Current;
+        var webRootDirectory = WebRootPaths.DefaultDirectoryName;
+
+        var repoRoot = repositoryRoot ?? RepositoryPaths.TryResolveRoot();
+        if (repoRoot is not null)
+        {
+            var path = Path.Combine(ResolveProfileDirectory(repoRoot, profile), webRootDirectory);
+            Directory.CreateDirectory(path);
+            return Path.GetFullPath(path);
+        }
+
+        var besideApp = Path.Combine(
+            AppContext.BaseDirectory,
+            ProfilesDirectoryName,
+            profile,
+            webRootDirectory);
+        Directory.CreateDirectory(besideApp);
+        return Path.GetFullPath(besideApp);
+    }
+
     public static void WriteProfileFile(string repositoryRoot, string profileName)
     {
         var profile = NormalizeProfileName(profileName);

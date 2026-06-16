@@ -9,18 +9,6 @@ public static class WebRootPaths
         if (!string.IsNullOrWhiteSpace(explicitPath))
             return Path.GetFullPath(explicitPath);
 
-        var besideApp = Path.Combine(AppContext.BaseDirectory, DefaultDirectoryName);
-        if (Directory.Exists(besideApp))
-            return besideApp;
-
-        var repoRoot = RepositoryPaths.TryResolveRoot();
-        if (repoRoot is not null)
-        {
-            var repoWebRoot = Path.Combine(repoRoot, DefaultDirectoryName);
-            if (Directory.Exists(repoWebRoot))
-                return repoWebRoot;
-        }
-
-        return besideApp;
+        return SitesProfileResolver.ResolveWebRootPath();
     }
 }

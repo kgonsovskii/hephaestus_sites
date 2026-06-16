@@ -1,5 +1,6 @@
 using Sites.CertMaintenance;
 using Sites.Cp;
+using Sites.DataFtp;
 using Sites.Host;
 using Sites.Web;
 using Sites.Web.Abstractions;
@@ -27,6 +28,7 @@ builder.Services.AddSitesCp(
     builder.Configuration,
     typeof(Program).Assembly,
     "Sites.Modules");
+builder.Services.AddSitesDataFtp(builder.Configuration);
 builder.Services.AddSitesProxyEngineFromReferencedAssembly(
     builder.Configuration,
     typeof(Program).Assembly,
@@ -42,10 +44,11 @@ var repoRoot = RepositoryPaths.TryResolveRoot(app.Environment.ContentRootPath);
 if (repoRoot is not null)
 {
     logger.LogInformation(
-        "Profile '{Profile}' -> sites {SitesJsonPath}, settings {SettingsJsonPath}",
+        "Profile '{Profile}' -> sites {SitesJsonPath}, settings {SettingsJsonPath}, wwwroot {WebRootPath}",
         SitesProfileResolver.Current,
         SitesProfileResolver.ResolveSitesJsonPath(repoRoot),
-        SitesProfileResolver.ResolveSettingsJsonPath(repoRoot));
+        SitesProfileResolver.ResolveSettingsJsonPath(repoRoot),
+        SitesProfileResolver.ResolveWebRootPath(repoRoot));
 }
 
 BootstrapGitSync(app.Services, logger);

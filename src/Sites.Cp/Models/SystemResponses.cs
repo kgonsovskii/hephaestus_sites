@@ -17,6 +17,10 @@ public sealed class SystemInfoResponse
     public string SettingsJsonPath { get; init; } = string.Empty;
 
     public bool IsLinux { get; init; }
+
+    public string WebRootFullPath { get; init; } = string.Empty;
+
+    public string WebFtpUrl { get; init; } = string.Empty;
 }
 
 public sealed class ProfileUpdateRequest

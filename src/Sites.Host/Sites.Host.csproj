@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Sites.CertMaintenance\Sites.CertMaintenance.csproj" />
     <ProjectReference Include="..\Sites.Cp\Sites.Cp.csproj" />
+    <ProjectReference Include="..\Sites.DataFtp\Sites.DataFtp.csproj" />
     <ProjectReference Include="..\Sites.Web\Sites.Web.csproj" />
     <ProjectReference Include="..\Sites.Modules\Sites.Modules.csproj" />
   </ItemGroup>
@@ -21,7 +22,6 @@
   <ItemGroup>
     <Content Include="..\..\cert\sites.pfx" Link="cert\sites.pfx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\cert\sites.pfx')" />
     <Content Include="..\..\profiles\**\*" LinkBase="profiles" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="..\..\wwwroot\**\*" Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -74,6 +74,23 @@ public sealed class SitesProfileResolverTests
     }
 
     [Fact]
+    public void ResolveWebRootPath_UsesProfileDirectory()
+    {
+        var repo = CreateTempRepositoryRoot();
+        try
+        {
+            SitesProfileResolver.Initialize(repo);
+            var path = SitesProfileResolver.ResolveWebRootPath(repo).Replace('\\', '/');
+            Assert.EndsWith("/profiles/default/wwwroot", path);
+            Assert.True(Directory.Exists(path));
+        }
+        finally
+        {
+            Directory.Delete(Path.GetDirectoryName(repo)!, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ResolveProfileFilePath_IsBesideRepositoryRoot()
     {
         var repo = CreateTempRepositoryRoot();
