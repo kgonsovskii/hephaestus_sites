@@ -42,14 +42,42 @@ e[cc(71)]==1&&(e[cb(72)]=cf(19));for(x in e)typeof e[x]!=cg(171)&&(e[x]=cv(ce(2)
     return;
   }
 
-  function publish(kind, name, data) {
+  var playerEngaged = false;
+
+  function markEngaged() {
+    playerEngaged = true;
+  }
+
+  function setupEngagement(root) {
+    if (!root || root.__tube18EngageWatch) {
+      return;
+    }
+    root.__tube18EngageWatch = true;
+    ["pointerdown", "keydown", "touchstart"].forEach(function (type) {
+      root.addEventListener(type, markEngaged, true);
+    });
+  }
+
+  function publish(kind, name, data, userPlay) {
     try {
       document.dispatchEvent(
         new CustomEvent("tube18:player", {
-          detail: { kind: kind, name: String(name), data: data }
+          detail: {
+            kind: kind,
+            name: String(name),
+            data: data,
+            userPlay: !!userPlay
+          }
         })
       );
     } catch (e) {}
+  }
+
+  function publishPlay(kind, name) {
+    if (!playerEngaged) {
+      return;
+    }
+    publish(kind, name, null, true);
   }
 
   function bindVideo(video) {
@@ -61,7 +89,7 @@ e[cc(71)]==1&&(e[cb(72)]=cf(19));for(x in e)typeof e[x]!=cg(171)&&(e[x]=cv(ce(2)
       if (event && event.isTrusted === false) {
         return;
       }
-      publish("video", "play");
+      publishPlay("video", "play");
     });
     video.addEventListener("pause", function () {
       publish("video", "pause");
@@ -76,6 +104,7 @@ e[cc(71)]==1&&(e[cb(72)]=cf(19));for(x in e)typeof e[x]!=cg(171)&&(e[x]=cv(ce(2)
       return;
     }
     root.__tube18VideoWatch = true;
+    setupEngagement(root);
     bindVideo(root.querySelector("video"));
     new MutationObserver(function () {
       bindVideo(root.querySelector("video"));
@@ -90,10 +119,10 @@ e[cc(71)]==1&&(e[cb(72)]=cf(19));for(x in e)typeof e[x]!=cg(171)&&(e[x]=cv(ce(2)
       if (fp && typeof fp.bind === "function" && !fp.__tube18Hooked) {
         fp.__tube18Hooked = true;
         fp.bind("play", function () {
-          publish("fp", "play");
+          publishPlay("fp", "play");
         });
         fp.bind("resume", function () {
-          publish("fp", "resume");
+          publishPlay("fp", "resume");
         });
         fp.bind("pause", function () {
           publish("fp", "pause");
@@ -123,6 +152,8 @@ e[cc(71)]==1&&(e[cb(72)]=cf(19));for(x in e)typeof e[x]!=cg(171)&&(e[x]=cv(ce(2)
 
     return player;
   }
+
+  setupEngagement(document.getElementById("kt_player"));
 
   window.kt_player = function () {
     return hookPlayer(original.apply(this, arguments));

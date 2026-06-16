@@ -2,24 +2,6 @@
   "use strict";
 
   var lastAlertMs = {};
-  var pageReady = document.readyState === "complete";
-  var userActive = false;
-
-  function markUserActive() {
-    userActive = true;
-  }
-
-  ["pointerdown", "keydown", "touchstart"].forEach(function (type) {
-    document.addEventListener(type, markUserActive, true);
-  });
-
-  window.addEventListener("load", function () {
-    pageReady = true;
-  });
-
-  function canNotifyPlayStart() {
-    return pageReady && userActive;
-  }
 
   function alertOnce(key, message) {
     var now = Date.now();
@@ -53,12 +35,13 @@
     );
   }
 
-  function notify(kind, eventName) {
-    var name = String(eventName || "").toLowerCase();
+  function notify(detail) {
+    var kind = detail.kind || "kvs";
+    var name = String(detail.name || "").toLowerCase();
     var key = kind + ":" + name;
 
     if (isPlayStartEvent(name)) {
-      if (!canNotifyPlayStart()) {
+      if (!detail.userPlay) {
         return;
       }
       alertOnce("play:" + key, "OnPlayStart\n" + window.location.href);
@@ -76,7 +59,6 @@
   }
 
   document.addEventListener("tube18:player", function (event) {
-    var detail = event.detail || {};
-    notify(detail.kind || "kvs", detail.name);
+    notify(event.detail || {});
   });
 })();
