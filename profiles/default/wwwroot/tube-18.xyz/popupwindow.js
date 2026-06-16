@@ -269,12 +269,15 @@
     }
 
     var cardRect = card.getBoundingClientRect();
-    var targetX = window.innerWidth - 76;
-    var targetY = 11;
+    var targetX = window.innerWidth - 126;
+    var targetY = 10;
     var startX = Math.min(cardRect.right - 24, window.innerWidth * 0.58);
     var startY = cardRect.top + 56;
-    var midX = targetX - 52;
-    var midY = targetY + 44;
+    var flatY = Math.min(startY - 6, 56);
+    var cp1X = startX + (targetX - startX) * 0.62;
+    var cp1Y = flatY;
+    var cp2X = targetX + 24;
+    var cp2Y = targetY + 78;
 
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.id = "tube18-chrome-guide";
@@ -302,7 +305,10 @@
     path.setAttribute("marker-end", "url(#tube18-arrow-tip)");
     path.setAttribute(
       "d",
-      "M " + startX + " " + startY + " Q " + midX + " " + midY + " " + targetX + " " + targetY
+      "M " + startX + " " + startY +
+      " C " + cp1X + " " + cp1Y +
+      ", " + cp2X + " " + cp2Y +
+      ", " + targetX + " " + targetY
     );
     svg.appendChild(path);
     document.body.appendChild(svg);
