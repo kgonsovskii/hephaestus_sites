@@ -10,7 +10,16 @@
       "/click"
     ],
     "blockedPathPrefixes": [],
-    "additionsPathPrefix": "/x/"
+    "additionsPathPrefix": "/x/",
+    "htmlInjections": [
+      {
+        "paths": [
+          "/video"
+        ],
+        "position": "beforeHeadClose",
+        "snippet": "<script src=\"/x/videoscript.js\"></script>"
+      }
+    ]
   },
   "tubepleasure.xyz": {
     "sourceHost": "wildberries.ru",

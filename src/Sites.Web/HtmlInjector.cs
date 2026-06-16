@@ -72,6 +72,11 @@ public static class HtmlInjector
 
             if (normalized.Equals(path, StringComparison.OrdinalIgnoreCase))
                 return true;
+
+            var prefix = path.TrimEnd('/');
+            if (prefix.Length > 1 &&
+                normalized.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase))
+                return true;
         }
 
         return false;

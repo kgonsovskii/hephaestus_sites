@@ -10,7 +10,8 @@ public enum HtmlInjectionPosition
 public sealed class HtmlInjection
 {
     /// <summary>
-    /// Request paths that receive the snippet. Use "/" for home, "*" for all HTML pages.
+    /// Request paths that receive the snippet. Use "/" for home, "*" for all HTML pages,
+    /// or a prefix like "/video" for /video/123/slug/ and other paths under that prefix.
     /// </summary>
     public IReadOnlyList<string> Paths { get; init; } = ["/"];
 

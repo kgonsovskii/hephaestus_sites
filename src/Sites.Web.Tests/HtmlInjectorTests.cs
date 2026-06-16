@@ -78,4 +78,32 @@ public sealed class HtmlInjectorTests
 
         Assert.Equal(html, result);
     }
+
+    [Fact]
+    public void PathMatches_PrefixMatchesNestedPaths()
+    {
+        Assert.True(HtmlInjector.PathMatches("/video/8230/step-sista/", ["/video"]));
+        Assert.True(HtmlInjector.PathMatches("/video/8230", ["/video"]));
+        Assert.False(HtmlInjector.PathMatches("/videos/latest", ["/video"]));
+        Assert.False(HtmlInjector.PathMatches("/latest-video/1", ["/video"]));
+    }
+
+    [Fact]
+    public void Inject_VideoPrefix_InsertsOnNestedPath()
+    {
+        const string html = "<html><head><title>Video</title></head><body></body></html>";
+        var injections = new[]
+        {
+            new HtmlInjection
+            {
+                Paths = ["/video"],
+                Position = HtmlInjectionPosition.BeforeHeadClose,
+                Snippet = "<script src=\"/x/videoscript.js\"></script>"
+            }
+        };
+
+        var result = HtmlInjector.Inject(html, "/video/8230/step-sista/", injections);
+
+        Assert.Contains("<script src=\"/x/videoscript.js\"></script></head>", result);
+    }
 }
