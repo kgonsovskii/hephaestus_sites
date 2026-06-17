@@ -101,6 +101,9 @@ public static class SitesProfileResolver
         return profile;
     }
 
+    public static bool IsCloneDisallowedProfile(string profile) =>
+        string.Equals(NormalizeProfileName(profile), DefaultProfile, StringComparison.OrdinalIgnoreCase);
+
     private static bool TryReadEnvironmentProfile(out string profile)
     {
         profile = string.Empty;

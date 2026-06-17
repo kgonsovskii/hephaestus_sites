@@ -91,6 +91,14 @@ public sealed class SitesProfileResolverTests
     }
 
     [Fact]
+    public void IsCloneDisallowedProfile_BlocksDefaultOnly()
+    {
+        Assert.True(SitesProfileResolver.IsCloneDisallowedProfile("default"));
+        Assert.True(SitesProfileResolver.IsCloneDisallowedProfile("Default"));
+        Assert.False(SitesProfileResolver.IsCloneDisallowedProfile("staging"));
+    }
+
+    [Fact]
     public void ResolveProfileFilePath_IsBesideRepositoryRoot()
     {
         var repo = CreateTempRepositoryRoot();

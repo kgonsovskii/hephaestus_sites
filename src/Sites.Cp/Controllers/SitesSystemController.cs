@@ -102,9 +102,12 @@ public sealed class SitesSystemApiController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Profile))
             return BadRequest(new { error = "Profile is required." });
 
+        string profile;
         try
         {
-            SitesProfileResolver.NormalizeProfileName(request.Profile);
+            profile = SitesProfileResolver.NormalizeProfileName(request.Profile);
+            if (SitesProfileResolver.IsCloneDisallowedProfile(profile))
+                return BadRequest(new { error = "The 'default' profile cannot be used for remote clone. Choose a dedicated profile name." });
         }
         catch (ArgumentException ex)
         {
@@ -120,7 +123,7 @@ public sealed class SitesSystemApiController : ControllerBase
 
         var runId = _cloneRuns.Start(
             (state, ct) => _clone.CloneToHostAsync(
-                request.Profile,
+                profile,
                 request.Host,
                 request.User,
                 request.Password,

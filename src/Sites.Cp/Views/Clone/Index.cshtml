@@ -55,6 +55,7 @@
             <div>
                 <label for="cloneProfile">Profile <span class="muted">(required)</span></label>
                 <input type="text" id="cloneProfile" value="@ViewData["Profile"]" autocomplete="off" required />
+                <div class="hint">Cannot clone with profile <code>default</code> — use a dedicated name (e.g. <code>staging</code>, <code>prod-eu</code>).</div>
             </div>
             <div>
                 <label for="cloneHost">Server IP / host</label>
@@ -171,6 +172,10 @@
         logEl.textContent = "";
         if (!body.profile || !body.host || !body.user || !body.password) {
             setStatus("Profile, host, user and password are required.", false);
+            return;
+        }
+        if (body.profile.toLowerCase() === "default") {
+            setStatus("Profile 'default' cannot be used for remote clone. Choose a dedicated profile name.", false);
             return;
         }
         try {
