@@ -28,6 +28,8 @@ builder.Services.AddSitesCp(
     builder.Configuration,
     typeof(Program).Assembly,
     "Sites.Modules");
+builder.Services.AddSitesVerboseHttpLogging();
+builder.Logging.AddSitesVerboseHttpLogLevels();
 builder.Services.AddSitesDataFtp(builder.Configuration);
 builder.Services.AddSitesProxyEngineFromReferencedAssembly(
     builder.Configuration,
@@ -71,6 +73,7 @@ else
         string.Join(", ", registry.ActiveSites.Select(site => site.Name)));
 }
 
+app.UseHttpLogging();
 app.UseSitesCertMaintenance();
 app.UseSitesCp();
 app.UseSitesProxyPipeline();

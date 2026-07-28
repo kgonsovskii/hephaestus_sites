@@ -16,38 +16,93 @@ public sealed class RequestLoggingMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var stopwatch = Stopwatch.StartNew();
-        var siteName = "unknown";
+        var siteName = ResolveSiteName(context);
+        var request = context.Request;
+        var host = request.Host.Value ?? string.Empty;
+        var path = request.Path.Value ?? "/";
+        var query = request.QueryString.Value ?? string.Empty;
+        var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "-";
+        var userAgent = Truncate(request.Headers.UserAgent.ToString(), 120);
+
+        _logger.LogInformation(
+            "[{Site}] >> {RemoteIp} {Method} {Host}{Path}{Query} ua={UserAgent}",
+            siteName,
+            remoteIp,
+            request.Method,
+            host,
+            path,
+            query,
+            userAgent);
+
+        Exception? fault = null;
 
         try
         {
-            siteName = context.Items.ContainsKey(SiteContext.ItemKey)
-                ? context.GetSite().Name
-                : siteName;
-
-            _logger.LogInformation(
-                "[{Site}] {Method} {Path}{Query} -> upstream",
-                siteName,
-                context.Request.Method,
-                context.Request.Path.Value,
-                context.Request.QueryString.Value);
-
             await _next(context);
+        }
+        catch (Exception ex)
+        {
+            fault = ex;
+            throw;
         }
         finally
         {
             stopwatch.Stop();
+            siteName = ResolveSiteName(context);
 
-            if (context.Items.ContainsKey(SiteContext.ItemKey))
-                siteName = context.GetSite().Name;
+            var response = context.Response;
+            var contentType = response.ContentType ?? "-";
+            var contentLength = response.ContentLength?.ToString() ?? "-";
+            var cacheHeader = response.Headers.TryGetValue("X-Proxy-Cache", out var cacheValues)
+                ? cacheValues.ToString()
+                : "-";
 
-            _logger.LogInformation(
-                "[{Site}] {Method} {Path}{Query} -> {StatusCode} ({ElapsedMs} ms)",
-                siteName,
-                context.Request.Method,
-                context.Request.Path.Value,
-                context.Request.QueryString.Value,
-                context.Response.StatusCode,
-                stopwatch.ElapsedMilliseconds);
+            if (fault is null)
+            {
+                _logger.LogInformation(
+                    "[{Site}] << {RemoteIp} {Method} {Host}{Path}{Query} -> {StatusCode} type={ContentType} len={ContentLength} cache={Cache} ({ElapsedMs} ms)",
+                    siteName,
+                    remoteIp,
+                    request.Method,
+                    host,
+                    path,
+                    query,
+                    response.StatusCode,
+                    contentType,
+                    contentLength,
+                    cacheHeader,
+                    stopwatch.ElapsedMilliseconds);
+            }
+            else
+            {
+                _logger.LogError(
+                    fault,
+                    "[{Site}] !! {RemoteIp} {Method} {Host}{Path}{Query} -> {StatusCode} type={ContentType} len={ContentLength} cache={Cache} ({ElapsedMs} ms)",
+                    siteName,
+                    remoteIp,
+                    request.Method,
+                    host,
+                    path,
+                    query,
+                    response.StatusCode,
+                    contentType,
+                    contentLength,
+                    cacheHeader,
+                    stopwatch.ElapsedMilliseconds);
+            }
         }
+    }
+
+    private static string ResolveSiteName(HttpContext context) =>
+        context.Items.ContainsKey(SiteContext.ItemKey)
+            ? context.GetSite().Name
+            : "unknown";
+
+    private static string Truncate(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value))
+            return "-";
+
+        return value.Length <= maxLength ? value : value[..maxLength] + "…";
     }
 }
