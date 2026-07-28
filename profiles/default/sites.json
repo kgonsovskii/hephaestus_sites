@@ -1,6 +1,7 @@
 {
   "veryoldgames.xyz": {
     "sourceHost": "oldgames.ru",
+    "sourceUpstreamHost": "oldgames.ru",
     "targetHost": "",
     "disableCaching": false,
     "passCookies": true,
