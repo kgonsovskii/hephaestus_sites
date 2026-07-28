@@ -1,8 +1,8 @@
 {
   "veryoldgames.xyz": {
-    "sourceHost": "oldgames.ru",
-    "sourceUpstreamHost": "oldgames.ru",
+    "sourceHost": "onlineigry.net",
     "targetHost": "",
+    "sourceUpstreamHost": "onlineigry.net",
     "disableCaching": false,
     "passCookies": true,
     "enableOutboundRedirectPaths": true,
