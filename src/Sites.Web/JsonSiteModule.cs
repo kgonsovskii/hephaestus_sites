@@ -19,7 +19,7 @@ public sealed class JsonSiteModule : ISiteModule
 
     public string SourceUpstreamHost =>
         string.IsNullOrWhiteSpace(Definition.SourceUpstreamHost)
-            ? $"www.{SourceHost}"
+            ? SourceHost
             : Definition.SourceUpstreamHost;
 
     public string SourceBaseUrl => $"https://{SourceUpstreamHost}";

@@ -8,7 +8,7 @@ public abstract class SiteModuleBase : ISiteModule
 
     public virtual string Name => SourceHost.Split('.', 2)[0];
     public abstract string SourceHost { get; }
-    public virtual string SourceUpstreamHost => $"www.{SourceHost}";
+    public virtual string SourceUpstreamHost => SourceHost;
     public virtual string SourceBaseUrl => $"https://{SourceUpstreamHost}";
     public abstract string TargetHost { get; }
     public virtual string TargetBaseUrl => $"https://{TargetHost}";

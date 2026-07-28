@@ -43,6 +43,20 @@ public sealed class RedirectRewriterTests
     }
 
     [Fact]
+    public void RewriteAllowedLocation_ProtocolRelativeSourceHost_RewritesToPublicHost()
+    {
+        var request = CreateRequest("localhost:5080", "/");
+        var site = TestSites.Tube18();
+
+        var rewritten = RedirectRewriter.RewriteAllowedLocation(
+            "//tube18.sex/video/1/",
+            request,
+            site);
+
+        Assert.Equal("http://localhost:5080/video/1/", rewritten);
+    }
+
+    [Fact]
     public void RewriteAllowedLocation_CdnSubdomain_RewritesToPublicHost()
     {
         var request = CreateRequest("localhost:5080", "/");

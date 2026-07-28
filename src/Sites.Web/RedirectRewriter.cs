@@ -45,24 +45,42 @@ public static class RedirectRewriter
         if (location.Length == 0)
             return location;
 
-        if (site.RedirectForeignRequests && ForeignRequestRewriter.IsForeignUrl(site, location, request))
-            return ResolveRedirectTarget(request, site, site.RedirectForeignRequestsUrl);
-
-        if (!Uri.TryCreate(location, UriKind.Absolute, out var absolute))
+        if (TryParseRedirectUri(location, out var absolute) && absolute is not null)
         {
-            if (Uri.TryCreate(location, UriKind.Relative, out _))
-            {
-                var baseUrl = PublicTargetResolver.Resolve(request, site).BaseUrl.TrimEnd('/');
-                return $"{baseUrl}/{location.TrimStart('/')}";
-            }
+            if (SourceHostMatcher.MatchesSourceHost(site, absolute.Host))
+                return RewriteSourceRedirect(request, site, absolute);
+
+            if (site.RedirectForeignRequests && ForeignRequestRewriter.IsForeignUrl(site, location, request))
+                return ResolveRedirectTarget(request, site, site.RedirectForeignRequestsUrl);
 
             return location;
         }
 
-        if (!SourceHostMatcher.MatchesSourceHost(site, absolute.Host))
-            return location;
+        if (Uri.TryCreate(location, UriKind.Relative, out _))
+        {
+            var baseUrl = PublicTargetResolver.Resolve(request, site).BaseUrl.TrimEnd('/');
+            return $"{baseUrl}/{location.TrimStart('/')}";
+        }
 
-        var publicBase = PublicTargetResolver.Resolve(request, site).BaseUrl;
+        return location;
+    }
+
+    private static bool TryParseRedirectUri(string location, out Uri? absolute)
+    {
+        if (Uri.TryCreate(location, UriKind.Absolute, out absolute))
+            return true;
+
+        if (location.StartsWith("//", StringComparison.Ordinal) &&
+            Uri.TryCreate("https:" + location, UriKind.Absolute, out absolute))
+            return true;
+
+        absolute = null;
+        return false;
+    }
+
+    private static string RewriteSourceRedirect(HttpRequest request, ISiteModule site, Uri absolute)
+    {
+        var publicBase = PublicTargetResolver.Resolve(request, site).BaseUrl.TrimEnd('/');
         return $"{publicBase}{absolute.PathAndQuery}";
     }
 }
