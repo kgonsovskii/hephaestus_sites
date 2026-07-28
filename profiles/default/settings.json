@@ -10,7 +10,7 @@
         "video/",
         "application/vnd.apple.mpegurl",
         "application/x-mpegurl",
-        "application/dash+xml"
+        "application/dash\u002Bxml"
       ]
     },
     "clientBandwidth": {
@@ -24,10 +24,10 @@
         "text/javascript",
         "application/javascript",
         "application/json",
-        "image/svg+xml",
+        "image/svg\u002Bxml",
         "application/xml",
         "text/xml",
-        "application/xhtml+xml"
+        "application/xhtml\u002Bxml"
       ],
       "localAssetsMaxAge": "7.00:00:00",
       "serveHeadFromCache": true,
