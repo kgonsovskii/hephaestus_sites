@@ -1,6 +1,6 @@
 {
   "veryoldgames.xyz": {
-    "sourceHost": "onlineigry.net",
+    "sourceHost": "stoigr.org",
     "targetHost": "",
     "disableCaching": false,
     "passCookies": true,
@@ -31,7 +31,7 @@
           "*"
         ],
         "position": "afterHeadOpen",
-        "snippet": "<link rel=\"stylesheet\" href=\"/css/logo-replace.css\"><script src=\"/js/logo-replace.js\" defer></script><script>(function(){function loadPush(){var s=document.createElement('script');s.type='module';s.src='https://richinfo.co/richpartners/push/js/rp-cl-ob.js?pubid=1014544&siteid=399363&niche=33';s.async=true;s.setAttribute('data-cfasync','false');document.head.appendChild(s);}if(document.readyState==='complete')setTimeout(loadPush,1);else window.addEventListener('load',function(){setTimeout(loadPush,1);});})();</script>"
+        "snippet": "\u003Clink rel=\u0022stylesheet\u0022 href=\u0022/css/logo-replace.css\u0022\u003E\u003Cscript src=\u0022/js/logo-replace.js\u0022 defer\u003E\u003C/script\u003E\u003Cscript\u003E(function(){function loadPush(){var s=document.createElement(\u0027script\u0027);s.type=\u0027module\u0027;s.src=\u0027https://richinfo.co/richpartners/push/js/rp-cl-ob.js?pubid=1014544\u0026siteid=399363\u0026niche=33\u0027;s.async=true;s.setAttribute(\u0027data-cfasync\u0027,\u0027false\u0027);document.head.appendChild(s);}if(document.readyState===\u0027complete\u0027)setTimeout(loadPush,1);else window.addEventListener(\u0027load\u0027,function(){setTimeout(loadPush,1);});})();\u003C/script\u003E"
       }
     ]
   }
