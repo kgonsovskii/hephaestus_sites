@@ -207,7 +207,6 @@ public sealed class ReverseProxyMiddleware
             context.Response.Headers["X-Proxy-Cache"] = "BYPASS";
             if (!ApplyClientBandwidthHeaders(context, bodyBytes))
                 await context.Response.Body.WriteAsync(bodyBytes, context.RequestAborted);
-            await context.Response.Body.WriteAsync(bodyBytes, context.RequestAborted);
             return;
         }
 
