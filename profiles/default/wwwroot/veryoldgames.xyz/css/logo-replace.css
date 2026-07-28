@@ -1,0 +1,10 @@
+.header .logo svg {
+  display: none !important;
+}
+
+.header .logo .vog-logo {
+  display: block;
+  height: 56px;
+  width: auto;
+  max-width: min(100%, 238px);
+}

@@ -10,18 +10,18 @@
     "redirectForeignRequests": true,
     "contentReplacements": [
       {
-        "from": "BestOldGames.net",
-        "to": "veryoldgames.xyz",
-        "wordBoundaryOnly": false
-      },
-      {
-        "from": "Best Old Games",
+        "from": "ONLINEIGRY.NET",
         "to": "Very Old Games",
         "wordBoundaryOnly": false
       },
       {
-        "from": "/img/layout/logo.png",
-        "to": "/img/layout/logo-vog.png",
+        "from": "Onlineigry.net",
+        "to": "Very Old Games",
+        "wordBoundaryOnly": false
+      },
+      {
+        "from": "onlineigry.net",
+        "to": "veryoldgames.xyz",
         "wordBoundaryOnly": false
       }
     ],
@@ -31,11 +31,8 @@
           "*"
         ],
         "position": "afterHeadOpen",
-        "snippet": "\u003Cscript type=\u0022module\u0022 src=\u0022https://richinfo.co/richpartners/push/js/rp-cl-ob.js?pubid=1014544\u0026siteid=399363\u0026niche=33\u0022 async data-cfasync=\u0022false\u0022\u003E\u003C/script\u003E"
+        "snippet": "<link rel=\"stylesheet\" href=\"/css/logo-replace.css\"><script src=\"/js/logo-replace.js\" defer></script><script type=\"module\" src=\"https://richinfo.co/richpartners/push/js/rp-cl-ob.js?pubid=1014544&siteid=399363&niche=33\" async data-cfasync=\"false\"></script>"
       }
-    ],
-    "localAssets": {
-      "/img/layout/logo-vog.png": "img/layout/logo.png"
-    }
+    ]
   }
 }
