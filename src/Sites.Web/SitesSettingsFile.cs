@@ -30,24 +30,9 @@ public static class SitesSettingsFile
         if (!string.IsNullOrWhiteSpace(explicitPath))
             return Path.GetFullPath(explicitPath);
 
-        var publishedPath = Path.Combine(
-            AppContext.BaseDirectory,
-            SitesProfileResolver.ProfilesDirectoryName,
-            SitesProfileResolver.Current,
-            DefaultFileName);
-
-        if (File.Exists(publishedPath))
-            return Path.GetFullPath(publishedPath);
-
-        var repoRoot = RepositoryPaths.TryResolveRoot();
-        if (repoRoot is not null)
-        {
-            var repoPath = SitesProfileResolver.ResolveSettingsJsonPath(repoRoot);
-            if (File.Exists(repoPath))
-                return repoPath;
-        }
-
-        return Path.GetFullPath(publishedPath);
+        return ProfileDataFilePaths.Resolve(
+            DefaultFileName,
+            repoRoot => SitesProfileResolver.ResolveSettingsJsonPath(repoRoot));
     }
 
     public static SitesProfileSettingsDocument LoadOrCreate(string path, SitesProfileSettingsDocument defaults)
