@@ -1,31 +1,4 @@
 {
-  "tube-18.xyz": {
-    "sourceHost": "tube18.sex",
-    "targetHost": "",
-    "disableCaching": false,
-    "passCookies": true,
-    "enableOutboundRedirectPaths": true,
-    "outboundRedirectPathPrefixes": [
-      "/go",
-      "/out",
-      "/click"
-    ],
-    "blockedPathPrefixes": [],
-    "redirectForeignRequests": true,
-    "htmlInjections": [
-      {
-        "paths": [
-          "/video"
-        ],
-        "position": "beforeBodyClose",
-        "snippet": "\u003Cscript src=\u0022/popupwindow.js\u0022\u003E\u003C/script\u003E\u003Cscript src=\u0022/videoscript.js\u0022\u003E\u003C/script\u003E"
-      }
-    ],
-    "settings": {
-      "VideoInterval": 5,
-      "DownloadUrl": "/superplayer.cmd"
-    }
-  },
   "veryoldgames.xyz": {
     "sourceHost": "bestoldgames.net",
     "targetHost": "",
