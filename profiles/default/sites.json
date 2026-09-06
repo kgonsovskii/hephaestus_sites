@@ -1,1 +1,12 @@
-{}
+{
+  "veryoldgames.xyz": {
+    "sourceHost": "tube18.sex",
+    "targetHost": "",
+    "disableCaching": false,
+    "passCookies": true,
+    "enableOutboundRedirectPaths": true,
+    "outboundRedirectPathPrefixes": [],
+    "blockedPathPrefixes": [],
+    "redirectForeignRequests": true
+  }
+}
