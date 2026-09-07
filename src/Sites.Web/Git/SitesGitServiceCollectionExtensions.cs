@@ -9,6 +9,7 @@ public static class SitesGitServiceCollectionExtensions
     {
         services.Configure<SitesGitOptions>(configuration.GetSection(SitesGitOptions.SectionName));
         services.AddSingleton<SitesGitService>();
+        services.AddHostedService<SitesGitMaintenanceHostedService>();
         return services;
     }
 }
