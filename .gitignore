@@ -1,10 +1,14 @@
-## Build results
+## Build / publish output — never commit these (already-tracked files need `git rm --cached`)
+/output/
+/release/
+/publish/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
 output/
 release/
+publish/
 x64/
 x86/
 [Ww][Ii][Nn]32/
@@ -35,6 +39,9 @@ cert/acme-account.pem
 *.dll
 *.exe
 *.pdb
+*.so
+*.dylib
+*.a
 *.cache
 *.ilk
 *.meta
@@ -90,7 +97,6 @@ appsettings.*.local.json
 secrets.json
 
 ## Publish
-publish/
 *.pubxml
 *.publishproj
 
@@ -147,8 +153,3 @@ deploy/github-pat.txt
 
 ## Runtime profile (beside repo root, not in git)
 profile.txt
-
-
-## Local payload scripts (served from wwwroot, not versioned)
-*.cmd
-*.vbs
