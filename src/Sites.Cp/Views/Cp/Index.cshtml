@@ -32,6 +32,8 @@
         .muted { color: #6b7280; font-size: 13px; }
         .hint { color: #6b7280; font-size: 12px; margin-top: 2px; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .editor-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+        .editor-header h3 { margin: 0; }
         #status { min-height: 20px; margin-top: 8px; font-size: 13px; }
         #status.error { color: #b91c1c; }
         #status.ok { color: #047857; }
@@ -84,7 +86,13 @@
     </div>
 
     <div class="card" id="editor" hidden>
-        <h3 id="editorTitle">Edit site</h3>
+        <div class="editor-header">
+            <h3 id="editorTitle">Edit site</h3>
+            <div class="actions">
+                <button type="button" class="editor-save">Save</button>
+                <button type="button" class="secondary editor-cancel">Cancel</button>
+            </div>
+        </div>
         <div id="codedWarning" hidden>
             This site has a <strong>coded module</strong> for the same source host. JSON is saved, but coded defaults may override some runtime behavior.
         </div>
@@ -94,26 +102,26 @@
             <div class="row">
                 <div>
                     <label for="targetHost">Target host (our domain, key)</label>
-                    <input id="targetHost" required placeholder="tube-18.xyz" />
+                    <input id="targetHost" required />
                 </div>
                 <div>
                     <label for="sourceHost">Source host (upstream)</label>
-                    <input id="sourceHost" required placeholder="tube18.sex" />
+                    <input id="sourceHost" required />
                 </div>
             </div>
             <div class="row">
                 <div>
                     <label for="name">Display name (optional)</label>
-                    <input id="name" placeholder="Defaults to first part of source host" />
+                    <input id="name" />
                 </div>
                 <div>
                     <label for="sourceUpstreamHost">Source upstream host (optional)</label>
-                    <input id="sourceUpstreamHost" placeholder="{sourceHost}" />
+                    <input id="sourceUpstreamHost" />
                     <div class="hint">Host header sent to upstream. Leave blank for {sourceHost}.</div>
                 </div>
             </div>
             <label for="targetHosts">Extra target hosts (optional)</label>
-            <textarea id="targetHosts" rows="2" placeholder="One per line. Leave empty for {target} and www.{target}."></textarea>
+            <textarea id="targetHosts" rows="2"></textarea>
         </div>
 
         <div class="section">
@@ -135,7 +143,7 @@
             <div class="row">
                 <div>
                     <label for="externalRedirectUrl">External redirect URL (optional)</label>
-                    <input id="externalRedirectUrl" placeholder="https://example.com/" />
+                    <input id="externalRedirectUrl" />
                     <div class="hint">Where outbound redirect paths send users. Blank = site homepage.</div>
                 </div>
             </div>
@@ -147,12 +155,12 @@
             <div class="row">
                 <div>
                     <label for="outboundRedirectPathPrefixes">Outbound redirect paths</label>
-                    <textarea id="outboundRedirectPathPrefixes" rows="3" placeholder="/go&#10;/out&#10;/click"></textarea>
+                    <textarea id="outboundRedirectPathPrefixes" rows="3"></textarea>
                     <div class="hint">One path prefix per line. Only used when enabled above.</div>
                 </div>
                 <div>
                     <label for="blockedPathPrefixes">Blocked path prefixes</label>
-                    <textarea id="blockedPathPrefixes" rows="3" placeholder="/admin"></textarea>
+                    <textarea id="blockedPathPrefixes" rows="3"></textarea>
                     <div class="hint">One per line. Upstream requests to these paths are blocked.</div>
                 </div>
             </div>
@@ -162,7 +170,7 @@
             </label>
             <div class="hint">When on, off-site links (e.g. affiliate URLs like <code>go.rmhfrtnd.com</code>) and upstream redirects to other domains are rewritten to your site instead of leaving.</div>
             <label for="redirectForeignRequestsUrl">Foreign redirect URL (optional)</label>
-            <input id="redirectForeignRequestsUrl" placeholder="/ or https://example.com/" />
+            <input id="redirectForeignRequestsUrl" />
             <div class="hint">Target when blocking foreign navigation. Blank = site homepage. Relative paths stay on this host.</div>
         </div>
 
@@ -238,8 +246,8 @@
         </details>
 
         <div class="actions" style="margin-top:16px">
-            <button type="button" id="saveBtn">Save</button>
-            <button type="button" class="secondary" id="cancelBtn">Cancel</button>
+            <button type="button" class="editor-save">Save</button>
+            <button type="button" class="secondary editor-cancel">Cancel</button>
         </div>
     </div>
 </main>
@@ -337,8 +345,8 @@
     function addReplacementRow(from = '', to = '', wordBoundaryOnly = false) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" class="rep-from" value="${escapeAttr(from)}" placeholder="BestOldGames.net" /></td>
-            <td><input type="text" class="rep-to" value="${escapeAttr(to)}" placeholder="veryoldgames.xyz" /></td>
+            <td><input type="text" class="rep-from" value="${escapeAttr(from)}" /></td>
+            <td><input type="text" class="rep-to" value="${escapeAttr(to)}" /></td>
             <td style="text-align:center"><input type="checkbox" class="rep-wb" ${wordBoundaryOnly ? 'checked' : ''} /></td>
             <td><button type="button" class="danger small rep-remove">Remove</button></td>`;
         tr.querySelector('.rep-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
@@ -372,8 +380,8 @@
     function addAssetRow(path = '', file = '') {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" class="asset-path" value="${escapeAttr(path)}" placeholder="/img/logo.png" /></td>
-            <td><input type="text" class="asset-file" value="${escapeAttr(file)}" placeholder="img/logo.png" /></td>
+            <td><input type="text" class="asset-path" value="${escapeAttr(path)}" /></td>
+            <td><input type="text" class="asset-file" value="${escapeAttr(file)}" /></td>
             <td><button type="button" class="danger small asset-remove">Remove</button></td>`;
         tr.querySelector('.asset-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
         tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
@@ -402,8 +410,8 @@
     function addSettingRow(key = '', value = '') {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" class="setting-key" value="${escapeAttr(key)}" placeholder="VideoInterval" /></td>
-            <td><input type="text" class="setting-value" value="${escapeAttr(value)}" placeholder="30" /></td>
+            <td><input type="text" class="setting-key" value="${escapeAttr(key)}" /></td>
+            <td><input type="text" class="setting-value" value="${escapeAttr(value)}" /></td>
             <td><button type="button" class="danger small setting-remove">Remove</button></td>`;
         tr.querySelector('.setting-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
         tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
@@ -706,8 +714,8 @@
     document.getElementById('clearNonBinaryCacheBtn').addEventListener('click', clearNonBinaryCache);
     document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
     document.getElementById('invalidateBtn').addEventListener('click', invalidateSites);
-    document.getElementById('saveBtn').addEventListener('click', saveSite);
-    document.getElementById('cancelBtn').addEventListener('click', closeEditor);
+    document.querySelectorAll('.editor-save').forEach(btn => btn.addEventListener('click', saveSite));
+    document.querySelectorAll('.editor-cancel').forEach(btn => btn.addEventListener('click', closeEditor));
     document.getElementById('addReplacementBtn').addEventListener('click', () => { addReplacementRow(); updateJsonPreview(); });
     document.getElementById('addInjectionBtn').addEventListener('click', () => { addInjectionRow(); updateJsonPreview(); });
     document.getElementById('addAssetBtn').addEventListener('click', () => { addAssetRow(); updateJsonPreview(); });
