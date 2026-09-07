@@ -10,7 +10,7 @@
     "redirectForeignRequests": true
   },
   "veryoldgames.xyz": {
-    "sourceHost": "old-games.net",
+    "sourceHost": "playclassic.games",
     "targetHost": "",
     "disableCaching": false,
     "passCookies": true,
