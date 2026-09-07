@@ -13,12 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Sites.RemoteDeploy\DeployOptions.cs" Link="RemoteDeploy\DeployOptions.cs" />
-    <Compile Include="..\Sites.RemoteDeploy\RemoteDeployRunner.cs" Link="RemoteDeploy\RemoteDeployRunner.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Sites.DataFtp\Sites.DataFtp.csproj" />
+    <ProjectReference Include="..\Sites.RemoteDeploy\Sites.RemoteDeploy.csproj" />
     <ProjectReference Include="..\Sites.Web\Sites.Web.csproj" />
   </ItemGroup>
 
