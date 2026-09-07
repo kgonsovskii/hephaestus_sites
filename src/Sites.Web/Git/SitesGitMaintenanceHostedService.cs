@@ -30,20 +30,26 @@ public sealed class SitesGitMaintenanceHostedService : BackgroundService
         {
             try
             {
-                var result = await _git.PullAsync(stoppingToken);
-                if (result.Succeeded)
+                var pull = await _git.PullAsync(stoppingToken);
+                if (!pull.Succeeded)
                 {
-                    _catalog.ReloadRegistry();
-                    _logger.LogInformation("Sites git pull: {Message}", result.Message);
+                    _logger.LogWarning("Sites git pull: {Message}", pull.Message);
                 }
                 else
                 {
-                    _logger.LogWarning("Sites git pull: {Message}", result.Message);
+                    _catalog.ReloadRegistry();
+                    _logger.LogInformation("Sites git pull: {Message}", pull.Message);
+
+                    var push = await _git.PushAsync(stoppingToken);
+                    if (push.Succeeded)
+                        _logger.LogInformation("Sites git push: {Message}", push.Message);
+                    else
+                        _logger.LogWarning("Sites git push: {Message}", push.Message);
                 }
             }
             catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogError(ex, "Sites git pull maintenance failed.");
+                _logger.LogError(ex, "Sites git sync maintenance failed.");
             }
 
             var interval = _options.CurrentValue.PullInterval;

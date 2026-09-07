@@ -101,8 +101,7 @@ public sealed class SitesSystemApiController : ControllerBase
     public async Task<ActionResult<SitesGitOperationResult>> GitSync(CancellationToken cancellationToken)
     {
         var result = await _git.SyncAsync(cancellationToken);
-        if (result.Succeeded)
-            _catalog.ReloadRegistry();
+        _catalog.ReloadRegistry();
         return Ok(result);
     }
 

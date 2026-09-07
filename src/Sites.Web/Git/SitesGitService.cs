@@ -93,7 +93,12 @@ public sealed class SitesGitService
                 if (!pull.Succeeded)
                     return pull;
 
-                return PushCore();
+                var push = PushCore();
+                var log = pull.Log.Concat(push.Log).ToList();
+                if (!push.Succeeded)
+                    return Fail($"{pull.Message} {push.Message}", log);
+
+                return Success($"{pull.Message} {push.Message}", log);
             }, cancellationToken);
         }
         finally

@@ -10,7 +10,7 @@ public sealed class SitesGitOptions
 
     public string EncryptedPatFileName { get; set; } = "git-pat.enc";
 
-    /// <summary>How often the host pulls from origin. Push stays manual (CP buttons).</summary>
+    /// <summary>How often the host pulls from origin, reloads sites.json, then pushes local changes.</summary>
     public TimeSpan PullInterval { get; set; } = TimeSpan.FromHours(6);
 
     public string CommitUserName { get; set; } = "sites-host";
