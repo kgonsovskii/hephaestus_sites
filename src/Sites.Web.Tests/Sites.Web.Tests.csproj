@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Sites.CertMaintenance\Sites.CertMaintenance.csproj" />
     <ProjectReference Include="..\Sites.RemoteDeploy\Sites.RemoteDeploy.csproj" />
     <ProjectReference Include="..\Sites.Host\Sites.Host.csproj" />
     <ProjectReference Include="..\Sites.Web\Sites.Web.csproj" />

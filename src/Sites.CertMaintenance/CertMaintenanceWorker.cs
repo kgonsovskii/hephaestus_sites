@@ -65,9 +65,6 @@ public sealed class CertMaintenanceWorker
                 _certificateStore.NotAfter);
         }
 
-        if (!ShouldRenew(_certificateStore.NotAfter, options.RenewBeforeDays))
-            return;
-
         var domains = PublishDomainDiscovery.DiscoverFromRegistry(_registry);
         if (domains.Count == 0)
         {
@@ -83,6 +80,23 @@ public sealed class CertMaintenanceWorker
             _logger.LogWarning(
                 "SiteRegistry had no domains; using module discovery from {SitesJsonPath}.",
                 sitesJsonPath);
+        }
+
+        var missingHosts = CertificateDomainCoverage.MissingDomains(_certificateStore.Current, domains);
+        var renewForExpiry = ShouldRenew(_certificateStore.NotAfter, options.RenewBeforeDays);
+        if (!renewForExpiry && missingHosts.Count == 0)
+        {
+            _logger.LogInformation(
+                "TLS certificate covers {Count} site host(s) and is not due for renewal.",
+                domains.Count);
+            return;
+        }
+
+        if (missingHosts.Count > 0)
+        {
+            _logger.LogWarning(
+                "TLS certificate is missing site host(s): {Hosts}. Reissuing so HTTPS names match sites.json.",
+                string.Join(", ", missingHosts));
         }
 
         _logger.LogInformation(
