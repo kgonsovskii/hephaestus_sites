@@ -14,7 +14,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sites.DataFtp\Sites.DataFtp.csproj" />
-    <ProjectReference Include="..\Sites.RemoteDeploy\Sites.RemoteDeploy.csproj" />
+    <ProjectReference Include="..\Sites.RemoteDeploy\Sites.RemoteDeploy.csproj">
+      <Private>true</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Sites.Web\Sites.Web.csproj" />
   </ItemGroup>
 

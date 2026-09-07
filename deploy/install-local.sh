@@ -31,6 +31,12 @@ if [ ! -f "${SITES_PUBLISH_DIR}/Sites.Cp.dll" ]; then
   exit 1
 fi
 
+if [ ! -f "${SITES_PUBLISH_DIR}/Sites.RemoteDeploy.dll" ]; then
+  echo "[sites-install] ERROR: Sites.RemoteDeploy.dll missing after publish (CP requires it)." >&2
+  ls -la "${SITES_PUBLISH_DIR}" >&2 || true
+  exit 1
+fi
+
 echo "[sites-install] stopping ${SITES_SERVICE_NAME}"
 systemctl stop "${SITES_SERVICE_NAME}" 2>/dev/null || true
 
