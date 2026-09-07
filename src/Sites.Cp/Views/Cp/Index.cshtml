@@ -18,6 +18,8 @@
         button, .btn { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font: inherit; }
         button.secondary { background: #6b7280; }
         button.danger { background: #dc2626; }
+        button.git-push { background: #059669; }
+        button.git-pull { background: #7c3aed; }
         button.small { padding: 4px 8px; font-size: 12px; }
         input, textarea, select { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
         textarea { min-height: 72px; resize: vertical; }
@@ -67,6 +69,11 @@
             </div>
         </div>
         <div id="status"></div>
+    </div>
+
+    <div class="actions" style="margin:0 0 16px">
+        <button type="button" class="git-push" id="gitPushBtn" title="git add/commit/push the whole repository (all sites)">Push to git</button>
+        <button type="button" class="git-pull" id="gitPullBtn" title="git pull the whole repository (all sites)">Pull from git</button>
     </div>
 
     <div class="card">
@@ -583,16 +590,12 @@
                 <td class="actions">
                     <button type="button" data-edit="${entry.targetHost}">Edit</button>
                     <button type="button" class="danger" data-delete="${entry.targetHost}">Delete</button>
-                    <button type="button" class="secondary" data-pull="${entry.targetHost}">Pull</button>
-                    <button type="button" class="secondary" data-push="${entry.targetHost}">Push</button>
                 </td>`;
             sitesBody.appendChild(tr);
         }
 
         sitesBody.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openEditor(btn.dataset.edit)));
         sitesBody.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteSite(btn.dataset.delete)));
-        sitesBody.querySelectorAll('[data-pull]').forEach(btn => btn.addEventListener('click', () => gitSite('pull', btn.dataset.pull)));
-        sitesBody.querySelectorAll('[data-push]').forEach(btn => btn.addEventListener('click', () => gitSite('push', btn.dataset.push)));
     }
 
     async function loadSites() {
@@ -668,23 +671,27 @@
         }
     }
 
-    async function gitSite(action, targetHost) {
-        const label = action === 'pull' ? 'Pull' : 'Push';
-        setStatus(`${label} ${targetHost}…`);
-        sitesBody.querySelectorAll('[data-pull], [data-push]').forEach(btn => { btn.disabled = true; });
+    async function gitRepo(action) {
+        const label = action === 'pull' ? 'Pull from git' : 'Push to git';
+        const pullBtn = document.getElementById('gitPullBtn');
+        const pushBtn = document.getElementById('gitPushBtn');
+        setStatus(`${label} (all sites)…`);
+        pullBtn.disabled = true;
+        pushBtn.disabled = true;
         try {
             const result = await api(`${systemBase}/git/${action}`, { method: 'POST', body: '{}' });
             const kind = result.succeeded ? 'ok' : 'error';
             const logTail = Array.isArray(result.log) && result.log.length
                 ? ' ' + result.log.slice(-3).join(' · ')
                 : '';
-            setStatus(`${label} ${targetHost}: ${result.message || ''}${logTail}`.trim(), kind);
+            setStatus(`${label} (all sites): ${result.message || ''}${logTail}`.trim(), kind);
             if (action === 'pull' && result.succeeded)
                 await loadSites();
         } catch (err) {
-            setStatus(`${label} ${targetHost}: ${err.message}`, 'error');
+            setStatus(`${label} (all sites): ${err.message}`, 'error');
         } finally {
-            sitesBody.querySelectorAll('[data-pull], [data-push]').forEach(btn => { btn.disabled = false; });
+            pullBtn.disabled = false;
+            pushBtn.disabled = false;
         }
     }
 
@@ -735,6 +742,8 @@
     }
 
     document.getElementById('addBtn').addEventListener('click', () => openEditor(null));
+    document.getElementById('gitPullBtn').addEventListener('click', () => gitRepo('pull'));
+    document.getElementById('gitPushBtn').addEventListener('click', () => gitRepo('push'));
     document.getElementById('clearNonBinaryCacheBtn').addEventListener('click', clearNonBinaryCache);
     document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
     document.getElementById('invalidateBtn').addEventListener('click', invalidateSites);
