@@ -19,9 +19,10 @@ public sealed class ContentRewriterTests
 
         var result = ContentRewriter.Rewrite(html, replacements);
 
-        Assert.Contains("https://stor6.localhost:5080/get_file/1.mp4", result);
+        Assert.Contains("http://localhost:5080/get_file/1.mp4", result);
         Assert.Contains("http://localhost:5080/v", result);
         Assert.DoesNotContain("https://stor6.tube18.sex", result);
+        Assert.DoesNotContain("stor6.localhost", result);
     }
 
     [Fact]
@@ -43,7 +44,28 @@ public sealed class ContentRewriterTests
         var result = ContentRewriter.Rewrite(html, replacements);
 
         Assert.Contains("http://127.0.0.1:5080/pic.jpg", result);
+        Assert.DoesNotContain("www.127.0.0.1", result);
         Assert.DoesNotContain("tube-18.xyz", result);
+    }
+
+    [Fact]
+    public void Rewrite_LoopbackIp_CollapsesCdnSubdomainToRequestHost()
+    {
+        var replacements = SiteContentReplacements.BuildDefaults(
+            "tube18.sex",
+            "tube18.sex",
+            "http://127.0.0.1:5080",
+            "127.0.0.1:5080");
+        const string html =
+            """<img src="https://www.tube18.sex/pic.jpg"><video src="https://stor6.tube18.sex/get_file/1.mp4">""";
+
+        var result = ContentRewriter.Rewrite(html, replacements);
+
+        Assert.Contains("http://127.0.0.1:5080/pic.jpg", result);
+        Assert.Contains("http://127.0.0.1:5080/get_file/1.mp4", result);
+        Assert.DoesNotContain("www.127.0.0.1", result);
+        Assert.DoesNotContain("stor6.127.0.0.1", result);
+        Assert.DoesNotContain("https://www.127.0.0.1", result);
     }
 
     [Fact]

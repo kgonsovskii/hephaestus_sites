@@ -87,6 +87,17 @@ public static class ContentRewriter
             if (string.IsNullOrEmpty(replacement.From))
                 continue;
 
+            if (replacement.IsRegex)
+            {
+                var to = replacement.To;
+                result = Regex.Replace(
+                    result,
+                    replacement.From,
+                    _ => to,
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                continue;
+            }
+
             result = replacement.WordBoundaryOnly
                 ? ReplaceWholeWord(result, replacement.From, replacement.To)
                 : result.Replace(replacement.From, replacement.To, StringComparison.OrdinalIgnoreCase);
