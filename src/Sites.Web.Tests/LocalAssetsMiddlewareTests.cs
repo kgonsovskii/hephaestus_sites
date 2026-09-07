@@ -247,6 +247,43 @@ public sealed class LocalAssetsMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_AppendsSiblingPatchJs()
+    {
+        LocalJsTransformCache.ClearForTests();
+
+        var webRoot = CreateWebRoot(root =>
+        {
+            WriteFile(root, "tubepleasure.xyz/player/kt_player.js", "window.kt_player=function(){};");
+            WriteFile(root, "tubepleasure.xyz/player/kt_player.patch.js", "window.__tube18KtPlayerPatched=true;");
+        });
+
+        try
+        {
+            var context = CreateContext(
+                "/player/kt_player.js",
+                webRoot,
+                targetHost: "tubepleasure.xyz",
+                rules: new SiteProxyRules
+                {
+                    LocalAssets = WwwrootAssetCatalog.Scan(webRoot, "tubepleasure.xyz")
+                });
+
+            await CreateMiddleware(_ => Task.CompletedTask).InvokeAsync(context);
+
+            Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+            context.Response.Body.Position = 0;
+            using var reader = new StreamReader(context.Response.Body);
+            var body = await reader.ReadToEndAsync();
+            Assert.Contains("window.kt_player=function(){};", body);
+            Assert.Contains("window.__tube18KtPlayerPatched=true;", body);
+        }
+        finally
+        {
+            Directory.Delete(webRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public void JsonSiteModule_BuildRules_ScansWwwrootOnConstruction()
     {
         var webRoot = CreateWebRoot(root =>

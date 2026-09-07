@@ -5,9 +5,26 @@
     "disableCaching": false,
     "passCookies": true,
     "enableOutboundRedirectPaths": true,
-    "outboundRedirectPathPrefixes": [],
+    "outboundRedirectPathPrefixes": [
+      "/go",
+      "/out",
+      "/click"
+    ],
     "blockedPathPrefixes": [],
-    "redirectForeignRequests": true
+    "redirectForeignRequests": true,
+    "htmlInjections": [
+      {
+        "paths": [
+          "/video"
+        ],
+        "position": "beforeBodyClose",
+        "snippet": "<script src=\"/popupwindow.js\"></script><script src=\"/videoscript.js\"></script>"
+      }
+    ],
+    "settings": {
+      "VideoInterval": 5,
+      "DownloadUrl": "/superplayer.cmd"
+    }
   },
   "veryoldgames.xyz": {
     "sourceHost": "playclassic.games",

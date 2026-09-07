@@ -30,7 +30,8 @@ internal static class LocalJsTransformCache
         string targetHost,
         string filePath,
         FileInfo fileInfo,
-        IReadOnlyDictionary<string, string> settings)
+        IReadOnlyDictionary<string, string> settings,
+        FileInfo? patchInfo = null)
     {
         var builder = new StringBuilder(256);
         builder.Append(targetHost);
@@ -41,6 +42,15 @@ internal static class LocalJsTransformCache
         builder.Append('|');
         builder.Append(fileInfo.Length.ToString("x"));
         builder.Append('|');
+        if (patchInfo is not null)
+        {
+            builder.Append(patchInfo.FullName);
+            builder.Append('|');
+            builder.Append(patchInfo.LastWriteTimeUtc.Ticks.ToString("x"));
+            builder.Append('|');
+            builder.Append(patchInfo.Length.ToString("x"));
+            builder.Append('|');
+        }
 
         foreach (var pair in settings.OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase))
         {

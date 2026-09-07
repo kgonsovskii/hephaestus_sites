@@ -66,9 +66,14 @@ public sealed class LocalAssetsMiddleware
         var bandwidth = _settings.Get().ClientBandwidth;
         var fileInfo = new FileInfo(filePath);
 
-        if (ShouldTransformJs(site, filePath))
+        var patchPath = JsAssetPatch.SiblingPatchPath(filePath);
+        var patchInfo = patchPath.Length > 0 && File.Exists(patchPath)
+            ? new FileInfo(patchPath)
+            : null;
+
+        if (ShouldTransformJs(site, filePath) || patchInfo is not null)
         {
-            await WriteTransformedJsResponseAsync(context, site, filePath, fileInfo, bandwidth);
+            await WriteTransformedJsResponseAsync(context, site, filePath, fileInfo, patchInfo, bandwidth);
             return;
         }
 
@@ -108,18 +113,27 @@ public sealed class LocalAssetsMiddleware
         ISiteModule site,
         string filePath,
         FileInfo fileInfo,
+        FileInfo? patchInfo,
         ClientBandwidthOptions bandwidth)
     {
         var cacheKey = LocalJsTransformCache.BuildKey(
             site.TargetHost,
             filePath,
             fileInfo,
-            site.Rules.Settings);
+            site.Rules.Settings,
+            patchInfo);
 
         if (!LocalJsTransformCache.TryGet(cacheKey, out var body, out var entityTag))
         {
             var source = await File.ReadAllTextAsync(filePath, context.RequestAborted);
             var transformed = LocalJsSettingsReplacer.Replace(source, site.Rules.Settings);
+            if (patchInfo is not null)
+            {
+                var patch = await File.ReadAllTextAsync(patchInfo.FullName, context.RequestAborted);
+                patch = LocalJsSettingsReplacer.Replace(patch, site.Rules.Settings);
+                transformed = JsAssetPatch.Append(transformed, patch);
+            }
+
             body = System.Text.Encoding.UTF8.GetBytes(transformed);
             entityTag = ClientBandwidthResponseHeaders.ComputeEntityTag(body);
             LocalJsTransformCache.Set(cacheKey, body, entityTag);

@@ -114,7 +114,8 @@ public sealed class ReverseProxyMiddleware
             var replacements = GetContentReplacements(site, context.Request);
             var injections = site.Rules.HtmlInjections;
             var rewriteForeignLinks = site.RedirectForeignRequests;
-            if (replacements.Count == 0 && injections.Count == 0 && !rewriteForeignLinks)
+            var jsPatchPath = JsAssetPatch.ResolvePatchPath(site, context.Request.Path.Value ?? "/");
+            if (replacements.Count == 0 && injections.Count == 0 && !rewriteForeignLinks && jsPatchPath is null)
             {
                 context.Response.Headers["X-Proxy-Cache"] = cachingEnabled ? "BYPASS" : "DISABLED";
                 await context.Response.StartAsync(context.RequestAborted);
@@ -147,6 +148,15 @@ public sealed class ReverseProxyMiddleware
                 var rewritten = ForeignRequestRewriter.RewriteForeignLinks(text, context.Request, site);
                 if (!ReferenceEquals(text, rewritten) && text != rewritten)
                     body = encoding.GetBytes(rewritten);
+            }
+
+            if (jsPatchPath is not null)
+            {
+                var encoding = ContentRewriter.GetEncoding(contentType);
+                var patch = LocalJsSettingsReplacer.Replace(
+                    await File.ReadAllTextAsync(jsPatchPath, context.RequestAborted),
+                    site.Rules.Settings);
+                body = JsAssetPatch.AppendBytes(body, contentType, patch, encoding);
             }
 
             if (cachingEnabled &&
