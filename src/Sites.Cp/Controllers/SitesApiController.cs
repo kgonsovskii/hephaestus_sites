@@ -3,7 +3,6 @@ using Sites.Cp.Models;
 using Sites.Web;
 using Sites.Web.Abstractions;
 using Sites.Web.Caching;
-using Sites.Web.Git;
 
 namespace Sites.Cp.Controllers;
 
@@ -12,18 +11,15 @@ namespace Sites.Cp.Controllers;
 public sealed class SitesApiController : ControllerBase
 {
     private readonly SitesCatalogService _catalog;
-    private readonly SitesCatalogChangedSignal _catalogChanged;
     private readonly ProxyDiskCache _cache;
     private readonly ProxyCachePolicy _cachePolicy;
 
     public SitesApiController(
         SitesCatalogService catalog,
-        SitesCatalogChangedSignal catalogChanged,
         ProxyDiskCache cache,
         ProxyCachePolicy cachePolicy)
     {
         _catalog = catalog;
-        _catalogChanged = catalogChanged;
         _cache = cache;
         _cachePolicy = cachePolicy;
     }
@@ -66,7 +62,6 @@ public sealed class SitesApiController : ControllerBase
         try
         {
             var created = _catalog.Create(targetHost, definition);
-            _catalogChanged.NotifyCatalogChanged();
             ClearTextCacheAfterSiteChange();
             return CreatedAtAction(nameof(Get), new { targetHost = created.TargetHost }, ToResponse(created));
         }
@@ -86,7 +81,6 @@ public sealed class SitesApiController : ControllerBase
         try
         {
             var updated = _catalog.Update(targetHost, definition);
-            _catalogChanged.NotifyCatalogChanged();
             ClearTextCacheAfterSiteChange();
             return Ok(ToResponse(updated));
         }
@@ -106,7 +100,6 @@ public sealed class SitesApiController : ControllerBase
         try
         {
             _catalog.Delete(targetHost);
-            _catalogChanged.NotifyCatalogChanged();
             ClearTextCacheAfterSiteChange();
             return NoContent();
         }

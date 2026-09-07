@@ -583,12 +583,16 @@
                 <td class="actions">
                     <button type="button" data-edit="${entry.targetHost}">Edit</button>
                     <button type="button" class="danger" data-delete="${entry.targetHost}">Delete</button>
+                    <button type="button" class="secondary" data-pull="${entry.targetHost}">Pull</button>
+                    <button type="button" class="secondary" data-push="${entry.targetHost}">Push</button>
                 </td>`;
             sitesBody.appendChild(tr);
         }
 
         sitesBody.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openEditor(btn.dataset.edit)));
         sitesBody.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteSite(btn.dataset.delete)));
+        sitesBody.querySelectorAll('[data-pull]').forEach(btn => btn.addEventListener('click', () => gitSite('pull', btn.dataset.pull)));
+        sitesBody.querySelectorAll('[data-push]').forEach(btn => btn.addEventListener('click', () => gitSite('push', btn.dataset.push)));
     }
 
     async function loadSites() {
@@ -661,6 +665,26 @@
             await loadSites();
         } catch (err) {
             setStatus(err.message, 'error');
+        }
+    }
+
+    async function gitSite(action, targetHost) {
+        const label = action === 'pull' ? 'Pull' : 'Push';
+        setStatus(`${label} ${targetHost}…`);
+        sitesBody.querySelectorAll('[data-pull], [data-push]').forEach(btn => { btn.disabled = true; });
+        try {
+            const result = await api(`${systemBase}/git/${action}`, { method: 'POST', body: '{}' });
+            const kind = result.succeeded ? 'ok' : 'error';
+            const logTail = Array.isArray(result.log) && result.log.length
+                ? ' ' + result.log.slice(-3).join(' · ')
+                : '';
+            setStatus(`${label} ${targetHost}: ${result.message || ''}${logTail}`.trim(), kind);
+            if (action === 'pull' && result.succeeded)
+                await loadSites();
+        } catch (err) {
+            setStatus(`${label} ${targetHost}: ${err.message}`, 'error');
+        } finally {
+            sitesBody.querySelectorAll('[data-pull], [data-push]').forEach(btn => { btn.disabled = false; });
         }
     }
 

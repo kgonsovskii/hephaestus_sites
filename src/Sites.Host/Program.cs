@@ -4,7 +4,6 @@ using Sites.DataFtp;
 using Sites.Host;
 using Sites.Web;
 using Sites.Web.Abstractions;
-using Sites.Web.Git;
 
 SitesProfileResolver.Initialize();
 
@@ -53,7 +52,6 @@ if (repoRoot is not null)
         SitesProfileResolver.ResolveWebRootPath(repoRoot));
 }
 
-BootstrapGitSync(app.Services, logger);
 LogHostEndpoints(app.Configuration, app.Environment, logger);
 
 if (registry.IsSingleSiteMode)
@@ -117,19 +115,3 @@ static string? ParseSelectedSiteName(string[] args)
     return null;
 }
 
-static void BootstrapGitSync(IServiceProvider services, ILogger logger)
-{
-    try
-    {
-        var git = services.GetRequiredService<SitesGitService>();
-        var result = git.SyncAsync().GetAwaiter().GetResult();
-        if (result.Succeeded)
-            logger.LogInformation("Sites git bootstrap sync: {Message}", result.Message);
-        else
-            logger.LogWarning("Sites git bootstrap sync: {Message}", result.Message);
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(ex, "Sites git bootstrap sync failed.");
-    }
-}

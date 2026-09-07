@@ -27,7 +27,7 @@ public static class SitesCpExtensions
     {
         services.Configure<CpOptions>(configuration.GetSection(CpOptions.SectionName));
         services.Configure<DeployOptions>(configuration.GetSection(DeployOptions.SectionName));
-        services.AddSitesGitMaintenance(configuration);
+        services.AddSitesGit(configuration);
 
         services.AddSingleton<SitesCloneRunStore>();
         services.AddScoped<SitesCloneService>();

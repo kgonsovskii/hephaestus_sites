@@ -85,16 +85,26 @@ public sealed class SitesSystemApiController : ControllerBase
     public ActionResult<SitesGitStatus> GitStatus() => Ok(_git.GetStatus());
 
     [HttpPost("git/pull")]
-    public async Task<ActionResult<SitesGitOperationResult>> GitPull(CancellationToken cancellationToken) =>
-        Ok(await _git.PullAsync(cancellationToken));
+    public async Task<ActionResult<SitesGitOperationResult>> GitPull(CancellationToken cancellationToken)
+    {
+        var result = await _git.PullAsync(cancellationToken);
+        if (result.Succeeded)
+            _catalog.ReloadRegistry();
+        return Ok(result);
+    }
 
     [HttpPost("git/push")]
     public async Task<ActionResult<SitesGitOperationResult>> GitPush(CancellationToken cancellationToken) =>
         Ok(await _git.PushAsync(cancellationToken));
 
     [HttpPost("git/sync")]
-    public async Task<ActionResult<SitesGitOperationResult>> GitSync(CancellationToken cancellationToken) =>
-        Ok(await _git.SyncAsync(cancellationToken));
+    public async Task<ActionResult<SitesGitOperationResult>> GitSync(CancellationToken cancellationToken)
+    {
+        var result = await _git.SyncAsync(cancellationToken);
+        if (result.Succeeded)
+            _catalog.ReloadRegistry();
+        return Ok(result);
+    }
 
     [HttpPost("clone")]
     public ActionResult<CloneStartResponse> StartClone([FromBody] CloneStartRequest request)
