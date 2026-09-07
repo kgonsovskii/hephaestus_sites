@@ -1,6 +1,16 @@
 {
-  "veryoldgames.xyz": {
+  "tubepleasure.xyx": {
     "sourceHost": "tube18.sex",
+    "targetHost": "",
+    "disableCaching": false,
+    "passCookies": true,
+    "enableOutboundRedirectPaths": true,
+    "outboundRedirectPathPrefixes": [],
+    "blockedPathPrefixes": [],
+    "redirectForeignRequests": true
+  },
+  "veryoldgames.xyz": {
+    "sourceHost": "old-games.net",
     "targetHost": "",
     "disableCaching": false,
     "passCookies": true,
