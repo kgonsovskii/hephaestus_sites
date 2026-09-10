@@ -21,13 +21,14 @@ public sealed class SitesWebRootPathProvider : ISitesWebRootPathProvider
                 return _cachedPath;
 
             var repoRoot = RepositoryPaths.TryResolveRoot() ?? RepositoryPaths.ResolveRoot();
-            _cachedPath = SitesProfileResolver.ResolveWebRootPath(repoRoot, profile);
+            _cachedPath = SitesProfileResolver.ResolveProfileDirectory(repoRoot, profile);
             _cachedProfile = profile;
             Directory.CreateDirectory(_cachedPath);
+            Directory.CreateDirectory(Path.Combine(_cachedPath, WebRootPaths.DefaultDirectoryName));
             _logger.LogInformation(
-                "Sites FTP root (profile {Profile}): {FtpRoot}",
-                profile,
-                _cachedPath);
+                "Sites FTP root is the profile folder {FtpRoot} (sites in {Wwwroot}/)",
+                _cachedPath,
+                WebRootPaths.DefaultDirectoryName);
             return _cachedPath;
         }
     }
