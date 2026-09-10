@@ -10,6 +10,12 @@ sites_git_pat_encrypted_blob_path() {
   printf '%s/git-pat.enc' "${script_dir}"
 }
 
+sites_data_git_pat_encrypted_blob_path() {
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  printf '%s/git-pat-data.enc' "${script_dir}"
+}
+
 encrypt_sites_git_pat() {
   local plain="$1"
   local key="${SITES_GIT_PAT_KEY}"
@@ -53,6 +59,16 @@ read_sites_git_pat_from_encrypted_file() {
   decrypt_sites_git_pat "$(tr -d '[:space:]' < "${path}")"
 }
 
+read_sites_data_git_pat_from_encrypted_file() {
+  local path
+  path="$(sites_data_git_pat_encrypted_blob_path)"
+  if [ ! -f "${path}" ]; then
+    echo "Encrypted data PAT file not found: ${path}" >&2
+    return 1
+  fi
+  decrypt_sites_git_pat "$(tr -d '[:space:]' < "${path}")"
+}
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   action="${1:-}"
   case "${action}" in
@@ -67,8 +83,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     show)
       read_sites_git_pat_from_encrypted_file
       ;;
+    show-data)
+      read_sites_data_git_pat_from_encrypted_file
+      ;;
     *)
-      echo "usage: $0 encrypt|decrypt|show [value]" >&2
+      echo "usage: $0 encrypt|decrypt|show|show-data [value]" >&2
       exit 1
       ;;
   esac

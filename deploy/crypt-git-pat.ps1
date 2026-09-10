@@ -1,6 +1,6 @@
 # Sites Git PAT obfuscation (XOR + hex). Not strong crypto — keeps github_pat_* out of git plaintext.
 param(
-    [ValidateSet('encrypt', 'decrypt', 'show')][string]$Action,
+    [ValidateSet('encrypt', 'decrypt', 'show', 'show-data')][string]$Action,
     [string]$Value
 )
 
@@ -10,6 +10,10 @@ $script:SitesGitPatKey = 'SitesGitKey42'
 
 function Get-SitesGitPatEncryptedBlobPath {
     Join-Path $PSScriptRoot 'git-pat.enc'
+}
+
+function Get-SitesDataGitPatEncryptedBlobPath {
+    Join-Path $PSScriptRoot 'git-pat-data.enc'
 }
 
 function Encrypt-SitesGitPat {
@@ -48,6 +52,14 @@ function Read-SitesGitPatFromEncryptedFile {
     return Decrypt-SitesGitPat ((Get-Content -LiteralPath $path -Raw).Trim())
 }
 
+function Read-SitesDataGitPatFromEncryptedFile {
+    $path = Get-SitesDataGitPatEncryptedBlobPath
+    if (-not (Test-Path -LiteralPath $path)) {
+        throw "Encrypted data PAT file not found: $path"
+    }
+    return Decrypt-SitesGitPat ((Get-Content -LiteralPath $path -Raw).Trim())
+}
+
 if ($PSBoundParameters.ContainsKey('Action') -and $MyInvocation.InvocationName -ne '.') {
     switch ($Action) {
         'encrypt' {
@@ -60,6 +72,9 @@ if ($PSBoundParameters.ContainsKey('Action') -and $MyInvocation.InvocationName -
         }
         'show' {
             Read-SitesGitPatFromEncryptedFile
+        }
+        'show-data' {
+            Read-SitesDataGitPatFromEncryptedFile
         }
     }
 }

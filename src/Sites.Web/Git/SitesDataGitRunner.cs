@@ -24,11 +24,11 @@ public static class SitesDataGitRunner
         }
 
         var codeRoot = RepositoryPaths.ResolveRoot();
-        if (!SitesGitPatFile.TryLoadToken(codeRoot, out _)
-            || !SitesGitPatFile.TryBuildAuthenticatedCloneUrl(RepositoryUrl, codeRoot, out var cloneUrl))
+        if (!SitesGitPatFile.TryLoadDataToken(codeRoot, out _)
+            || !SitesGitPatFile.TryBuildAuthenticatedDataCloneUrl(RepositoryUrl, codeRoot, out var cloneUrl))
         {
             throw new InvalidOperationException(
-                $"Cannot clone {RepositoryUrl}: missing PAT at {SitesGitPatFile.ResolveEncryptedPath(codeRoot)}.");
+                $"Cannot clone {RepositoryUrl}: missing PAT at {SitesGitPatFile.ResolveEncryptedDataPath(codeRoot)}.");
         }
 
         if (Directory.Exists(dataDir))

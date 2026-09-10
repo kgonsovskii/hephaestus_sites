@@ -31,7 +31,7 @@ public sealed class SitesGitService
         var status = new SitesGitStatus
         {
             RepositoryRoot = dataRoot,
-            HasPat = SitesGitPatFile.TryLoadToken(RepositoryPaths.ResolveRoot(), out _),
+            HasPat = SitesGitPatFile.TryLoadDataToken(RepositoryPaths.ResolveRoot(), out _),
             IsRepository = Directory.Exists(Path.Combine(dataRoot, ".git"))
         };
 
@@ -126,8 +126,8 @@ public sealed class SitesGitService
             }
         }
 
-        if (!SitesGitPatFile.TryLoadToken(codeRoot, out var token))
-            return Fail($"Missing GitHub PAT at {SitesGitPatFile.ResolveEncryptedPath(codeRoot)}.", log);
+        if (!SitesGitPatFile.TryLoadDataToken(codeRoot, out var token))
+            return Fail($"Missing GitHub PAT at {SitesGitPatFile.ResolveEncryptedDataPath(codeRoot)}.", log);
 
         EnsureGitIdentity(dataRoot, log);
         SetAuthenticatedRemote(dataRoot, token, log);
@@ -150,8 +150,8 @@ public sealed class SitesGitService
         if (!Directory.Exists(Path.Combine(dataRoot, ".git")))
             return Fail("hephaestus_sites_data is not a git repository.", log);
 
-        if (!SitesGitPatFile.TryLoadToken(codeRoot, out var token))
-            return Fail($"Missing GitHub PAT at {SitesGitPatFile.ResolveEncryptedPath(codeRoot)}.", log);
+        if (!SitesGitPatFile.TryLoadDataToken(codeRoot, out var token))
+            return Fail($"Missing GitHub PAT at {SitesGitPatFile.ResolveEncryptedDataPath(codeRoot)}.", log);
 
         EnsureGitIdentity(dataRoot, log);
         SetAuthenticatedRemote(dataRoot, token, log);

@@ -65,7 +65,7 @@ public static class RemoteDeployRunner
                 exports.Add($"export SITES_GIT_CLONE_URL='{EscapeShell(cloneUrl)}'");
             }
 
-            if (Sites.Web.Abstractions.SitesGitPatFile.TryBuildAuthenticatedCloneUrl(
+            if (Sites.Web.Abstractions.SitesGitPatFile.TryBuildAuthenticatedDataCloneUrl(
                     options.DataGitRepositoryUrl,
                     repoRoot,
                     out var dataCloneUrl))

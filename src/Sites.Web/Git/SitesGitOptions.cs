@@ -8,7 +8,7 @@ public sealed class SitesGitOptions
 
     public string DefaultBranch { get; set; } = "main";
 
-    public string EncryptedPatFileName { get; set; } = "git-pat.enc";
+    public string EncryptedPatFileName { get; set; } = "git-pat-data.enc";
 
     /// <summary>How often the host pulls <c>hephaestus_sites_data</c>, reloads sites.json, then pushes local changes.</summary>
     public TimeSpan PullInterval { get; set; } = TimeSpan.FromHours(6);

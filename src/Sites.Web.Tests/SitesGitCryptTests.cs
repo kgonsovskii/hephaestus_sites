@@ -23,4 +23,17 @@ public sealed class SitesGitCryptTests
             "https://x-access-token:github_pat_abc@github.com/kgonsovskii/hephaestus_sites.git",
             url);
     }
+
+    [Fact]
+    public void DataPatFile_IsSeparateFromCodePatFile()
+    {
+        var repoRoot = RepositoryPaths.ResolveRoot();
+        Assert.Equal("git-pat.enc", SitesGitPatFile.EncryptedFileName);
+        Assert.Equal("git-pat-data.enc", SitesGitPatFile.EncryptedDataFileName);
+        Assert.True(File.Exists(SitesGitPatFile.ResolveEncryptedDataPath(repoRoot)));
+        Assert.True(SitesGitPatFile.TryLoadDataToken(repoRoot, out var dataToken));
+        Assert.StartsWith("github_pat_", dataToken, StringComparison.Ordinal);
+        Assert.True(SitesGitPatFile.TryLoadToken(repoRoot, out var codeToken));
+        Assert.NotEqual(dataToken, codeToken);
+    }
 }

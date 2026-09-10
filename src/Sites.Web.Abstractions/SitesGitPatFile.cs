@@ -3,31 +3,23 @@ namespace Sites.Web.Abstractions;
 public static class SitesGitPatFile
 {
     public const string EncryptedFileName = "git-pat.enc";
+    public const string EncryptedDataFileName = "git-pat-data.enc";
     public const string LegacyPlainFileName = "github-pat.txt";
 
     public static string ResolveEncryptedPath(string? repoRoot = null) =>
         Path.Combine(RepositoryPaths.DeployDirectory(repoRoot), EncryptedFileName);
+
+    public static string ResolveEncryptedDataPath(string? repoRoot = null) =>
+        Path.Combine(RepositoryPaths.DeployDirectory(repoRoot), EncryptedDataFileName);
 
     public static string ResolveLegacyPlainPath(string? repoRoot = null) =>
         Path.Combine(RepositoryPaths.DeployDirectory(repoRoot), LegacyPlainFileName);
 
     public static bool TryLoadToken(string? repoRoot, out string token)
     {
-        token = string.Empty;
         repoRoot ??= RepositoryPaths.ResolveRoot();
-        var encPath = ResolveEncryptedPath(repoRoot);
-        if (File.Exists(encPath))
-        {
-            try
-            {
-                token = SitesGitCrypt.Decrypt(File.ReadAllText(encPath)).Trim();
-                return IsUsableToken(token);
-            }
-            catch
-            {
-                return false;
-            }
-        }
+        if (TryLoadEncrypted(ResolveEncryptedPath(repoRoot), out token))
+            return true;
 
         var plainPath = ResolveLegacyPlainPath(repoRoot);
         if (!File.Exists(plainPath))
@@ -36,6 +28,9 @@ public static class SitesGitPatFile
         token = File.ReadAllText(plainPath).Trim();
         return IsUsableToken(token);
     }
+
+    public static bool TryLoadDataToken(string? repoRoot, out string token) =>
+        TryLoadEncrypted(ResolveEncryptedDataPath(repoRoot), out token);
 
     public static string TokenFingerprint(string token) =>
         token.Length >= 20 ? token[..20] + "..." : token;
@@ -51,9 +46,19 @@ public static class SitesGitPatFile
         return $"https://x-access-token:{token}@{uri.Host}{uri.PathAndQuery.TrimEnd('/')}";
     }
 
-    public static bool TryBuildAuthenticatedCloneUrl(string repositoryUrl, string? repoRoot, out string cloneUrl)
+    public static bool TryBuildAuthenticatedCloneUrl(string repositoryUrl, string? repoRoot, out string cloneUrl) =>
+        TryBuildAuthenticatedUrl(repositoryUrl, TryLoadToken, repoRoot, out cloneUrl);
+
+    public static bool TryBuildAuthenticatedDataCloneUrl(string repositoryUrl, string? repoRoot, out string cloneUrl) =>
+        TryBuildAuthenticatedUrl(repositoryUrl, TryLoadDataToken, repoRoot, out cloneUrl);
+
+    private static bool TryBuildAuthenticatedUrl(
+        string repositoryUrl,
+        TryLoadPat load,
+        string? repoRoot,
+        out string cloneUrl)
     {
-        if (!TryLoadToken(repoRoot, out var token))
+        if (!load(repoRoot, out var token))
         {
             cloneUrl = repositoryUrl;
             return false;
@@ -63,8 +68,28 @@ public static class SitesGitPatFile
         return true;
     }
 
+    private static bool TryLoadEncrypted(string encPath, out string token)
+    {
+        token = string.Empty;
+        if (!File.Exists(encPath))
+            return false;
+
+        try
+        {
+            token = SitesGitCrypt.Decrypt(File.ReadAllText(encPath)).Trim();
+            return IsUsableToken(token);
+        }
+        catch
+        {
+            token = string.Empty;
+            return false;
+        }
+    }
+
     private static bool IsUsableToken(string token) =>
         token.Length > 0
         && !token.StartsWith("ghp_your", StringComparison.OrdinalIgnoreCase)
         && !token.StartsWith("github_pat_your", StringComparison.OrdinalIgnoreCase);
+
+    private delegate bool TryLoadPat(string? repoRoot, out string token);
 }

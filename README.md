@@ -7,7 +7,7 @@ parent/
   profile.txt                 — active profile name
   hephaestus_sites/           — this repo (code)
     src/                      — solution and C# projects
-    deploy/                   — remote install + PAT
+    deploy/                   — remote install + code PAT + data PAT
     output/  release/ cert/
   hephaestus_sites_data/      — sibling data repo (dynamic)
     {profile}/sites.json

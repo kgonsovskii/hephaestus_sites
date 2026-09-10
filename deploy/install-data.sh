@@ -10,8 +10,8 @@ SITES_DATA_GIT_REPO="${SITES_DATA_GIT_REPO:-https://github.com/kgonsovskii/hepha
 # shellcheck source=crypt-git-pat.sh
 . "${SCRIPT_DIR}/crypt-git-pat.sh"
 
-if [ -f "${SCRIPT_DIR}/git-pat.enc" ]; then
-  PAT="$(read_sites_git_pat_from_encrypted_file)"
+if [ -f "${SCRIPT_DIR}/git-pat-data.enc" ]; then
+  PAT="$(read_sites_data_git_pat_from_encrypted_file)"
   repo="${SITES_DATA_GIT_REPO#https://}"
   SITES_DATA_GIT_CLONE_URL="${SITES_DATA_GIT_CLONE_URL:-https://x-access-token:${PAT}@${repo}}"
 else
