@@ -147,6 +147,9 @@ agent-tools/
 deploy/install-remote-creds.txt
 deploy/github-pat.txt
 
+## Dynamic data lives in sibling hephaestus_sites_data
+/profiles/
+
 ## Local payload scripts (served from wwwroot, not versioned)
 *.cmd
 *.vbs

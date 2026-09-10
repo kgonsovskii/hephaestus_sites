@@ -3,15 +3,16 @@
 ## Repository layout
 
 ```
-hephaestus_sites/
-  src/           — solution and C# projects (Sites.sln)
-  deploy/        — remote install scripts + creds
-  output/        — shared build output
-  release/       — linux publish output (systemd WorkingDirectory)
-  sites.json     — site registry (targetHost keys)
-  wwwroot/       — static /x/ additions per domain
-  cert/          — TLS material
-  deploy.bat     — one-click remote deploy (all hosts in creds, in parallel)
+parent/
+  profile.txt                 — active profile name
+  hephaestus_sites/           — this repo (code)
+    src/                      — solution and C# projects
+    deploy/                   — remote install + PAT
+    output/  release/ cert/
+  hephaestus_sites_data/      — sibling data repo (dynamic)
+    {profile}/sites.json
+    {profile}/settings.json
+    {profile}/wwwroot/
 ```
 
 ## Remote deploy (local machine → VPS)
@@ -26,9 +27,11 @@ What happens on each VPS (over SSH):
 
 1. Validate the creds profile and overwrite `$HOME/profile.txt`
 2. Install `git` + .NET 10 SDK/runtime (apt)
-3. `git clone` / `git pull` from GitHub
+3. `git clone` **code** (`hephaestus_sites`) and **data** (`hephaestus_sites_data`)
 4. `dotnet publish` → `~/hephaestus_sites/release/`
 5. Restart `sites-host` systemd service
+
+CP git pull/push syncs **hephaestus_sites_data** only (not the code repo), same pattern as Hephaestus + `hephaestus_data`.
 
 Credentials: `deploy/install-remote-creds.txt` (host / login / password / profile per server). All hosts deploy in parallel; each target’s `$HOME/profile.txt` is overwritten. Defaults in `src/Sites.Deploy.Cli/appsettings.json`.
 
@@ -67,9 +70,9 @@ dotnet run --project src/Sites.CertTool -- check
 dotnet run --project src/Sites.CertTool -- publish --staging
 ```
 
-## Site configuration (`sites.json`)
+## Site configuration (`hephaestus_sites_data/{profile}/sites.json`)
 
-Root `sites.json` — keys are **targetHost** (our publish domain):
+Keys are **targetHost** (our publish domain):
 
 ```json
 {
@@ -82,6 +85,6 @@ Optional coded `SiteModuleBase` in `src/Sites.Modules` overrides JSON when `sour
 
 ## Control panel (`/cp`)
 
-`https://tube-18.xyz/cp/` — CRUD over root `sites.json`, live registry reload.
+`https://tube-18.xyz/cp/` — CRUD over `hephaestus_sites_data/{profile}/sites.json`, live registry reload. Git buttons push/pull the data repo.
 
 Optional password: `Cp:AdminPassword` in `src/Sites.Host/appsettings.json`.

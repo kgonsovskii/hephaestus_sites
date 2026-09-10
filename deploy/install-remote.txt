@@ -11,10 +11,14 @@ PROFILE_FILE="$(dirname "${SITES_CLONE_DIR}")/profile.txt"
 printf '%s\n' "${SITES_PROFILE}" > "${PROFILE_FILE}"
 echo "[sites-deploy] profile ${SITES_PROFILE} overwritten -> ${PROFILE_FILE}"
 SITES_GIT_CLONE_URL="${SITES_GIT_CLONE_URL:-${SITES_GIT_REPO}}"
+SITES_DATA_GIT_REPO="${SITES_DATA_GIT_REPO:-https://github.com/kgonsovskii/hephaestus_sites_data.git}"
+SITES_DATA_GIT_CLONE_URL="${SITES_DATA_GIT_CLONE_URL:-${SITES_DATA_GIT_REPO}}"
+SITES_DATA_DIR="${SITES_DATA_DIR:-$(dirname "${SITES_CLONE_DIR}")/hephaestus_sites_data}"
 
 echo "[sites-deploy] clone dir: ${SITES_CLONE_DIR}"
 echo "[sites-deploy] publish dir: ${SITES_PUBLISH_DIR}"
 echo "[sites-deploy] git repo: ${SITES_GIT_REPO}"
+echo "[sites-deploy] data repo: ${SITES_DATA_GIT_REPO}"
 
 wait_for_apt_dpkg_lock
 apt_get update
@@ -52,6 +56,21 @@ else
   echo "[sites-deploy] Fresh clone from GitHub"
   rm -rf "${SITES_CLONE_DIR}"
   git clone --depth 1 "${SITES_GIT_CLONE_URL}" "${SITES_CLONE_DIR}"
+fi
+
+if [ -d "${SITES_DATA_DIR}/.git" ]; then
+  echo "[sites-deploy] Updating existing hephaestus_sites_data"
+  git -C "${SITES_DATA_DIR}" fetch origin
+  data_branch="$(git -C "${SITES_DATA_DIR}" rev-parse --abbrev-ref HEAD)"
+  if [ "${data_branch}" = "HEAD" ]; then
+    git -C "${SITES_DATA_DIR}" reset --hard origin/HEAD
+  else
+    git -C "${SITES_DATA_DIR}" reset --hard "origin/${data_branch}"
+  fi
+else
+  echo "[sites-deploy] Fresh clone of hephaestus_sites_data"
+  rm -rf "${SITES_DATA_DIR}"
+  git clone --depth 1 "${SITES_DATA_GIT_CLONE_URL}" "${SITES_DATA_DIR}"
 fi
 
 echo "[sites-deploy] local install (publish + systemd)"

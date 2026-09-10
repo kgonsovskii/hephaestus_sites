@@ -72,8 +72,8 @@
     </div>
 
     <div class="actions" style="margin:0 0 16px">
-        <button type="button" class="git-push" id="gitPushBtn" title="git add/commit/push the whole repository (all sites)">Push to git</button>
-        <button type="button" class="git-pull" id="gitPullBtn" title="git pull the whole repository (all sites)">Pull from git</button>
+                <button type="button" class="git-push" id="gitPushBtn" title="git add/commit/push hephaestus_sites_data (profile sites.json, wwwroot)">Push data to git</button>
+                <button type="button" class="git-pull" id="gitPullBtn" title="git pull hephaestus_sites_data">Pull data from git</button>
     </div>
 
     <div class="card">
@@ -217,12 +217,12 @@
 
         <div class="section">
             <h4>Local asset aliases</h4>
-            <div class="hint">Files under <code>profiles/{profile}/wwwroot/{targetHost}/</code> are served automatically at the same URL path after reload/invalidate. Use this table only for extra URL aliases.</div>
+            <div class="hint">Files under <code>hephaestus_sites_data/{profile}/wwwroot/{targetHost}/</code> are served automatically at the same URL path after reload/invalidate. Use this table only for extra URL aliases.</div>
             <table class="dyn-table" id="assetsTable">
                 <thead>
                 <tr>
                     <th>Request path</th>
-                    <th>File (under profiles/{profile}/wwwroot/{targetHost}/)</th>
+                    <th>File (under hephaestus_sites_data/{profile}/wwwroot/{targetHost}/)</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -672,7 +672,7 @@
     }
 
     async function gitRepo(action) {
-        const label = action === 'pull' ? 'Pull from git' : 'Push to git';
+        const label = action === 'pull' ? 'Pull data from git' : 'Push data to git';
         const pullBtn = document.getElementById('gitPullBtn');
         const pushBtn = document.getElementById('gitPushBtn');
         setStatus(`${label} (all sites)…`);

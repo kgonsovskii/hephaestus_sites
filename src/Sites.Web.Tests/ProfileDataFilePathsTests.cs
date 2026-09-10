@@ -16,7 +16,7 @@ public sealed class ProfileDataFilePathsTests
         Assert.Equal(
             Path.GetFullPath(expected).Replace('\\', '/'),
             Path.GetFullPath(resolved).Replace('\\', '/'));
-        Assert.Contains("/profiles/default/sites.json", resolved.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("/output/profiles/", resolved.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/hephaestus_sites_data/default/sites.json", resolved.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/profiles/default/sites.json", resolved.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase);
     }
 }

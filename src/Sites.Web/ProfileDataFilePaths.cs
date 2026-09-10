@@ -8,18 +8,12 @@ internal static class ProfileDataFilePaths
     {
         var repoRoot = RepositoryPaths.TryResolveRoot();
         if (repoRoot is not null)
-        {
-            var repoPath = resolveProfilePath(repoRoot);
-            if (File.Exists(repoPath))
-                return Path.GetFullPath(repoPath);
-        }
+            return Path.GetFullPath(resolveProfilePath(repoRoot));
 
-        var publishedPath = Path.Combine(
+        return Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory,
-            SitesProfileResolver.ProfilesDirectoryName,
+            SitesProfileResolver.SitesDataDirectoryName,
             SitesProfileResolver.Current,
-            fileName);
-
-        return Path.GetFullPath(publishedPath);
+            fileName));
     }
 }

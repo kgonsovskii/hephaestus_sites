@@ -9,7 +9,7 @@ namespace Sites.Web.Git;
 public sealed class SitesGitService
 {
     private const string SyncStashMessage = "sites-pre-sync";
-    private const string SyncCommitMessage = "Sites CP sync";
+    private const string SyncCommitMessage = "Sites data sync";
 
     private static string NetworkGitConfig =>
         "-c credential.helper= -c core.askPass= -c credential.useHttpPath=true "
@@ -27,27 +27,27 @@ public sealed class SitesGitService
 
     public SitesGitStatus GetStatus()
     {
-        var repoRoot = RepositoryPaths.ResolveRoot();
+        var dataRoot = SitesProfileResolver.ResolveSitesDataBase();
         var status = new SitesGitStatus
         {
-            RepositoryRoot = repoRoot,
-            HasPat = SitesGitPatFile.TryLoadToken(repoRoot, out _),
-            IsRepository = Directory.Exists(Path.Combine(repoRoot, ".git"))
+            RepositoryRoot = dataRoot,
+            HasPat = SitesGitPatFile.TryLoadToken(RepositoryPaths.ResolveRoot(), out _),
+            IsRepository = Directory.Exists(Path.Combine(dataRoot, ".git"))
         };
 
         if (!status.IsRepository)
         {
-            status = status with { LastError = "Repository is not a git checkout (.git missing)." };
+            status = status with { LastError = "hephaestus_sites_data is not a git checkout (.git missing)." };
             return status;
         }
 
-        if (!TryRunGit("rev-parse --abbrev-ref HEAD", repoRoot, out var branch, out var branchError))
+        if (!TryRunGit("rev-parse --abbrev-ref HEAD", dataRoot, out var branch, out var branchError))
         {
             status = status with { LastError = branchError };
             return status;
         }
 
-        var changed = ListChangedFiles(repoRoot);
+        var changed = ListChangedFiles(dataRoot);
         return status with
         {
             Branch = branch.Trim(),
@@ -110,54 +110,67 @@ public sealed class SitesGitService
     private SitesGitOperationResult PullCore()
     {
         var log = new List<string>();
-        var repoRoot = RepositoryPaths.ResolveRoot();
-        if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
-            return Fail("Not a git repository.", log);
+        var dataRoot = SitesProfileResolver.ResolveSitesDataBase();
+        var codeRoot = RepositoryPaths.ResolveRoot();
+        if (!Directory.Exists(Path.Combine(dataRoot, ".git")))
+        {
+            try
+            {
+                SitesDataGitRunner.EnsureCloned(_logger);
+                log.Add($"cloned {SitesDataGitRunner.RepositoryUrl}");
+                return Success($"Cloned hephaestus_sites_data.", log);
+            }
+            catch (Exception ex)
+            {
+                return Fail(ex.Message, log);
+            }
+        }
 
-        if (!SitesGitPatFile.TryLoadToken(repoRoot, out var token))
-            return Fail($"Missing GitHub PAT at {SitesGitPatFile.ResolveEncryptedPath(repoRoot)}.", log);
+        if (!SitesGitPatFile.TryLoadToken(codeRoot, out var token))
+            return Fail($"Missing GitHub PAT at {SitesGitPatFile.ResolveEncryptedPath(codeRoot)}.", log);
 
-        EnsureGitIdentity(repoRoot, log);
-        SetAuthenticatedRemote(repoRoot, token, log);
+        EnsureGitIdentity(dataRoot, log);
+        SetAuthenticatedRemote(dataRoot, token, log);
 
-        var stashed = TryStash(repoRoot, log);
-        RunGit($"{NetworkGitConfig}fetch origin", repoRoot, log);
-        var branch = ResolveBranch(repoRoot, log);
-        PullPreferRemote(repoRoot, branch, log);
+        var stashed = TryStash(dataRoot, log);
+        RunGit($"{NetworkGitConfig}fetch origin", dataRoot, log);
+        var branch = ResolveBranch(dataRoot, log);
+        PullPreferRemote(dataRoot, branch, log);
         if (stashed)
-            RestoreStash(repoRoot, log);
+            RestoreStash(dataRoot, log);
 
-        return Success($"Pulled origin/{branch}.", log);
+        return Success($"Pulled origin/{branch} (hephaestus_sites_data).", log);
     }
 
     private SitesGitOperationResult PushCore()
     {
         var log = new List<string>();
-        var repoRoot = RepositoryPaths.ResolveRoot();
-        if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
-            return Fail("Not a git repository.", log);
+        var dataRoot = SitesProfileResolver.ResolveSitesDataBase();
+        var codeRoot = RepositoryPaths.ResolveRoot();
+        if (!Directory.Exists(Path.Combine(dataRoot, ".git")))
+            return Fail("hephaestus_sites_data is not a git repository.", log);
 
-        if (!SitesGitPatFile.TryLoadToken(repoRoot, out var token))
-            return Fail($"Missing GitHub PAT at {SitesGitPatFile.ResolveEncryptedPath(repoRoot)}.", log);
+        if (!SitesGitPatFile.TryLoadToken(codeRoot, out var token))
+            return Fail($"Missing GitHub PAT at {SitesGitPatFile.ResolveEncryptedPath(codeRoot)}.", log);
 
-        EnsureGitIdentity(repoRoot, log);
-        SetAuthenticatedRemote(repoRoot, token, log);
-        var branch = ResolveBranch(repoRoot, log);
+        EnsureGitIdentity(dataRoot, log);
+        SetAuthenticatedRemote(dataRoot, token, log);
+        var branch = ResolveBranch(dataRoot, log);
 
-        if (!HasWorkingTreeChanges(repoRoot))
-            return Success("No local changes to push.", log);
+        if (!HasWorkingTreeChanges(dataRoot))
+            return Success("No local data changes to push.", log);
 
-        RunGit("add -A", repoRoot, log);
-        if (!TryRunGit($"commit -m \"{SyncCommitMessage}\"", repoRoot, out _, out var commitError)
+        RunGit("add -A", dataRoot, log);
+        if (!TryRunGit($"commit -m \"{SyncCommitMessage}\"", dataRoot, out _, out var commitError)
             && !commitError.Contains("nothing to commit", StringComparison.OrdinalIgnoreCase))
         {
             return Fail(commitError, log);
         }
 
-        if (!TryRunGit($"{NetworkGitConfig}push origin {branch}", repoRoot, out _, out var pushError))
+        if (!TryRunGit($"{NetworkGitConfig}push origin {branch}", dataRoot, out _, out var pushError))
             return Fail(pushError, log);
 
-        return Success($"Pushed to origin/{branch}.", log);
+        return Success($"Pushed hephaestus_sites_data to origin/{branch}.", log);
     }
 
     private void PullPreferRemote(string repoRoot, string branch, List<string> log)

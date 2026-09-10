@@ -10,8 +10,9 @@ public sealed class SitesProfileResolverTests
         var repo = Path.Combine(sandbox, "repo");
         Directory.CreateDirectory(Path.Combine(repo, "src"));
         File.WriteAllText(Path.Combine(repo, "src", "Sites.sln"), "");
-        Directory.CreateDirectory(Path.Combine(repo, "profiles", "default"));
-        File.WriteAllText(Path.Combine(repo, "profiles", "default", "sites.json"), "{}");
+        var data = Path.Combine(sandbox, SitesProfileResolver.SitesDataDirectoryName, "default");
+        Directory.CreateDirectory(data);
+        File.WriteAllText(Path.Combine(data, "sites.json"), "{}");
         return repo;
     }
 
@@ -56,7 +57,7 @@ public sealed class SitesProfileResolverTests
     }
 
     [Fact]
-    public void ResolveSitesJsonPath_UsesProfilesDirectory()
+    public void ResolveSitesJsonPath_UsesSiblingDataRepo()
     {
         var repo = CreateTempRepositoryRoot();
         try
@@ -65,7 +66,7 @@ public sealed class SitesProfileResolverTests
             File.WriteAllText(profilePath, "default");
             SitesProfileResolver.Initialize(repo);
             var path = SitesProfileResolver.ResolveSitesJsonPath(repo).Replace('\\', '/');
-            Assert.EndsWith("/profiles/default/sites.json", path);
+            Assert.EndsWith("/hephaestus_sites_data/default/sites.json", path);
         }
         finally
         {
@@ -81,7 +82,7 @@ public sealed class SitesProfileResolverTests
         {
             SitesProfileResolver.Initialize(repo);
             var path = SitesProfileResolver.ResolveWebRootPath(repo).Replace('\\', '/');
-            Assert.EndsWith("/profiles/default/wwwroot", path);
+            Assert.EndsWith("/hephaestus_sites_data/default/wwwroot", path);
             Assert.True(Directory.Exists(path));
         }
         finally

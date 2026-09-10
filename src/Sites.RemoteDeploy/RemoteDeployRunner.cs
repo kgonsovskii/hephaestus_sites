@@ -43,6 +43,7 @@ public static class RemoteDeployRunner
         {
             $"export SITES_PROFILE='{EscapeShell(profileName)}'",
             $"export SITES_GIT_REPO='{EscapeShell(options.GitRepositoryUrl)}'",
+            $"export SITES_DATA_GIT_REPO='{EscapeShell(options.DataGitRepositoryUrl)}'",
             $"export SITES_SERVICE_NAME='{EscapeShell(options.ServiceName)}'",
             $"export SITES_RUNTIME_IDENTIFIER='{EscapeShell(options.RuntimeIdentifier)}'"
         };
@@ -54,13 +55,23 @@ public static class RemoteDeployRunner
             exports.Add($"export SITES_PUBLISH_DIR='{EscapeShell(options.PublishDirectory)}'");
 
         var repoRoot = Sites.Web.Abstractions.RepositoryPaths.TryResolveRoot();
-        if (repoRoot is not null
-            && Sites.Web.Abstractions.SitesGitPatFile.TryBuildAuthenticatedCloneUrl(
-                options.GitRepositoryUrl,
-                repoRoot,
-                out var cloneUrl))
+        if (repoRoot is not null)
         {
-            exports.Add($"export SITES_GIT_CLONE_URL='{EscapeShell(cloneUrl)}'");
+            if (Sites.Web.Abstractions.SitesGitPatFile.TryBuildAuthenticatedCloneUrl(
+                    options.GitRepositoryUrl,
+                    repoRoot,
+                    out var cloneUrl))
+            {
+                exports.Add($"export SITES_GIT_CLONE_URL='{EscapeShell(cloneUrl)}'");
+            }
+
+            if (Sites.Web.Abstractions.SitesGitPatFile.TryBuildAuthenticatedCloneUrl(
+                    options.DataGitRepositoryUrl,
+                    repoRoot,
+                    out var dataCloneUrl))
+            {
+                exports.Add($"export SITES_DATA_GIT_CLONE_URL='{EscapeShell(dataCloneUrl)}'");
+            }
         }
 
         return string.Join('\n', exports) + '\n' + remoteScriptText;

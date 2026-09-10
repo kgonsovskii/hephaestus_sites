@@ -14,6 +14,8 @@ public sealed class DeployOptions
 
     public string GitRepositoryUrl { get; set; } = "https://github.com/kgonsovskii/hephaestus_sites.git";
 
+    public string DataGitRepositoryUrl { get; set; } = "https://github.com/kgonsovskii/hephaestus_sites_data.git";
+
     /// <summary>Remote git checkout directory. Empty = $HOME/hephaestus_sites on the VPS.</summary>
     public string CloneDirectory { get; set; } = string.Empty;
 

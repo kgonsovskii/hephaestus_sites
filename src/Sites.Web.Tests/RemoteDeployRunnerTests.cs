@@ -18,6 +18,7 @@ public sealed class RemoteDeployRunnerTests
         var script = RemoteDeployRunner.PrependDeployExports(options, "echo ok\n", "staging");
 
         Assert.Contains("export SITES_PROFILE='staging'", script);
+        Assert.Contains("export SITES_DATA_GIT_REPO='https://github.com/kgonsovskii/hephaestus_sites_data.git'", script);
         Assert.DoesNotContain("hephaestus_sites_staging", script);
     }
 

@@ -43,7 +43,7 @@
 
     <div class="card">
         <h2>Profile</h2>
-        <p class="muted">Profile selects <code>profiles/{name}/sites.json</code> and <code>settings.json</code>. Active profile is in <code>../profile.txt</code> beside the repo.</p>
+        <p class="muted">Profile selects <code>hephaestus_sites_data/{name}/sites.json</code> and <code>settings.json</code> (sibling data repo). Active profile is in <code>../profile.txt</code> beside the code repo.</p>
         <dl class="meta" id="profileMeta"></dl>
         <label for="profileInput">Profile name</label>
         <input type="text" id="profileInput" autocomplete="off" />
@@ -54,7 +54,7 @@
 
     <div class="card">
         <h2>Git</h2>
-        <p class="muted">Automatic <strong>pull then push</strong> every 6 hours. Manual Pull / Push / Sync for the whole repo are on this page and the Sites page.</p>
+        <p class="muted">Automatic <strong>pull then push</strong> of <code>hephaestus_sites_data</code> every 6 hours. The code repo is not pulled/pushed from CP.</p>
         <div id="gitStatus" class="muted">Loading…</div>
         <div class="actions">
             <button type="button" id="gitPullBtn">Pull</button>
@@ -71,7 +71,7 @@
 
     <div class="card">
         <h2>Web FTP</h2>
-        <p class="muted">FTP access to <code>profiles/{profile}/wwwroot</code> (same credentials as Hephaestus: <code>ftp</code> / <code>ftp123</code>).</p>
+        <p class="muted">FTP access to <code>hephaestus_sites_data/{profile}/wwwroot</code> (same credentials as Hephaestus: <code>ftp</code> / <code>ftp123</code>).</p>
         <dl class="meta" id="ftpMeta">
             <dt>Root</dt><dd id="webRootPath">…</dd>
             <dt>URL</dt><dd id="webFtpUrl">…</dd>

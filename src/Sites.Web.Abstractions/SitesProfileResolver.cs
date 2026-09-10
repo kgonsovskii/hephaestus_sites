@@ -4,6 +4,7 @@ public static class SitesProfileResolver
 {
     public const string DefaultProfile = "default";
     public const string ProfileFileName = "profile.txt";
+    public const string SitesDataDirectoryName = "hephaestus_sites_data";
     public const string ProfilesDirectoryName = "profiles";
     public const string SitesJsonFileName = "sites.json";
     public const string SettingsJsonFileName = "settings.json";
@@ -38,11 +39,27 @@ public static class SitesProfileResolver
         return Path.GetFullPath(Path.Combine(parent, ProfileFileName));
     }
 
+    public static string ResolveSitesDataBase(string? repositoryRoot = null)
+    {
+        var repoRoot = Path.GetFullPath(repositoryRoot ?? RepositoryPaths.ResolveRoot());
+        var parent = Directory.GetParent(repoRoot)?.FullName
+            ?? throw new InvalidOperationException(
+                $"Cannot resolve {SitesDataDirectoryName} beside repository root '{repoRoot}': no parent directory.");
+
+        var data = Path.GetFullPath(Path.Combine(parent, SitesDataDirectoryName));
+        if (data.StartsWith(repoRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith(repoRoot + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(data, repoRoot, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"{SitesDataDirectoryName} must be a sibling of the sites repository, not inside it.");
+        }
+
+        return data;
+    }
+
     public static string ResolveProfileDirectory(string repositoryRoot, string? profile = null) =>
-        Path.GetFullPath(Path.Combine(
-            Path.GetFullPath(repositoryRoot),
-            ProfilesDirectoryName,
-            profile ?? Current));
+        Path.GetFullPath(Path.Combine(ResolveSitesDataBase(repositoryRoot), profile ?? Current));
 
     public static string ResolveSitesJsonPath(string repositoryRoot, string? profile = null) =>
         Path.Combine(ResolveProfileDirectory(repositoryRoot, profile), SitesJsonFileName);
@@ -63,9 +80,10 @@ public static class SitesProfileResolver
             return Path.GetFullPath(path);
         }
 
+        var dataBase = Directory.GetParent(Path.GetFullPath(AppContext.BaseDirectory))?.FullName;
         var besideApp = Path.Combine(
-            AppContext.BaseDirectory,
-            ProfilesDirectoryName,
+            dataBase ?? AppContext.BaseDirectory,
+            SitesDataDirectoryName,
             profile,
             webRootDirectory);
         Directory.CreateDirectory(besideApp);

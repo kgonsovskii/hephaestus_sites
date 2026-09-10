@@ -23,7 +23,6 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Content Include="..\..\profiles\**\*" LinkBase="profiles" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

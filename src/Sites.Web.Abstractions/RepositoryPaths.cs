@@ -38,7 +38,7 @@ public static class RepositoryPaths
         Path.Combine(ResolveRoot(startDirectory), "deploy");
 
     public static string ProfilesDirectory(string? startDirectory = null) =>
-        Path.Combine(ResolveRoot(startDirectory), SitesProfileResolver.ProfilesDirectoryName);
+        SitesProfileResolver.ResolveSitesDataBase(TryResolveRoot(startDirectory) ?? ResolveRoot(startDirectory));
 
     public static string OutputDirectory(string? startDirectory = null) =>
         Path.Combine(ResolveRoot(startDirectory), "output");

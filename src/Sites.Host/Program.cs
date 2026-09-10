@@ -6,6 +6,7 @@ using Sites.Web;
 using Sites.Web.Abstractions;
 
 SitesProfileResolver.Initialize();
+Sites.Web.Git.SitesDataGitRunner.EnsureCloned();
 
 var selectedSiteName = Environment.GetEnvironmentVariable("SITES_SITE")
     ?? ParseSelectedSiteName(args);
@@ -45,8 +46,9 @@ var repoRoot = RepositoryPaths.TryResolveRoot(app.Environment.ContentRootPath);
 if (repoRoot is not null)
 {
     logger.LogInformation(
-        "Profile '{Profile}' -> sites {SitesJsonPath}, settings {SettingsJsonPath}, wwwroot {WebRootPath}",
+        "Profile '{Profile}' -> data {DataDir}, sites {SitesJsonPath}, settings {SettingsJsonPath}, wwwroot {WebRootPath}",
         SitesProfileResolver.Current,
+        SitesProfileResolver.ResolveSitesDataBase(repoRoot),
         SitesProfileResolver.ResolveSitesJsonPath(repoRoot),
         SitesProfileResolver.ResolveSettingsJsonPath(repoRoot),
         SitesProfileResolver.ResolveWebRootPath(repoRoot));

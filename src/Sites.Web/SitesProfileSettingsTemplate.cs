@@ -44,7 +44,7 @@ public sealed class SitesProfileSettingsTemplate
 
         throw new InvalidOperationException(
             "Could not resolve Sites settings template. Configure the Sites section in appsettings.json " +
-            $"or provide a valid profiles/{{profile}}/settings.json (missing or invalid Cache:Ttl / other fields). " +
+            $"or provide a valid hephaestus_sites_data/{{profile}}/settings.json (missing or invalid Cache:Ttl / other fields). " +
             $"Appsettings section '{SitesProxyOptions.SectionName}' bound Ttl={fromAppSettings.Cache.Ttl}.");
     }
 

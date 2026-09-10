@@ -15,6 +15,9 @@ printf '%s\n' "${SITES_PROFILE}" > "${PROFILE_FILE}"
 
 echo "[sites-install] profile=${SITES_PROFILE} clone=${SITES_CLONE_DIR} publish=${SITES_PUBLISH_DIR}"
 
+echo "[sites-install] hephaestus_sites_data (sibling)"
+bash "${SCRIPT_DIR}/install-data.sh"
+
 echo "[sites-install] dotnet publish -> ${SITES_PUBLISH_DIR}"
 dotnet publish "${SITES_CLONE_DIR}/src/Sites.Publish/Sites.Publish.csproj" \
   -c Release \

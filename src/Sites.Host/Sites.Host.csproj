@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <Content Include="..\..\cert\sites.pfx" Link="cert\sites.pfx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\cert\sites.pfx')" />
-    <Content Include="..\..\profiles\**\*" LinkBase="profiles" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
