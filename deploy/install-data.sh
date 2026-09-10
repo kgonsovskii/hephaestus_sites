@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Clone sibling hephaestus_sites_data (dynamic profiles). Same idea as Hephaestus install-data.
+# Clone or reset sibling hephaestus_sites_data (dynamic profiles). Same idea as Hephaestus install-data.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,11 +18,24 @@ else
   SITES_DATA_GIT_CLONE_URL="${SITES_DATA_GIT_CLONE_URL:-${SITES_DATA_GIT_REPO}}"
 fi
 
+export GIT_TERMINAL_PROMPT=0
+
 echo "[sites-install-data] clone=${SITES_CLONE_DIR}"
 echo "[sites-install-data] data=${SITES_DATA_DIR}"
 
 if [ -d "${SITES_DATA_DIR}/.git" ]; then
-  echo "[sites-install-data] existing data repo — skip clone (runtime git syncs it)"
+  echo "[sites-install-data] updating existing data repo from origin"
+  git -C "${SITES_DATA_DIR}" remote set-url origin "${SITES_DATA_GIT_CLONE_URL}"
+  git -C "${SITES_DATA_DIR}" fetch origin
+  data_branch="$(git -C "${SITES_DATA_DIR}" rev-parse --abbrev-ref HEAD)"
+  if [ "${data_branch}" = "HEAD" ]; then
+    git -C "${SITES_DATA_DIR}" reset --hard origin/HEAD
+  else
+    git -C "${SITES_DATA_DIR}" reset --hard "origin/${data_branch}"
+  fi
+  git -C "${SITES_DATA_DIR}" clean -fd
+  git -C "${SITES_DATA_DIR}" remote set-url origin "${SITES_DATA_GIT_REPO}"
+  echo "[sites-install-data] done"
   exit 0
 fi
 
@@ -34,4 +47,5 @@ fi
 mkdir -p "$(dirname "${SITES_DATA_DIR}")"
 echo "[sites-install-data] cloning ${SITES_DATA_GIT_REPO}"
 git clone "${SITES_DATA_GIT_CLONE_URL}" "${SITES_DATA_DIR}"
+git -C "${SITES_DATA_DIR}" remote set-url origin "${SITES_DATA_GIT_REPO}"
 echo "[sites-install-data] done"

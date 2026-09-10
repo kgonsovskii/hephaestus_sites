@@ -27,9 +27,9 @@ What happens on each VPS (over SSH):
 
 1. Validate the creds profile and overwrite `$HOME/profile.txt`
 2. Install `git` + .NET 10 SDK/runtime (apt)
-3. `git clone` **code** (`hephaestus_sites`) and **data** (`hephaestus_sites_data`)
+3. `git clone`/`reset` **code** (`hephaestus_sites`) and **data** (`hephaestus_sites_data`)
 4. `dotnet publish` → `~/hephaestus_sites/release/`
-5. Restart `sites-host` systemd service
+5. Restart `sites-host` systemd service — on start it pulls data again and issues/renews Let's Encrypt for every host in that profile's `sites.json`
 
 CP git pull/push syncs **hephaestus_sites_data** only (not the code repo), same pattern as Hephaestus + `hephaestus_data`.
 
@@ -61,7 +61,7 @@ dotnet run --project src/Sites.Host
 2. Set `CertMaintenance:AcmeEmail` in `src/Sites.Host/appsettings.json` (real email — Let's Encrypt rejects `example.com`).
 3. Deploy via `deploy.bat` (or run `Sites.Host` on the server after publish).
 
-`Sites.Host` auto-renews Let's Encrypt certificates (no cron).
+`Sites.Host` pulls `hephaestus_sites_data` and issues/renews Let's Encrypt on every start (deploy or reboot). The background loop checks again after 15s, then every 12 hours.
 
 ## Optional manual cert tool
 

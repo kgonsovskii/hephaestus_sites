@@ -42,4 +42,17 @@ public sealed class RemoteDeployRunnerTests
         Assert.Contains("PROFILE_FILE=\"$(dirname \"${SITES_CLONE_DIR}\")/profile.txt\"", script);
         Assert.DoesNotContain("SITES_PROFILE=\"${SITES_PROFILE:-default}\"", script);
     }
+
+    [Fact]
+    public void InstallDataScript_ResetsExistingDataRepo()
+    {
+        var repoRoot = RepositoryPaths.TryResolveRoot()
+            ?? throw new InvalidOperationException("Repository root not found.");
+        var script = File.ReadAllText(Path.Combine(RepositoryPaths.DeployDirectory(repoRoot), "install-data.sh"));
+
+        Assert.Contains("git-pat-data.enc", script);
+        Assert.Contains("updating existing data repo from origin", script);
+        Assert.Contains("reset --hard", script);
+        Assert.DoesNotContain("skip clone (runtime git syncs it)", script);
+    }
 }

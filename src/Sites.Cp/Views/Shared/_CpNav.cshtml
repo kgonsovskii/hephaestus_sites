@@ -14,7 +14,35 @@
         <a href="@Link("/clone")" class="@NavClass("clone")">Clone</a>
         <a href="@Link("/system")" class="@NavClass("system")">System</a>
     </nav>
-    <form method="post" action="@Link("/auth/logout")" style="margin:0">
-        <button type="submit" class="secondary">Logout</button>
-    </form>
+    <div style="display:flex; gap:8px; align-items:center">
+        <button type="button" id="cpNavRebootBtn">Reboot</button>
+        <form method="post" action="@Link("/auth/logout")" style="margin:0">
+            <button type="submit" class="secondary">Logout</button>
+        </form>
+    </div>
 </header>
+<script>
+(function () {
+    const btn = document.getElementById("cpNavRebootBtn");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+        if (!confirm("Reboot this server now? All sites and CP will stop until the host is back."))
+            return;
+        btn.disabled = true;
+        try {
+            const res = await fetch(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Link("/api/system/reboot"))), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: "{}"
+            });
+            const data = await res.json();
+            alert(data.message || (data.succeeded ? "Reboot requested." : "Reboot failed."));
+        } catch (e) {
+            alert(String(e));
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
+</script>

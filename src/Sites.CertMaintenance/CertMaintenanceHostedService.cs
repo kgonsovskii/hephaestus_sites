@@ -28,6 +28,22 @@ public sealed class CertMaintenanceHostedService : BackgroundService
             return;
         }
 
+        var startupDelay = _options.CurrentValue.StartupDelay;
+        if (startupDelay < TimeSpan.Zero)
+            startupDelay = TimeSpan.Zero;
+
+        try
+        {
+            if (startupDelay > TimeSpan.Zero)
+                await Task.Delay(startupDelay, stoppingToken);
+
+            await RunOnceSafeAsync(stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            return;
+        }
+
         await RunMaintenanceLoopAsync(stoppingToken);
     }
 
@@ -35,10 +51,9 @@ public sealed class CertMaintenanceHostedService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            var options = _options.CurrentValue;
-            var interval = options.CheckInterval <= TimeSpan.Zero
-                ? TimeSpan.FromHours(12)
-                : options.CheckInterval;
+            var interval = _options.CurrentValue.CheckInterval;
+            if (interval <= TimeSpan.Zero)
+                interval = TimeSpan.FromHours(12);
 
             try
             {
@@ -49,14 +64,19 @@ public sealed class CertMaintenanceHostedService : BackgroundService
                 break;
             }
 
-            try
-            {
-                await _worker.RunOnceAsync(stoppingToken);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogError(ex, "Certificate maintenance failed.");
-            }
+            await RunOnceSafeAsync(stoppingToken);
+        }
+    }
+
+    private async Task RunOnceSafeAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            await _worker.RunOnceAsync(stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Certificate maintenance failed.");
         }
     }
 }

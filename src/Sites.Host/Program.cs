@@ -6,7 +6,8 @@ using Sites.Web;
 using Sites.Web.Abstractions;
 
 SitesProfileResolver.Initialize();
-Sites.Web.Git.SitesDataGitRunner.EnsureCloned();
+using (var bootLog = LoggerFactory.Create(builder => builder.AddSimpleConsole(options => options.SingleLine = true)))
+    Sites.Web.Git.SitesDataGitRunner.EnsureSynced(bootLog.CreateLogger("Sites.Host"));
 
 var selectedSiteName = Environment.GetEnvironmentVariable("SITES_SITE")
     ?? ParseSelectedSiteName(args);
