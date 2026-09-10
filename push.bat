@@ -41,3 +41,5 @@ if errorlevel 1 (
 echo OK: pushed %BRANCH%.
 echo Branches: https://gitverse.ru/sevenseals/acs/branches
 exit /b 0
+
+pull.bat
