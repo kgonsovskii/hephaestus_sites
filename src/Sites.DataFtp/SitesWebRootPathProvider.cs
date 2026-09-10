@@ -20,11 +20,12 @@ public sealed class SitesWebRootPathProvider : ISitesWebRootPathProvider
             if (_cachedProfile == profile && _cachedPath is not null)
                 return _cachedPath;
 
-            _cachedPath = WebRootPaths.Resolve();
+            var repoRoot = RepositoryPaths.TryResolveRoot() ?? RepositoryPaths.ResolveRoot();
+            _cachedPath = SitesProfileResolver.ResolveProfileDirectory(repoRoot, profile);
             _cachedProfile = profile;
             Directory.CreateDirectory(_cachedPath);
             _logger.LogInformation(
-                "Sites web root (profile {Profile}): {WebRoot}",
+                "Sites FTP root (profile {Profile}): {FtpRoot}",
                 profile,
                 _cachedPath);
             return _cachedPath;
