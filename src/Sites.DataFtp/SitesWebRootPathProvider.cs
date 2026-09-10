@@ -21,7 +21,7 @@ public sealed class SitesWebRootPathProvider : ISitesWebRootPathProvider
                 return _cachedPath;
 
             var repoRoot = RepositoryPaths.TryResolveRoot() ?? RepositoryPaths.ResolveRoot();
-            _cachedPath = SitesProfileResolver.ResolveProfileDirectory(repoRoot, profile);
+            _cachedPath = SitesProfileResolver.ResolveWebRootPath(repoRoot, profile);
             _cachedProfile = profile;
             Directory.CreateDirectory(_cachedPath);
             _logger.LogInformation(

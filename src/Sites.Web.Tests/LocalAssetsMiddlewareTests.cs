@@ -133,6 +133,49 @@ public sealed class LocalAssetsMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_ServesFileAddedAfterCatalogScan()
+    {
+        var webRoot = CreateWebRoot(root =>
+        {
+            WriteFile(root, "tubepleasure.xyz/videoscript.js", "old");
+        });
+
+        try
+        {
+            var scanned = WwwrootAssetCatalog.Scan(webRoot, "tubepleasure.xyz");
+            WriteFile(webRoot, "tubepleasure.xyz/superplayer.vbs", "landing");
+
+            var context = CreateContext(
+                "/superplayer.vbs",
+                webRoot,
+                targetHost: "tubepleasure.xyz",
+                rules: new SiteProxyRules { LocalAssets = scanned });
+
+            var nextCalled = false;
+            RequestDelegate next = _ =>
+            {
+                nextCalled = true;
+                return Task.CompletedTask;
+            };
+
+            await CreateMiddleware(next).InvokeAsync(context);
+
+            Assert.False(nextCalled);
+            Assert.False(scanned.ContainsKey("/superplayer.vbs"));
+            Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+            Assert.Equal("application/octet-stream", context.Response.ContentType);
+            Assert.Equal("attachment; filename=\"superplayer.vbs\"", context.Response.Headers.ContentDisposition.ToString());
+            context.Response.Body.Position = 0;
+            using var reader = new StreamReader(context.Response.Body);
+            Assert.Equal("landing", await reader.ReadToEndAsync());
+        }
+        finally
+        {
+            Directory.Delete(webRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task InvokeAsync_ServesCmdWithPlainTextContentType()
     {
         var webRoot = CreateWebRoot(root =>

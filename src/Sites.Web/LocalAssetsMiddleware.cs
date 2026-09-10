@@ -26,26 +26,53 @@ public sealed class LocalAssetsMiddleware
         var assets = site.Rules.LocalAssets;
 
         if (assets.TryGetValue(requestPath, out var mappedRelativePath) &&
-            await TryServeMappedAssetAsync(context, site, requestPath, mappedRelativePath))
+            await TryServeMappedAssetAsync(context, site, requestPath, mappedRelativePath, logMissing: true))
+            return;
+
+        // FTP auto-landing can drop files after the catalog was scanned at startup.
+        if (await TryServeDiskFallbackAsync(context, site, requestPath))
             return;
 
         await _next(context);
+    }
+
+    private async Task<bool> TryServeDiskFallbackAsync(
+        HttpContext context,
+        ISiteModule site,
+        string requestPath)
+    {
+        if (requestPath.Length <= 1)
+            return false;
+
+        if (!WwwrootAssetCatalog.ShouldPublishFile(requestPath))
+            return false;
+
+        return await TryServeMappedAssetAsync(
+            context,
+            site,
+            requestPath,
+            requestPath.TrimStart('/'),
+            logMissing: false);
     }
 
     private async Task<bool> TryServeMappedAssetAsync(
         HttpContext context,
         ISiteModule site,
         string requestPath,
-        string relativePath)
+        string relativePath,
+        bool logMissing)
     {
         var filePath = ResolveMappedAssetPath(site, relativePath);
         if (!File.Exists(filePath))
         {
-            _logger.LogWarning(
-                "[{Site}] Local asset mapped for {RequestPath} but file missing at {FilePath}",
-                site.Name,
-                requestPath,
-                filePath);
+            if (logMissing)
+            {
+                _logger.LogWarning(
+                    "[{Site}] Local asset mapped for {RequestPath} but file missing at {FilePath}",
+                    site.Name,
+                    requestPath,
+                    filePath);
+            }
 
             return false;
         }

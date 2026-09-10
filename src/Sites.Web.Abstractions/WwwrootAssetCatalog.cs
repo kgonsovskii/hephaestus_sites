@@ -42,7 +42,7 @@ public static class WwwrootAssetCatalog
         return assets;
     }
 
-    internal static bool ShouldPublishFile(string filePath)
+    public static bool ShouldPublishFile(string filePath)
     {
         var fileName = Path.GetFileName(filePath);
         if (fileName.Length == 0)
