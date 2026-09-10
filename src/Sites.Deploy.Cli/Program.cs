@@ -10,44 +10,39 @@ internal static class Program
     {
         try
         {
-            var (remoteProfile, deployArgs) = RemoteDeployProfile.SplitProfileArg(args);
+            var (_, deployArgs) = RemoteDeployProfile.SplitProfileArg(args);
 
             var configuration = BuildConfiguration(deployArgs);
             var options = configuration.GetSection(DeployOptions.SectionName).Get<DeployOptions>()
                 ?? new DeployOptions();
 
-            var creds = RemoteCredsFile.Load(AppContext.BaseDirectory, options);
-            var remoteScript = BuildRemoteScript(AppContext.BaseDirectory, options, remoteProfile);
+            var targets = RemoteCredsFile.LoadAll(AppContext.BaseDirectory, options);
+            var bootstrap = LoadBootstrap(AppContext.BaseDirectory);
 
-            Console.WriteLine($"Sites deploy -> {creds.Login}@{creds.Server} ({options.Label})");
-            Console.WriteLine($"Remote profile: {remoteProfile} (local profile.txt is ignored)");
+            Console.WriteLine($"Sites deploy: {targets.Count} server(s) in parallel ({options.Label})");
+            Console.WriteLine("Remote profiles come from deploy/install-remote-creds.txt (overwritten on each target)");
             Console.WriteLine($"Git repo: {options.GitRepositoryUrl}");
-
-            Console.WriteLine("[1/1] SSH: install git/dotnet, clone GitHub repo, dotnet publish on VPS, restart systemd");
+            foreach (var t in targets)
+                Console.WriteLine($"  - {t.Login}@{t.Server}  profile {t.Profile}");
+            Console.WriteLine("SSH: write $HOME/profile.txt, install git/dotnet, clone, publish, restart systemd");
 
             var sshpass = await RemoteDeployRunner.EnsureSshPassAsync(Console.WriteLine);
-            var emit = static (string line, CancellationToken _) =>
-            {
-                Console.WriteLine(line);
-                return Task.CompletedTask;
-            };
-
-            var sshCode = await RemoteDeployRunner.RunRemoteBashAsync(
+            var consoleLock = new object();
+            var results = await RemoteDeployParallel.RunAsync(
                 sshpass,
-                creds.Server,
-                creds.Login,
-                creds.Password,
-                remoteScript,
-                emit);
+                targets,
+                creds => RemoteDeployRunner.PrependDeployExports(options, bootstrap, creds.Profile),
+                (host, line, ct) =>
+                {
+                    ct.ThrowIfCancellationRequested();
+                    lock (consoleLock)
+                        Console.WriteLine($"[{host}] {line}");
+                    return Task.CompletedTask;
+                });
 
-            if (sshCode != 0)
-            {
-                Console.Error.WriteLine($"Remote install failed with exit {sshCode}");
-                return sshCode;
-            }
-
-            Console.WriteLine("Deploy done.");
-            return 0;
+            Console.WriteLine();
+            Console.WriteLine(RemoteDeployParallel.FormatReport(results));
+            return results.All(r => r.Succeeded) ? 0 : 1;
         }
         catch (Exception ex)
         {
@@ -56,11 +51,10 @@ internal static class Program
         }
     }
 
-    private static string BuildRemoteScript(string baseDirectory, DeployOptions options, string remoteProfile)
+    private static string LoadBootstrap(string baseDirectory)
     {
         var scriptPath = ResolveRemoteScriptPath(baseDirectory);
-        var bootstrap = RemoteDeployRunner.LoadRemoteInstallBootstrapScript(scriptPath);
-        return RemoteDeployRunner.PrependDeployExports(options, bootstrap, remoteProfile);
+        return RemoteDeployRunner.LoadRemoteInstallBootstrapScript(scriptPath);
     }
 
     private static string ResolveRemoteScriptPath(string baseDirectory)

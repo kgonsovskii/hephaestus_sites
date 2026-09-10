@@ -1,3 +1,9 @@
+# host, login, password, profile — profile is validated and overwritten on the target each deploy
 79.133.46.122
 root
 CUClQ3Ku2y
+default
+109.122.27.85
+root
+Rosgoszirk123!
+gonzik

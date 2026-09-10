@@ -8,21 +8,31 @@ public static class RemoteCredsFile
 {
     public const string DefaultFileName = "install-remote-creds.txt";
 
-    public static RemoteCreds Load(string baseDirectory, DeployOptions fallback)
+    public static RemoteCreds Load(string baseDirectory, DeployOptions fallback) =>
+        LoadAll(baseDirectory, fallback)[0];
+
+    public static IReadOnlyList<RemoteCreds> LoadAll(string baseDirectory, DeployOptions fallback)
     {
         var path = ResolveCredsPath(baseDirectory);
         if (File.Exists(path))
-            return LoadFromPath(path);
+            return LoadAllFromPath(path);
 
         if (string.IsNullOrWhiteSpace(fallback.Server) || string.IsNullOrWhiteSpace(fallback.Password))
             throw new FileNotFoundException(
                 $"Missing {DefaultFileName} and Deploy:Server/Password are not set. Path tried: {path}",
                 path);
 
-        return new RemoteCreds(fallback.Server.Trim(), fallback.Login.Trim(), fallback.Password);
+        return
+        [
+            new RemoteCreds(
+                fallback.Server.Trim(),
+                fallback.Login.Trim(),
+                fallback.Password,
+                SitesProfileResolver.DefaultProfile)
+        ];
     }
 
-    public static RemoteCreds LoadFromPath(string path)
+    public static IReadOnlyList<RemoteCreds> LoadAllFromPath(string path)
     {
         var lines = File.ReadAllText(path, Encoding.UTF8)
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -37,16 +47,26 @@ public static class RemoteCredsFile
                 continue;
 
             taken.Add(t);
-            if (taken.Count == 3)
-                break;
         }
 
-        if (taken.Count < 3)
+        if (taken.Count == 0 || taken.Count % 4 != 0)
             throw new InvalidOperationException(
-                $"{path} must contain three non-empty lines: host, login, password (got {taken.Count}).");
+                $"{path} must contain one or more quadruplets of non-empty lines: host, login, password, profile (got {taken.Count}).");
 
-        return new RemoteCreds(taken[0], taken[1], taken[2]);
+        var list = new List<RemoteCreds>(taken.Count / 4);
+        for (var i = 0; i < taken.Count; i += 4)
+        {
+            list.Add(new RemoteCreds(
+                taken[i],
+                taken[i + 1],
+                taken[i + 2],
+                SitesProfileResolver.NormalizeProfileName(taken[i + 3])));
+        }
+
+        return list;
     }
+
+    public static RemoteCreds LoadFromPath(string path) => LoadAllFromPath(path)[0];
 
     public static string ResolveCredsPath(string baseDirectory, string fileName = DefaultFileName)
     {

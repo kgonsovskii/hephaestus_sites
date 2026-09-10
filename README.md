@@ -11,7 +11,7 @@ hephaestus_sites/
   sites.json     — site registry (targetHost keys)
   wwwroot/       — static /x/ additions per domain
   cert/          — TLS material
-  deploy.bat     — one-click remote deploy
+  deploy.bat     — one-click remote deploy (all hosts in creds, in parallel)
 ```
 
 ## Remote deploy (local machine → VPS)
@@ -20,14 +20,17 @@ hephaestus_sites/
 deploy.bat
 ```
 
-What happens on the VPS (over SSH):
+Deploys every host in `deploy/install-remote-creds.txt` in parallel and prints a success/fail report.
 
-1. Install `git` + .NET 10 SDK/runtime (apt)
-2. `git clone` / `git pull` from GitHub
-3. `dotnet publish` → `~/hephaestus_sites/release/`
-4. Restart `sites-host` systemd service
+What happens on each VPS (over SSH):
 
-Credentials: `deploy/install-remote-creds.txt` (3 lines: host, login, password). Defaults in `src/Sites.Deploy/appsettings.json`.
+1. Validate the creds profile and overwrite `$HOME/profile.txt`
+2. Install `git` + .NET 10 SDK/runtime (apt)
+3. `git clone` / `git pull` from GitHub
+4. `dotnet publish` → `~/hephaestus_sites/release/`
+5. Restart `sites-host` systemd service
+
+Credentials: `deploy/install-remote-creds.txt` (host / login / password / profile per server). All hosts deploy in parallel; each target’s `$HOME/profile.txt` is overwritten. Defaults in `src/Sites.Deploy.Cli/appsettings.json`.
 
 ## Build layout
 

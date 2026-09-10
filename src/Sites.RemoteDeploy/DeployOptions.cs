@@ -25,4 +25,4 @@ public sealed class DeployOptions
     public string RuntimeIdentifier { get; set; } = "linux-x64";
 }
 
-public sealed record RemoteCreds(string Server, string Login, string Password);
+public sealed record RemoteCreds(string Server, string Login, string Password, string Profile);

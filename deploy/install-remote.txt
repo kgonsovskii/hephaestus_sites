@@ -9,7 +9,7 @@ SITES_PUBLISH_DIR="${SITES_PUBLISH_DIR:-${SITES_CLONE_DIR}/release}"
 
 PROFILE_FILE="$(dirname "${SITES_CLONE_DIR}")/profile.txt"
 printf '%s\n' "${SITES_PROFILE}" > "${PROFILE_FILE}"
-echo "[sites-deploy] profile ${SITES_PROFILE} -> ${PROFILE_FILE}"
+echo "[sites-deploy] profile ${SITES_PROFILE} overwritten -> ${PROFILE_FILE}"
 SITES_GIT_CLONE_URL="${SITES_GIT_CLONE_URL:-${SITES_GIT_REPO}}"
 
 echo "[sites-deploy] clone dir: ${SITES_CLONE_DIR}"
