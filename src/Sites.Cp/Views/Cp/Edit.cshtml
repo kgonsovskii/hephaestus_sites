@@ -232,7 +232,7 @@
     const apiBase = '@Context.Request.PathBase/api/sites';
     const listUrl = '@Link("/")';
     const isAdd = @(Model.IsAdd ? "true" : "false");
-    const editingOriginalKey = @(Model.IsAdd ? "null" : System.Text.Json.JsonSerializer.Serialize(Model.TargetHost));
+    const editingOriginalKey = @Html.Raw(Model.IsAdd ? "null" : System.Text.Json.JsonSerializer.Serialize(Model.TargetHost));
     const initialDefinition = @Html.Raw(Model.DefinitionJson);
     const statusEl = document.getElementById('status');
     const jsonPreview = document.getElementById('jsonPreview');
