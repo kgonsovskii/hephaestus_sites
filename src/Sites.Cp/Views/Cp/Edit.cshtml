@@ -1,0 +1,623 @@
+@model Sites.Cp.Models.SiteEditPageModel
+@{
+    var pb = Context.Request.PathBase.Value ?? "";
+    var root = string.IsNullOrEmpty(pb) ? "" : (pb.EndsWith("/") ? pb[..^1] : pb);
+    string Link(string path) => root + path;
+    var title = Model.IsAdd ? "Add site" : "Edit site";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title — Sites CP</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #1a1a1a; }
+        body { margin: 0; background: #f4f5f7; }
+        header { background: #111827; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        header nav a { color: #cbd5e1; text-decoration: none; margin-right: 14px; }
+        header nav a.active { color: #fff; font-weight: 600; }
+        main { max-width: 1100px; margin: 24px auto; padding: 0 16px 40px; }
+        .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+        button, .btn { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font: inherit; text-decoration: none; display: inline-block; }
+        button.secondary, .btn.secondary { background: #6b7280; }
+        button.danger { background: #dc2626; }
+        button.small { padding: 4px 8px; font-size: 12px; }
+        input, textarea, select { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+        textarea { min-height: 72px; resize: vertical; }
+        label { display: block; font-size: 13px; color: #374151; margin: 10px 0 4px; }
+        label.inline { display: flex; align-items: center; gap: 8px; margin: 8px 0; cursor: pointer; }
+        label.inline input { width: auto; margin: 0; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .hint { color: #6b7280; font-size: 12px; margin-top: 2px; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .editor-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+        .editor-header h3 { margin: 0; }
+        #status { min-height: 20px; margin-top: 8px; font-size: 13px; }
+        #status.error { color: #b91c1c; }
+        #status.ok { color: #047857; }
+        .section { border-top: 1px solid #e5e7eb; margin-top: 16px; padding-top: 12px; }
+        .section h4 { margin: 0 0 8px; font-size: 14px; color: #111827; }
+        .dyn-table { width: 100%; margin-top: 8px; }
+        .dyn-table th { font-size: 11px; text-align: left; color: #6b7280; text-transform: uppercase; }
+        .dyn-table td { padding: 6px 4px; }
+        .dyn-table input { margin: 0; }
+        .multibox { display: flex; flex-direction: column; gap: 6px; }
+        .multibox-row { display: flex; gap: 6px; align-items: center; }
+        .multibox-row input { flex: 1; margin: 0; }
+        .multibox-add { align-self: flex-start; }
+        details.raw-json { margin-top: 16px; }
+        details.raw-json summary { cursor: pointer; color: #6b7280; font-size: 13px; }
+        #codedWarning { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; color: #92400e; }
+        .muted { color: #6b7280; font-size: 13px; }
+        .badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+        code { font-size: 12px; background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+@await Html.PartialAsync("_CpNav", "sites")
+<main>
+    <div id="status"></div>
+    <div class="card">
+        <div class="editor-header">
+            <h3>@title <span class="badge">@Model.Profile</span></h3>
+            <div class="actions">
+                <button type="button" class="editor-save">Save</button>
+                <a class="btn secondary" href="@Link("/")">Cancel</a>
+            </div>
+        </div>
+        <p class="muted" style="margin-top:0">Saves apply immediately, reload the site registry, and clear text cache — no restart.</p>
+        <div id="codedWarning" @(Model.HasCodedModule ? null : "hidden")>
+            This site has a <strong>coded module</strong> for the same source host. JSON is saved, but coded defaults may override some runtime behavior.
+        </div>
+
+        <div class="section" style="border-top:0; margin-top:0; padding-top:0">
+            <h4>Identity</h4>
+            <div class="row">
+                <div>
+                    <label for="targetHost">Target host (our domain, key)</label>
+                    <input id="targetHost" required value="@Model.TargetHost" @(Model.IsAdd ? null : "readonly") />
+                </div>
+                <div>
+                    <label for="sourceHost">Source host (upstream)</label>
+                    <input id="sourceHost" required />
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="name">Display name (optional)</label>
+                    <input id="name" />
+                </div>
+                <div>
+                    <label for="sourceUpstreamHost">Source upstream host (optional)</label>
+                    <input id="sourceUpstreamHost" />
+                    <div class="hint">Host header sent to upstream. Leave blank for {sourceHost}.</div>
+                </div>
+            </div>
+            <label>Extra target hosts (optional)</label>
+            <div class="multibox" id="targetHosts"></div>
+            <button type="button" class="secondary small multibox-add" data-multibox="targetHosts" style="margin-top:8px">Add host</button>
+        </div>
+
+        <div class="section">
+            <h4>Proxy behavior</h4>
+            <label class="inline">
+                <input type="checkbox" id="passCookies" checked />
+                Pass cookies (browser ↔ upstream)
+            </label>
+            <div class="hint">Required for JS antibot flows (e.g. Wildberries). Default: on.</div>
+            <label class="inline">
+                <input type="checkbox" id="disableCaching" />
+                Disable disk caching
+            </label>
+            <div class="hint">Skip <code>/_cache</code> lookup and storage for this site.</div>
+        </div>
+
+        <div class="section">
+            <h4>Routing</h4>
+            <div class="row">
+                <div>
+                    <label for="externalRedirectUrl">External redirect URL (optional)</label>
+                    <input id="externalRedirectUrl" />
+                    <div class="hint">Where outbound redirect paths send users. Blank = site homepage.</div>
+                </div>
+            </div>
+            <label class="inline">
+                <input type="checkbox" id="enableOutboundRedirectPaths" checked />
+                Enable outbound redirect paths
+            </label>
+            <div class="hint">When on, visits to listed path prefixes (e.g. <code>/go</code>, <code>/out</code>) leave the proxied site and redirect to External redirect URL or your homepage.</div>
+            <div class="row">
+                <div>
+                    <label>Outbound redirect paths</label>
+                    <div class="multibox" id="outboundRedirectPathPrefixes"></div>
+                    <button type="button" class="secondary small multibox-add" data-multibox="outboundRedirectPathPrefixes" style="margin-top:8px">Add path</button>
+                    <div class="hint">One path prefix per box. Only used when enabled above.</div>
+                </div>
+                <div>
+                    <label>Blocked path prefixes</label>
+                    <div class="multibox" id="blockedPathPrefixes"></div>
+                    <button type="button" class="secondary small multibox-add" data-multibox="blockedPathPrefixes" style="margin-top:8px">Add prefix</button>
+                    <div class="hint">Upstream requests to these paths are blocked.</div>
+                </div>
+            </div>
+            <label class="inline">
+                <input type="checkbox" id="redirectForeignRequests" checked />
+                Redirect foreign requests
+            </label>
+            <div class="hint">When on, off-site links (e.g. affiliate URLs like <code>go.rmhfrtnd.com</code>) and upstream redirects to other domains are rewritten to your site instead of leaving.</div>
+            <label for="redirectForeignRequestsUrl">Foreign redirect URL (optional)</label>
+            <input id="redirectForeignRequestsUrl" />
+            <div class="hint">Target when blocking foreign navigation. Blank = site homepage. Relative paths stay on this host.</div>
+        </div>
+
+        <div class="section">
+            <h4>Content replacements</h4>
+            <div class="hint">Applied on top of automatic host/URL rewrites (source → target).</div>
+            <table class="dyn-table" id="replacementsTable">
+                <thead>
+                <tr>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Word boundary</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="replacementsBody"></tbody>
+            </table>
+            <button type="button" class="secondary small" id="addReplacementBtn" style="margin-top:8px">Add replacement</button>
+        </div>
+
+        <div class="section">
+            <h4>HTML injections</h4>
+            <div class="hint">Insert snippets into proxied HTML on matching paths. Use <code>*</code> for all pages, <code>/</code> for home, or a prefix like <code>/video</code> for all paths under it. Partner tags usually go at <strong>start of &lt;head&gt;</strong> (<code>afterHeadOpen</code>).</div>
+            <table class="dyn-table" id="injectionsTable">
+                <thead>
+                <tr>
+                    <th>Paths (one per line)</th>
+                    <th>Position</th>
+                    <th>Snippet</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="injectionsBody"></tbody>
+            </table>
+            <button type="button" class="secondary small" id="addInjectionBtn" style="margin-top:8px">Add injection</button>
+        </div>
+
+        <div class="section">
+            <h4>Local asset aliases</h4>
+            <div class="hint">Files under <code>hephaestus_sites_data/{profile}/wwwroot/{targetHost}/</code> are served automatically at the same URL path after reload/invalidate. Use this table only for extra URL aliases.</div>
+            <table class="dyn-table" id="assetsTable">
+                <thead>
+                <tr>
+                    <th>Request path</th>
+                    <th>File (under hephaestus_sites_data/{profile}/wwwroot/{targetHost}/)</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="assetsBody"></tbody>
+            </table>
+            <button type="button" class="secondary small" id="addAssetBtn" style="margin-top:8px">Add asset</button>
+        </div>
+
+        <div class="section">
+            <h4>Settings</h4>
+            <div class="hint">Optional key-value pairs stored in sites.json for future use. Values can be plain text, numbers, or JSON.</div>
+            <table class="dyn-table" id="settingsTable">
+                <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="settingsBody"></tbody>
+            </table>
+            <button type="button" class="secondary small" id="addSettingBtn" style="margin-top:8px">Add setting</button>
+        </div>
+
+        <details class="raw-json">
+            <summary>Raw JSON preview</summary>
+            <textarea id="jsonPreview" rows="12" readonly style="margin-top:8px; font-family:ui-monospace,monospace"></textarea>
+        </details>
+
+        <div class="actions" style="margin-top:16px">
+            <button type="button" class="editor-save">Save</button>
+            <a class="btn secondary" href="@Link("/")">Cancel</a>
+        </div>
+    </div>
+</main>
+<script>
+    const apiBase = '@Context.Request.PathBase/api/sites';
+    const listUrl = '@Link("/")';
+    const isAdd = @(Model.IsAdd ? "true" : "false");
+    const editingOriginalKey = @(Model.IsAdd ? "null" : System.Text.Json.JsonSerializer.Serialize(Model.TargetHost));
+    const initialDefinition = @Html.Raw(Model.DefinitionJson);
+    const statusEl = document.getElementById('status');
+    const jsonPreview = document.getElementById('jsonPreview');
+
+    const fields = {
+        targetHost: document.getElementById('targetHost'),
+        sourceHost: document.getElementById('sourceHost'),
+        name: document.getElementById('name'),
+        sourceUpstreamHost: document.getElementById('sourceUpstreamHost'),
+        passCookies: document.getElementById('passCookies'),
+        disableCaching: document.getElementById('disableCaching'),
+        externalRedirectUrl: document.getElementById('externalRedirectUrl'),
+        enableOutboundRedirectPaths: document.getElementById('enableOutboundRedirectPaths'),
+        redirectForeignRequests: document.getElementById('redirectForeignRequests'),
+        redirectForeignRequestsUrl: document.getElementById('redirectForeignRequestsUrl')
+    };
+
+    const boxes = {
+        targetHosts: document.getElementById('targetHosts'),
+        outboundRedirectPathPrefixes: document.getElementById('outboundRedirectPathPrefixes'),
+        blockedPathPrefixes: document.getElementById('blockedPathPrefixes')
+    };
+
+    function setStatus(message, kind) {
+        statusEl.textContent = message || '';
+        statusEl.className = kind || '';
+    }
+
+    async function api(url, options) {
+        const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json' },
+            ...options
+        });
+        if (!response.ok) {
+            let error = response.statusText;
+            try {
+                const body = await response.json();
+                error = body.error || JSON.stringify(body);
+            } catch { /* ignored */ }
+            throw new Error(error);
+        }
+        if (response.status === 204) return null;
+        return response.json();
+    }
+
+    function linesToArray(text) {
+        return (text || '')
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+    }
+
+    function arrayToLines(values) {
+        return (values || []).join('\n');
+    }
+
+    function collectMultibox(container) {
+        return [...container.querySelectorAll('input')]
+            .map(input => input.value.trim())
+            .filter(value => value.length > 0);
+    }
+
+    function addMultiboxRow(container, value = '') {
+        const row = document.createElement('div');
+        row.className = 'multibox-row';
+        row.innerHTML = `<input type="text" value="${escapeAttr(value)}" /><button type="button" class="danger small multibox-remove">Remove</button>`;
+        row.querySelector('input').addEventListener('input', updateJsonPreview);
+        row.querySelector('input').addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addMultiboxRow(container, '');
+                container.lastElementChild.querySelector('input').focus();
+            }
+        });
+        row.querySelector('.multibox-remove').addEventListener('click', () => {
+            const rows = container.querySelectorAll('.multibox-row');
+            if (rows.length > 1)
+                row.remove();
+            else
+                row.querySelector('input').value = '';
+            updateJsonPreview();
+        });
+        container.appendChild(row);
+    }
+
+    function setMultibox(container, values) {
+        container.innerHTML = '';
+        const list = values && values.length ? values : [''];
+        for (const value of list)
+            addMultiboxRow(container, value);
+    }
+
+    function defaultDefinition() {
+        return {
+            disableCaching: false,
+            passCookies: true,
+            enableOutboundRedirectPaths: true,
+            outboundRedirectPathPrefixes: [],
+            redirectForeignRequests: true,
+            blockedPathPrefixes: [],
+            contentReplacements: [],
+            localAssets: {},
+            settings: {}
+        };
+    }
+
+    function normalizeDefinition(def) {
+        const d = { ...defaultDefinition(), ...def };
+        d.passCookies = def.passCookies !== false;
+        d.disableCaching = !!def.disableCaching;
+        d.enableOutboundRedirectPaths = def.enableOutboundRedirectPaths !== false;
+        d.outboundRedirectPathPrefixes = def.outboundRedirectPathPrefixes || [];
+        d.redirectForeignRequests = def.redirectForeignRequests !== false;
+        d.blockedPathPrefixes = def.blockedPathPrefixes || [];
+        d.contentReplacements = def.contentReplacements || [];
+        d.htmlInjections = def.htmlInjections || [];
+        d.localAssets = def.localAssets || {};
+        d.settings = def.settings || {};
+        return d;
+    }
+
+    function addReplacementRow(from = '', to = '', wordBoundaryOnly = false) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="rep-from" value="${escapeAttr(from)}" /></td>
+            <td><input type="text" class="rep-to" value="${escapeAttr(to)}" /></td>
+            <td style="text-align:center"><input type="checkbox" class="rep-wb" ${wordBoundaryOnly ? 'checked' : ''} /></td>
+            <td><button type="button" class="danger small rep-remove">Remove</button></td>`;
+        tr.querySelector('.rep-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
+        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
+        tr.querySelectorAll('input[type=checkbox]').forEach(el => el.addEventListener('change', updateJsonPreview));
+        document.getElementById('replacementsBody').appendChild(tr);
+    }
+
+    function addInjectionRow(paths = '/', position = 'beforeHeadClose', snippet = '') {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><textarea class="inj-paths" rows="2">${escapeAttr(paths)}</textarea></td>
+            <td>
+                <select class="inj-position">
+                    <option value="afterHeadOpen">start of &lt;head&gt; (recommended)</option>
+                    <option value="beforeHeadClose">before &lt;/head&gt;</option>
+                    <option value="beforeBodyClose">before &lt;/body&gt;</option>
+                </select>
+            </td>
+            <td><textarea class="inj-snippet" rows="3">${escapeAttr(snippet)}</textarea></td>
+            <td><button type="button" class="danger small inj-remove">Remove</button></td>`;
+        tr.querySelector('.inj-position').value = position;
+        tr.querySelector('.inj-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
+        tr.querySelectorAll('textarea, select').forEach(el => {
+            el.addEventListener('input', updateJsonPreview);
+            el.addEventListener('change', updateJsonPreview);
+        });
+        document.getElementById('injectionsBody').appendChild(tr);
+    }
+
+    function addAssetRow(path = '', file = '') {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="asset-path" value="${escapeAttr(path)}" /></td>
+            <td><input type="text" class="asset-file" value="${escapeAttr(file)}" /></td>
+            <td><button type="button" class="danger small asset-remove">Remove</button></td>`;
+        tr.querySelector('.asset-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
+        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
+        document.getElementById('assetsBody').appendChild(tr);
+    }
+
+    function formatSettingValue(value) {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'object') return JSON.stringify(value);
+        return String(value);
+    }
+
+    function parseSettingValue(raw) {
+        const text = (raw || '').trim();
+        if (!text) return '';
+        if (text === 'true') return true;
+        if (text === 'false') return false;
+        if (/^-?\d+$/.test(text)) return parseInt(text, 10);
+        if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(text)) return parseFloat(text);
+        if ((text.startsWith('{') && text.endsWith('}')) || (text.startsWith('[') && text.endsWith(']'))) {
+            try { return JSON.parse(text); } catch { /* fall through */ }
+        }
+        return text;
+    }
+
+    function addSettingRow(key = '', value = '') {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="setting-key" value="${escapeAttr(key)}" /></td>
+            <td><input type="text" class="setting-value" value="${escapeAttr(value)}" /></td>
+            <td><button type="button" class="danger small setting-remove">Remove</button></td>`;
+        tr.querySelector('.setting-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
+        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
+        document.getElementById('settingsBody').appendChild(tr);
+    }
+
+    function escapeAttr(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;');
+    }
+
+    function collectReplacements() {
+        const rows = [];
+        document.querySelectorAll('#replacementsBody tr').forEach(tr => {
+            const from = tr.querySelector('.rep-from').value.trim();
+            const to = tr.querySelector('.rep-to').value.trim();
+            const wordBoundaryOnly = tr.querySelector('.rep-wb').checked;
+            if (!from && !to) return;
+            const item = { from, to };
+            if (wordBoundaryOnly) item.wordBoundaryOnly = true;
+            rows.push(item);
+        });
+        return rows;
+    }
+
+    function collectHtmlInjections() {
+        const rows = [];
+        document.querySelectorAll('#injectionsBody tr').forEach(tr => {
+            const paths = linesToArray(tr.querySelector('.inj-paths').value);
+            const position = tr.querySelector('.inj-position').value;
+            const snippet = tr.querySelector('.inj-snippet').value.trim();
+            if (!snippet) return;
+            rows.push({
+                paths: paths.length > 0 ? paths : ['/'],
+                position,
+                snippet
+            });
+        });
+        return rows;
+    }
+
+    function collectLocalAssets() {
+        const map = {};
+        document.querySelectorAll('#assetsBody tr').forEach(tr => {
+            const path = tr.querySelector('.asset-path').value.trim();
+            const file = tr.querySelector('.asset-file').value.trim();
+            if (!path || !file) return;
+            map[path] = file;
+        });
+        return map;
+    }
+
+    function collectSettings() {
+        const map = {};
+        document.querySelectorAll('#settingsBody tr').forEach(tr => {
+            const key = tr.querySelector('.setting-key').value.trim();
+            const raw = tr.querySelector('.setting-value').value;
+            if (!key) return;
+            map[key] = parseSettingValue(raw);
+        });
+        return map;
+    }
+
+    function buildPayload() {
+        const sourceHost = fields.sourceHost.value.trim();
+        const payload = {
+            sourceHost,
+            disableCaching: fields.disableCaching.checked,
+            passCookies: fields.passCookies.checked,
+            enableOutboundRedirectPaths: fields.enableOutboundRedirectPaths.checked,
+            outboundRedirectPathPrefixes: collectMultibox(boxes.outboundRedirectPathPrefixes),
+            redirectForeignRequests: fields.redirectForeignRequests.checked,
+            blockedPathPrefixes: collectMultibox(boxes.blockedPathPrefixes)
+        };
+
+        const name = fields.name.value.trim();
+        if (name) payload.name = name;
+
+        const sourceUpstreamHost = fields.sourceUpstreamHost.value.trim();
+        if (sourceUpstreamHost) payload.sourceUpstreamHost = sourceUpstreamHost;
+
+        const targetHosts = collectMultibox(boxes.targetHosts);
+        if (targetHosts.length > 0) payload.targetHosts = targetHosts;
+
+        const externalRedirectUrl = fields.externalRedirectUrl.value.trim();
+        if (externalRedirectUrl) payload.externalRedirectUrl = externalRedirectUrl;
+
+        const redirectForeignRequestsUrl = fields.redirectForeignRequestsUrl.value.trim();
+        if (redirectForeignRequestsUrl) payload.redirectForeignRequestsUrl = redirectForeignRequestsUrl;
+
+        const replacements = collectReplacements();
+        if (replacements.length > 0) payload.contentReplacements = replacements;
+
+        const injections = collectHtmlInjections();
+        if (injections.length > 0) payload.htmlInjections = injections;
+
+        const assets = collectLocalAssets();
+        if (Object.keys(assets).length > 0) payload.localAssets = assets;
+
+        const settings = collectSettings();
+        if (Object.keys(settings).length > 0) payload.settings = settings;
+
+        return payload;
+    }
+
+    function updateJsonPreview() {
+        try {
+            jsonPreview.value = JSON.stringify(buildPayload(), null, 2);
+        } catch {
+            jsonPreview.value = '{}';
+        }
+    }
+
+    function fillForm(definition) {
+        const def = normalizeDefinition(definition || {});
+        fields.sourceHost.value = def.sourceHost || '';
+        fields.name.value = def.name || '';
+        fields.sourceUpstreamHost.value = def.sourceUpstreamHost || '';
+        setMultibox(boxes.targetHosts, def.targetHosts);
+        fields.passCookies.checked = def.passCookies;
+        fields.disableCaching.checked = def.disableCaching;
+        fields.externalRedirectUrl.value = def.externalRedirectUrl || '';
+        fields.enableOutboundRedirectPaths.checked = def.enableOutboundRedirectPaths;
+        setMultibox(boxes.outboundRedirectPathPrefixes, def.outboundRedirectPathPrefixes);
+        fields.redirectForeignRequests.checked = def.redirectForeignRequests;
+        fields.redirectForeignRequestsUrl.value = def.redirectForeignRequestsUrl || '';
+        setMultibox(boxes.blockedPathPrefixes, def.blockedPathPrefixes);
+
+        document.getElementById('replacementsBody').innerHTML = '';
+        for (const rep of def.contentReplacements)
+            addReplacementRow(rep.from || '', rep.to || '', !!rep.wordBoundaryOnly);
+
+        document.getElementById('injectionsBody').innerHTML = '';
+        for (const inj of def.htmlInjections)
+            addInjectionRow(arrayToLines(inj.paths), inj.position || 'beforeHeadClose', inj.snippet || '');
+
+        document.getElementById('assetsBody').innerHTML = '';
+        for (const [path, file] of Object.entries(def.localAssets || {}))
+            addAssetRow(path, file);
+
+        document.getElementById('settingsBody').innerHTML = '';
+        for (const [key, value] of Object.entries(def.settings || {}))
+            addSettingRow(key, formatSettingValue(value));
+
+        updateJsonPreview();
+    }
+
+    async function saveSite() {
+        const targetHost = fields.targetHost.value.trim();
+        if (!targetHost || !fields.sourceHost.value.trim()) {
+            setStatus('Target host and source host are required.', 'error');
+            return;
+        }
+
+        const payload = buildPayload();
+        try {
+            if (!isAdd && editingOriginalKey) {
+                await api(`${apiBase}/${encodeURIComponent(editingOriginalKey)}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                await api(`${apiBase}/${encodeURIComponent(targetHost)}`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+            }
+            window.location = listUrl;
+        } catch (err) {
+            setStatus(err.message, 'error');
+        }
+    }
+
+    document.querySelectorAll('.editor-save').forEach(btn => btn.addEventListener('click', saveSite));
+    document.getElementById('addReplacementBtn').addEventListener('click', () => { addReplacementRow(); updateJsonPreview(); });
+    document.getElementById('addInjectionBtn').addEventListener('click', () => { addInjectionRow(); updateJsonPreview(); });
+    document.getElementById('addAssetBtn').addEventListener('click', () => { addAssetRow(); updateJsonPreview(); });
+    document.getElementById('addSettingBtn').addEventListener('click', () => { addSettingRow(); updateJsonPreview(); });
+    document.querySelectorAll('.multibox-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const container = document.getElementById(btn.dataset.multibox);
+            addMultiboxRow(container, '');
+            container.lastElementChild.querySelector('input').focus();
+            updateJsonPreview();
+        });
+    });
+    Object.values(fields).forEach(el => {
+        el.addEventListener('input', updateJsonPreview);
+        if (el.type === 'checkbox') el.addEventListener('change', updateJsonPreview);
+    });
+
+    fillForm(initialDefinition || defaultDefinition());
+</script>
+</body>
+</html>

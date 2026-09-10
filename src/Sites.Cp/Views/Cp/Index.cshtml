@@ -1,3 +1,9 @@
+@model Sites.Cp.Models.SitesListPageModel
+@{
+    var pb = Context.Request.PathBase.Value ?? "";
+    var root = string.IsNullOrEmpty(pb) ? "" : (pb.EndsWith("/") ? pb[..^1] : pb);
+    string Link(string path) => root + path;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,39 +21,20 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
         th { font-size: 12px; text-transform: uppercase; color: #6b7280; }
-        button, .btn { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font: inherit; }
-        button.secondary { background: #6b7280; }
+        button, .btn { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font: inherit; text-decoration: none; display: inline-block; }
+        button.secondary, .btn.secondary { background: #6b7280; }
         button.danger { background: #dc2626; }
         button.git-push { background: #059669; }
         button.git-pull { background: #7c3aed; }
-        button.small { padding: 4px 8px; font-size: 12px; }
-        input, textarea, select { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
-        textarea { min-height: 72px; resize: vertical; }
-        label { display: block; font-size: 13px; color: #374151; margin: 10px 0 4px; }
-        label.inline { display: flex; align-items: center; gap: 8px; margin: 8px 0; cursor: pointer; }
-        label.inline input { width: auto; margin: 0; }
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
         .badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 12px; padding: 2px 8px; border-radius: 999px; }
         .badge.warn { background: #fef3c7; color: #92400e; }
         .badge.ok { background: #d1fae5; color: #065f46; }
         .muted { color: #6b7280; font-size: 13px; }
-        .hint { color: #6b7280; font-size: 12px; margin-top: 2px; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .editor-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-        .editor-header h3 { margin: 0; }
         #status { min-height: 20px; margin-top: 8px; font-size: 13px; }
         #status.error { color: #b91c1c; }
         #status.ok { color: #047857; }
-        .section { border-top: 1px solid #e5e7eb; margin-top: 16px; padding-top: 12px; }
-        .section h4 { margin: 0 0 8px; font-size: 14px; color: #111827; }
-        .dyn-table { width: 100%; margin-top: 8px; }
-        .dyn-table th { font-size: 11px; }
-        .dyn-table td { padding: 6px 4px; }
-        .dyn-table input { margin: 0; }
-        details.raw-json { margin-top: 16px; }
-        details.raw-json summary { cursor: pointer; color: #6b7280; font-size: 13px; }
-        #codedWarning { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; color: #92400e; }
+        code { font-size: 12px; background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -56,24 +43,27 @@
     <div class="card">
         <div class="actions" style="justify-content:space-between; align-items:center">
             <div>
-                <h2 style="margin:0 0 4px">sites.json <span class="badge" id="profileBadge" style="vertical-align:middle">…</span></h2>
-                <div class="muted" id="jsonPath">Loading…</div>
-                <div class="muted" id="webFtpLine" hidden></div>
+                <h2 style="margin:0 0 4px">sites.json <span class="badge" style="vertical-align:middle">@Model.Profile</span></h2>
+                <div class="muted">@(string.IsNullOrEmpty(Model.Profile) ? "" : $"profile {Model.Profile} · ")@Model.SitesJsonPath</div>
+                @if (!string.IsNullOrEmpty(Model.WebFtpUrl))
+                {
+                    <div class="muted">Web FTP (root <code>@Model.WebRootFullPath</code>): <a href="@Model.WebFtpUrl" class="font-monospace user-select-all">@Model.WebFtpUrl</a></div>
+                }
                 <div class="muted">Saves apply immediately, reload the site registry, and clear text cache — no restart.</div>
             </div>
             <div class="actions">
                 <button type="button" class="secondary" id="clearNonBinaryCacheBtn" title="HTML, JS, CSS, JSON, VBS, CMD, PS1, etc.">Clear text cache</button>
                 <button type="button" class="secondary" id="clearCacheBtn">Clear all cache</button>
                 <button type="button" class="secondary" id="invalidateBtn">Invalidate</button>
-                <button type="button" id="addBtn">Add site</button>
+                <a class="btn" href="@Link("/edit")">Add site</a>
             </div>
         </div>
         <div id="status"></div>
     </div>
 
     <div class="actions" style="margin:0 0 16px">
-                <button type="button" class="git-push" id="gitPushBtn" title="git add/commit/push hephaestus_sites_data (profile sites.json, wwwroot)">Push data to git</button>
-                <button type="button" class="git-pull" id="gitPullBtn" title="git pull hephaestus_sites_data">Pull data from git</button>
+        <button type="button" class="git-push" id="gitPushBtn" title="git add/commit/push hephaestus_sites_data (profile sites.json, wwwroot)">Push data to git</button>
+        <button type="button" class="git-pull" id="gitPullBtn" title="git pull hephaestus_sites_data">Pull data from git</button>
     </div>
 
     <div class="card">
@@ -88,204 +78,58 @@
                 <th></th>
             </tr>
             </thead>
-            <tbody id="sitesBody"></tbody>
+            <tbody>
+            @foreach (var site in Model.Sites)
+            {
+                <tr>
+                    <td><code>@site.TargetHost</code></td>
+                    <td><code>@site.SourceHost</code></td>
+                    <td>
+                        @if (site.PassCookies)
+                        {
+                            <span class="badge ok">on</span>
+                        }
+                        else
+                        {
+                            <span class="badge warn">off</span>
+                        }
+                    </td>
+                    <td>
+                        @if (site.DisableCaching)
+                        {
+                            <span class="badge warn">off</span>
+                        }
+                        else
+                        {
+                            <span class="badge ok">on</span>
+                        }
+                    </td>
+                    <td>
+                        @if (site.HasCodedModule)
+                        {
+                            <span class="badge">coded</span>
+                        }
+                        else
+                        {
+                            <span class="muted">json</span>
+                        }
+                    </td>
+                    <td class="actions">
+                        <a class="btn" href="@Link("/edit?site=" + Uri.EscapeDataString(site.TargetHost))">Edit</a>
+                        <button type="button" class="danger" data-delete="@site.TargetHost">Delete</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
         </table>
-    </div>
-
-    <div class="card" id="editor" hidden>
-        <div class="editor-header">
-            <h3 id="editorTitle">Edit site</h3>
-            <div class="actions">
-                <button type="button" class="editor-save">Save</button>
-                <button type="button" class="secondary editor-cancel">Cancel</button>
-            </div>
-        </div>
-        <div id="codedWarning" hidden>
-            This site has a <strong>coded module</strong> for the same source host. JSON is saved, but coded defaults may override some runtime behavior.
-        </div>
-
-        <div class="section" style="border-top:0; margin-top:0; padding-top:0">
-            <h4>Identity</h4>
-            <div class="row">
-                <div>
-                    <label for="targetHost">Target host (our domain, key)</label>
-                    <input id="targetHost" required />
-                </div>
-                <div>
-                    <label for="sourceHost">Source host (upstream)</label>
-                    <input id="sourceHost" required />
-                </div>
-            </div>
-            <div class="row">
-                <div>
-                    <label for="name">Display name (optional)</label>
-                    <input id="name" />
-                </div>
-                <div>
-                    <label for="sourceUpstreamHost">Source upstream host (optional)</label>
-                    <input id="sourceUpstreamHost" />
-                    <div class="hint">Host header sent to upstream. Leave blank for {sourceHost}.</div>
-                </div>
-            </div>
-            <label for="targetHosts">Extra target hosts (optional)</label>
-            <textarea id="targetHosts" rows="2"></textarea>
-        </div>
-
-        <div class="section">
-            <h4>Proxy behavior</h4>
-            <label class="inline">
-                <input type="checkbox" id="passCookies" checked />
-                Pass cookies (browser ↔ upstream)
-            </label>
-            <div class="hint">Required for JS antibot flows (e.g. Wildberries). Default: on.</div>
-            <label class="inline">
-                <input type="checkbox" id="disableCaching" />
-                Disable disk caching
-            </label>
-            <div class="hint">Skip <code>/_cache</code> lookup and storage for this site.</div>
-        </div>
-
-        <div class="section">
-            <h4>Routing</h4>
-            <div class="row">
-                <div>
-                    <label for="externalRedirectUrl">External redirect URL (optional)</label>
-                    <input id="externalRedirectUrl" />
-                    <div class="hint">Where outbound redirect paths send users. Blank = site homepage.</div>
-                </div>
-            </div>
-            <label class="inline">
-                <input type="checkbox" id="enableOutboundRedirectPaths" checked />
-                Enable outbound redirect paths
-            </label>
-            <div class="hint">When on, visits to listed path prefixes (e.g. <code>/go</code>, <code>/out</code>) leave the proxied site and redirect to External redirect URL or your homepage.</div>
-            <div class="row">
-                <div>
-                    <label for="outboundRedirectPathPrefixes">Outbound redirect paths</label>
-                    <textarea id="outboundRedirectPathPrefixes" rows="3"></textarea>
-                    <div class="hint">One path prefix per line. Only used when enabled above.</div>
-                </div>
-                <div>
-                    <label for="blockedPathPrefixes">Blocked path prefixes</label>
-                    <textarea id="blockedPathPrefixes" rows="3"></textarea>
-                    <div class="hint">One per line. Upstream requests to these paths are blocked.</div>
-                </div>
-            </div>
-            <label class="inline">
-                <input type="checkbox" id="redirectForeignRequests" checked />
-                Redirect foreign requests
-            </label>
-            <div class="hint">When on, off-site links (e.g. affiliate URLs like <code>go.rmhfrtnd.com</code>) and upstream redirects to other domains are rewritten to your site instead of leaving.</div>
-            <label for="redirectForeignRequestsUrl">Foreign redirect URL (optional)</label>
-            <input id="redirectForeignRequestsUrl" />
-            <div class="hint">Target when blocking foreign navigation. Blank = site homepage. Relative paths stay on this host.</div>
-        </div>
-
-        <div class="section">
-            <h4>Content replacements</h4>
-            <div class="hint">Applied on top of automatic host/URL rewrites (source → target).</div>
-            <table class="dyn-table" id="replacementsTable">
-                <thead>
-                <tr>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Word boundary</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody id="replacementsBody"></tbody>
-            </table>
-            <button type="button" class="secondary small" id="addReplacementBtn" style="margin-top:8px">Add replacement</button>
-        </div>
-
-        <div class="section">
-            <h4>HTML injections</h4>
-            <div class="hint">Insert snippets into proxied HTML on matching paths. Use <code>*</code> for all pages, <code>/</code> for home, or a prefix like <code>/video</code> for all paths under it. Partner tags usually go at <strong>start of &lt;head&gt;</strong> (<code>afterHeadOpen</code>).</div>
-            <table class="dyn-table" id="injectionsTable">
-                <thead>
-                <tr>
-                    <th>Paths (one per line)</th>
-                    <th>Position</th>
-                    <th>Snippet</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody id="injectionsBody"></tbody>
-            </table>
-            <button type="button" class="secondary small" id="addInjectionBtn" style="margin-top:8px">Add injection</button>
-        </div>
-
-        <div class="section">
-            <h4>Local asset aliases</h4>
-            <div class="hint">Files under <code>hephaestus_sites_data/{profile}/wwwroot/{targetHost}/</code> are served automatically at the same URL path after reload/invalidate. Use this table only for extra URL aliases.</div>
-            <table class="dyn-table" id="assetsTable">
-                <thead>
-                <tr>
-                    <th>Request path</th>
-                    <th>File (under hephaestus_sites_data/{profile}/wwwroot/{targetHost}/)</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody id="assetsBody"></tbody>
-            </table>
-            <button type="button" class="secondary small" id="addAssetBtn" style="margin-top:8px">Add asset</button>
-        </div>
-
-        <div class="section">
-            <h4>Settings</h4>
-            <div class="hint">Optional key-value pairs stored in sites.json for future use. Values can be plain text, numbers, or JSON.</div>
-            <table class="dyn-table" id="settingsTable">
-                <thead>
-                <tr>
-                    <th>Key</th>
-                    <th>Value</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody id="settingsBody"></tbody>
-            </table>
-            <button type="button" class="secondary small" id="addSettingBtn" style="margin-top:8px">Add setting</button>
-        </div>
-
-        <details class="raw-json">
-            <summary>Raw JSON preview</summary>
-            <textarea id="jsonPreview" rows="12" readonly style="margin-top:8px; font-family:ui-monospace,monospace"></textarea>
-        </details>
-
-        <div class="actions" style="margin-top:16px">
-            <button type="button" class="editor-save">Save</button>
-            <button type="button" class="secondary editor-cancel">Cancel</button>
-        </div>
     </div>
 </main>
 <script>
-    const apiBase = '@Context.Request.PathBase/api/sites';
     const maintenanceBase = '@Context.Request.PathBase/api/maintenance';
     const systemBase = '@Context.Request.PathBase/api/system';
+    const apiBase = '@Context.Request.PathBase/api/sites';
+    const listUrl = '@Link("/")';
     const statusEl = document.getElementById('status');
-    const sitesBody = document.getElementById('sitesBody');
-    const editor = document.getElementById('editor');
-    const codedWarning = document.getElementById('codedWarning');
-    const editorTitle = document.getElementById('editorTitle');
-    const jsonPreview = document.getElementById('jsonPreview');
-    let editingOriginalKey = null;
-    let hasCodedModule = false;
-
-    const fields = {
-        targetHost: document.getElementById('targetHost'),
-        sourceHost: document.getElementById('sourceHost'),
-        name: document.getElementById('name'),
-        sourceUpstreamHost: document.getElementById('sourceUpstreamHost'),
-        targetHosts: document.getElementById('targetHosts'),
-        passCookies: document.getElementById('passCookies'),
-        disableCaching: document.getElementById('disableCaching'),
-        externalRedirectUrl: document.getElementById('externalRedirectUrl'),
-        enableOutboundRedirectPaths: document.getElementById('enableOutboundRedirectPaths'),
-        outboundRedirectPathPrefixes: document.getElementById('outboundRedirectPathPrefixes'),
-        redirectForeignRequests: document.getElementById('redirectForeignRequests'),
-        redirectForeignRequestsUrl: document.getElementById('redirectForeignRequestsUrl'),
-        blockedPathPrefixes: document.getElementById('blockedPathPrefixes')
-    };
 
     function setStatus(message, kind) {
         statusEl.textContent = message || '';
@@ -309,363 +153,11 @@
         return response.json();
     }
 
-    function linesToArray(text) {
-        return (text || '')
-            .split(/\r?\n/)
-            .map(line => line.trim())
-            .filter(line => line.length > 0);
-    }
-
-    function arrayToLines(values) {
-        return (values || []).join('\n');
-    }
-
-    function defaultDefinition() {
-        return {
-            disableCaching: false,
-            passCookies: true,
-            enableOutboundRedirectPaths: true,
-            outboundRedirectPathPrefixes: [],
-            redirectForeignRequests: true,
-            blockedPathPrefixes: [],
-            contentReplacements: [],
-            localAssets: {},
-            settings: {}
-        };
-    }
-
-    function normalizeDefinition(def) {
-        const d = { ...defaultDefinition(), ...def };
-        d.passCookies = def.passCookies !== false;
-        d.disableCaching = !!def.disableCaching;
-        d.enableOutboundRedirectPaths = def.enableOutboundRedirectPaths !== false;
-        d.outboundRedirectPathPrefixes = def.outboundRedirectPathPrefixes || [];
-        d.redirectForeignRequests = def.redirectForeignRequests !== false;
-        d.blockedPathPrefixes = def.blockedPathPrefixes || [];
-        d.contentReplacements = def.contentReplacements || [];
-        d.htmlInjections = def.htmlInjections || [];
-        d.localAssets = def.localAssets || {};
-        d.settings = def.settings || {};
-        return d;
-    }
-
-    function addReplacementRow(from = '', to = '', wordBoundaryOnly = false) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" class="rep-from" value="${escapeAttr(from)}" /></td>
-            <td><input type="text" class="rep-to" value="${escapeAttr(to)}" /></td>
-            <td style="text-align:center"><input type="checkbox" class="rep-wb" ${wordBoundaryOnly ? 'checked' : ''} /></td>
-            <td><button type="button" class="danger small rep-remove">Remove</button></td>`;
-        tr.querySelector('.rep-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
-        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
-        tr.querySelectorAll('input[type=checkbox]').forEach(el => el.addEventListener('change', updateJsonPreview));
-        document.getElementById('replacementsBody').appendChild(tr);
-    }
-
-    function addInjectionRow(paths = '/', position = 'beforeHeadClose', snippet = '') {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><textarea class="inj-paths" rows="2">${escapeAttr(paths)}</textarea></td>
-            <td>
-                <select class="inj-position">
-                    <option value="afterHeadOpen">start of &lt;head&gt; (recommended)</option>
-                    <option value="beforeHeadClose">before &lt;/head&gt;</option>
-                    <option value="beforeBodyClose">before &lt;/body&gt;</option>
-                </select>
-            </td>
-            <td><textarea class="inj-snippet" rows="3">${escapeAttr(snippet)}</textarea></td>
-            <td><button type="button" class="danger small inj-remove">Remove</button></td>`;
-        tr.querySelector('.inj-position').value = position;
-        tr.querySelector('.inj-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
-        tr.querySelectorAll('textarea, select').forEach(el => {
-            el.addEventListener('input', updateJsonPreview);
-            el.addEventListener('change', updateJsonPreview);
-        });
-        document.getElementById('injectionsBody').appendChild(tr);
-    }
-
-    function addAssetRow(path = '', file = '') {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" class="asset-path" value="${escapeAttr(path)}" /></td>
-            <td><input type="text" class="asset-file" value="${escapeAttr(file)}" /></td>
-            <td><button type="button" class="danger small asset-remove">Remove</button></td>`;
-        tr.querySelector('.asset-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
-        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
-        document.getElementById('assetsBody').appendChild(tr);
-    }
-
-    function formatSettingValue(value) {
-        if (value === null || value === undefined) return '';
-        if (typeof value === 'object') return JSON.stringify(value);
-        return String(value);
-    }
-
-    function parseSettingValue(raw) {
-        const text = (raw || '').trim();
-        if (!text) return '';
-        if (text === 'true') return true;
-        if (text === 'false') return false;
-        if (/^-?\d+$/.test(text)) return parseInt(text, 10);
-        if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(text)) return parseFloat(text);
-        if ((text.startsWith('{') && text.endsWith('}')) || (text.startsWith('[') && text.endsWith(']'))) {
-            try { return JSON.parse(text); } catch { /* fall through */ }
-        }
-        return text;
-    }
-
-    function addSettingRow(key = '', value = '') {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" class="setting-key" value="${escapeAttr(key)}" /></td>
-            <td><input type="text" class="setting-value" value="${escapeAttr(value)}" /></td>
-            <td><button type="button" class="danger small setting-remove">Remove</button></td>`;
-        tr.querySelector('.setting-remove').addEventListener('click', () => { tr.remove(); updateJsonPreview(); });
-        tr.querySelectorAll('input').forEach(el => el.addEventListener('input', updateJsonPreview));
-        document.getElementById('settingsBody').appendChild(tr);
-    }
-
-    function escapeAttr(value) {
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;');
-    }
-
-    function collectReplacements() {
-        const rows = [];
-        document.querySelectorAll('#replacementsBody tr').forEach(tr => {
-            const from = tr.querySelector('.rep-from').value.trim();
-            const to = tr.querySelector('.rep-to').value.trim();
-            const wordBoundaryOnly = tr.querySelector('.rep-wb').checked;
-            if (!from && !to) return;
-            const item = { from, to };
-            if (wordBoundaryOnly) item.wordBoundaryOnly = true;
-            rows.push(item);
-        });
-        return rows;
-    }
-
-    function collectHtmlInjections() {
-        const rows = [];
-        document.querySelectorAll('#injectionsBody tr').forEach(tr => {
-            const paths = linesToArray(tr.querySelector('.inj-paths').value);
-            const position = tr.querySelector('.inj-position').value;
-            const snippet = tr.querySelector('.inj-snippet').value.trim();
-            if (!snippet) return;
-            rows.push({
-                paths: paths.length > 0 ? paths : ['/'],
-                position,
-                snippet
-            });
-        });
-        return rows;
-    }
-
-    function collectLocalAssets() {
-        const map = {};
-        document.querySelectorAll('#assetsBody tr').forEach(tr => {
-            const path = tr.querySelector('.asset-path').value.trim();
-            const file = tr.querySelector('.asset-file').value.trim();
-            if (!path || !file) return;
-            map[path] = file;
-        });
-        return map;
-    }
-
-    function collectSettings() {
-        const map = {};
-        document.querySelectorAll('#settingsBody tr').forEach(tr => {
-            const key = tr.querySelector('.setting-key').value.trim();
-            const raw = tr.querySelector('.setting-value').value;
-            if (!key) return;
-            map[key] = parseSettingValue(raw);
-        });
-        return map;
-    }
-
-    function buildPayload() {
-        const sourceHost = fields.sourceHost.value.trim();
-        const payload = {
-            sourceHost,
-            disableCaching: fields.disableCaching.checked,
-            passCookies: fields.passCookies.checked,
-            enableOutboundRedirectPaths: fields.enableOutboundRedirectPaths.checked,
-            outboundRedirectPathPrefixes: linesToArray(fields.outboundRedirectPathPrefixes.value),
-            redirectForeignRequests: fields.redirectForeignRequests.checked,
-            blockedPathPrefixes: linesToArray(fields.blockedPathPrefixes.value)
-        };
-
-        const name = fields.name.value.trim();
-        if (name) payload.name = name;
-
-        const sourceUpstreamHost = fields.sourceUpstreamHost.value.trim();
-        if (sourceUpstreamHost) payload.sourceUpstreamHost = sourceUpstreamHost;
-
-        const targetHosts = linesToArray(fields.targetHosts.value);
-        if (targetHosts.length > 0) payload.targetHosts = targetHosts;
-
-        const externalRedirectUrl = fields.externalRedirectUrl.value.trim();
-        if (externalRedirectUrl) payload.externalRedirectUrl = externalRedirectUrl;
-
-        const redirectForeignRequestsUrl = fields.redirectForeignRequestsUrl.value.trim();
-        if (redirectForeignRequestsUrl) payload.redirectForeignRequestsUrl = redirectForeignRequestsUrl;
-
-        const replacements = collectReplacements();
-        if (replacements.length > 0) payload.contentReplacements = replacements;
-
-        const injections = collectHtmlInjections();
-        if (injections.length > 0) payload.htmlInjections = injections;
-
-        const assets = collectLocalAssets();
-        if (Object.keys(assets).length > 0) payload.localAssets = assets;
-
-        const settings = collectSettings();
-        if (Object.keys(settings).length > 0) payload.settings = settings;
-
-        return payload;
-    }
-
-    function updateJsonPreview() {
-        try {
-            jsonPreview.value = JSON.stringify(buildPayload(), null, 2);
-        } catch {
-            jsonPreview.value = '{}';
-        }
-    }
-
-    function fillForm(definition) {
-        const def = normalizeDefinition(definition);
-        fields.sourceHost.value = def.sourceHost || '';
-        fields.name.value = def.name || '';
-        fields.sourceUpstreamHost.value = def.sourceUpstreamHost || '';
-        fields.targetHosts.value = arrayToLines(def.targetHosts);
-        fields.passCookies.checked = def.passCookies;
-        fields.disableCaching.checked = def.disableCaching;
-        fields.externalRedirectUrl.value = def.externalRedirectUrl || '';
-        fields.enableOutboundRedirectPaths.checked = def.enableOutboundRedirectPaths;
-        fields.outboundRedirectPathPrefixes.value = arrayToLines(def.outboundRedirectPathPrefixes);
-        fields.redirectForeignRequests.checked = def.redirectForeignRequests;
-        fields.redirectForeignRequestsUrl.value = def.redirectForeignRequestsUrl || '';
-        fields.blockedPathPrefixes.value = arrayToLines(def.blockedPathPrefixes);
-
-        document.getElementById('replacementsBody').innerHTML = '';
-        for (const rep of def.contentReplacements)
-            addReplacementRow(rep.from || '', rep.to || '', !!rep.wordBoundaryOnly);
-
-        document.getElementById('injectionsBody').innerHTML = '';
-        for (const inj of def.htmlInjections)
-            addInjectionRow(arrayToLines(inj.paths), inj.position || 'beforeHeadClose', inj.snippet || '');
-
-        document.getElementById('assetsBody').innerHTML = '';
-        for (const [path, file] of Object.entries(def.localAssets || {}))
-            addAssetRow(path, file);
-
-        document.getElementById('settingsBody').innerHTML = '';
-        for (const [key, value] of Object.entries(def.settings || {}))
-            addSettingRow(key, formatSettingValue(value));
-
-        updateJsonPreview();
-    }
-
-    function renderSites(data) {
-        document.getElementById('profileBadge').textContent = data.profile || 'default';
-        document.getElementById('jsonPath').textContent = (data.profile ? `profile ${data.profile} · ` : '') + (data.sitesJsonPath || '');
-        sitesBody.innerHTML = '';
-        for (const entry of data.sites) {
-            const def = normalizeDefinition(entry.definition);
-            const cookies = def.passCookies
-                ? '<span class="badge ok">on</span>'
-                : '<span class="badge warn">off</span>';
-            const cache = def.disableCaching
-                ? '<span class="badge warn">off</span>'
-                : '<span class="badge ok">on</span>';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><code>${entry.targetHost}</code></td>
-                <td><code>${def.sourceHost}</code></td>
-                <td>${cookies}</td>
-                <td>${cache}</td>
-                <td>${entry.hasCodedModule ? '<span class="badge">coded</span>' : '<span class="muted">json</span>'}</td>
-                <td class="actions">
-                    <button type="button" data-edit="${entry.targetHost}">Edit</button>
-                    <button type="button" class="danger" data-delete="${entry.targetHost}">Delete</button>
-                </td>`;
-            sitesBody.appendChild(tr);
-        }
-
-        sitesBody.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openEditor(btn.dataset.edit)));
-        sitesBody.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteSite(btn.dataset.delete)));
-    }
-
-    async function loadSites() {
-        const data = await api(apiBase);
-        renderSites(data);
-    }
-
-    async function openEditor(targetHost) {
-        if (targetHost) {
-            const entry = await api(`${apiBase}/${encodeURIComponent(targetHost)}`);
-            editingOriginalKey = entry.targetHost;
-            hasCodedModule = entry.hasCodedModule;
-            editorTitle.textContent = 'Edit site';
-            fields.targetHost.value = entry.targetHost;
-            fields.targetHost.readOnly = true;
-            fillForm(entry.definition);
-        } else {
-            editingOriginalKey = null;
-            hasCodedModule = false;
-            editorTitle.textContent = 'Add site';
-            fields.targetHost.value = '';
-            fields.targetHost.readOnly = false;
-            fillForm(defaultDefinition());
-        }
-        codedWarning.hidden = !hasCodedModule;
-        editor.hidden = false;
-        editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function closeEditor() {
-        editor.hidden = true;
-        editingOriginalKey = null;
-        hasCodedModule = false;
-    }
-
-    async function saveSite() {
-        const targetHost = fields.targetHost.value.trim();
-        if (!targetHost || !fields.sourceHost.value.trim()) {
-            setStatus('Target host and source host are required.', 'error');
-            return;
-        }
-
-        const payload = buildPayload();
-        try {
-            if (editingOriginalKey) {
-                await api(`${apiBase}/${encodeURIComponent(editingOriginalKey)}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(payload)
-                });
-                setStatus(`Updated ${editingOriginalKey} (profile ${document.getElementById('profileBadge').textContent}). Live reload and text cache clear applied.`, 'ok');
-            } else {
-                await api(`${apiBase}/${encodeURIComponent(targetHost)}`, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                setStatus(`Created ${targetHost} (profile ${document.getElementById('profileBadge').textContent}). Live reload and text cache clear applied.`, 'ok');
-            }
-            closeEditor();
-            await loadSites();
-        } catch (err) {
-            setStatus(err.message, 'error');
-        }
-    }
-
     async function deleteSite(targetHost) {
         if (!confirm(`Delete site ${targetHost}?`)) return;
         try {
             await api(`${apiBase}/${encodeURIComponent(targetHost)}`, { method: 'DELETE' });
-            setStatus(`Deleted ${targetHost} (profile ${document.getElementById('profileBadge').textContent}). Live reload and text cache clear applied.`, 'ok');
-            await loadSites();
+            window.location = listUrl;
         } catch (err) {
             setStatus(err.message, 'error');
         }
@@ -686,7 +178,7 @@
                 : '';
             setStatus(`${label} (all sites): ${result.message || ''}${logTail}`.trim(), kind);
             if (action === 'pull' && result.succeeded)
-                await loadSites();
+                window.location = listUrl;
         } catch (err) {
             setStatus(`${label} (all sites): ${err.message}`, 'error');
         } finally {
@@ -719,47 +211,18 @@
         try {
             const result = await api(`${maintenanceBase}/invalidate`, { method: 'POST', body: '{}' });
             setStatus(`Reloaded ${result.siteCount} site(s) from profile ${result.profile}: ${result.sitesJsonPath}.`, 'ok');
-            await loadSites();
+            window.location = listUrl;
         } catch (err) {
             setStatus(err.message, 'error');
         }
     }
 
-    async function loadFtpInfo() {
-        try {
-            const info = await api(`${systemBase}/info`);
-            const line = document.getElementById('webFtpLine');
-            if (!info.webFtpUrl) {
-                line.hidden = true;
-                return;
-            }
-            line.hidden = false;
-            line.innerHTML = 'Web FTP (root <code>' + escapeAttr(info.webRootFullPath || '') + '</code>): '
-                + '<a href="' + escapeAttr(info.webFtpUrl) + '" class="font-monospace user-select-all">' + escapeAttr(info.webFtpUrl) + '</a>';
-        } catch {
-            document.getElementById('webFtpLine').hidden = true;
-        }
-    }
-
-    document.getElementById('addBtn').addEventListener('click', () => openEditor(null));
     document.getElementById('gitPullBtn').addEventListener('click', () => gitRepo('pull'));
     document.getElementById('gitPushBtn').addEventListener('click', () => gitRepo('push'));
     document.getElementById('clearNonBinaryCacheBtn').addEventListener('click', clearNonBinaryCache);
     document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
     document.getElementById('invalidateBtn').addEventListener('click', invalidateSites);
-    document.querySelectorAll('.editor-save').forEach(btn => btn.addEventListener('click', saveSite));
-    document.querySelectorAll('.editor-cancel').forEach(btn => btn.addEventListener('click', closeEditor));
-    document.getElementById('addReplacementBtn').addEventListener('click', () => { addReplacementRow(); updateJsonPreview(); });
-    document.getElementById('addInjectionBtn').addEventListener('click', () => { addInjectionRow(); updateJsonPreview(); });
-    document.getElementById('addAssetBtn').addEventListener('click', () => { addAssetRow(); updateJsonPreview(); });
-    document.getElementById('addSettingBtn').addEventListener('click', () => { addSettingRow(); updateJsonPreview(); });
-    Object.values(fields).forEach(el => {
-        el.addEventListener('input', updateJsonPreview);
-        if (el.type === 'checkbox') el.addEventListener('change', updateJsonPreview);
-    });
-
-    loadSites().catch(err => setStatus(err.message, 'error'));
-    loadFtpInfo();
+    document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteSite(btn.dataset.delete)));
 </script>
 </body>
 </html>

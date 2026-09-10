@@ -85,6 +85,6 @@ Optional coded `SiteModuleBase` in `src/Sites.Modules` overrides JSON when `sour
 
 ## Control panel (`/cp`)
 
-`https://tube-18.xyz/cp/` — CRUD over `hephaestus_sites_data/{profile}/sites.json`, live registry reload. Git buttons push/pull the data repo.
+`https://tube-18.xyz/cp/` — site list. Add is `/cp/edit`, edit is `/cp/edit?site=tube-18.xyz`. CRUD over `hephaestus_sites_data/{profile}/sites.json`, live registry reload. Git buttons push/pull the data repo.
 
 Optional password: `Cp:AdminPassword` in `src/Sites.Host/appsettings.json`.
