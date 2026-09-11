@@ -15,6 +15,10 @@ printf '%s\n' "${SITES_PROFILE}" > "${PROFILE_FILE}"
 
 echo "[sites-install] profile=${SITES_PROFILE} clone=${SITES_CLONE_DIR} publish=${SITES_PUBLISH_DIR}"
 
+echo "[sites-install] stopping ${SITES_SERVICE_NAME} before data/postgres (so a later flush cannot restore old track rows)"
+systemctl stop "${SITES_SERVICE_NAME}" 2>/dev/null || true
+sleep 1
+
 echo "[sites-install] hephaestus_sites_data (sibling)"
 bash "${SCRIPT_DIR}/install-data.sh"
 
