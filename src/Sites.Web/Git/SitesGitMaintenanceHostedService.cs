@@ -26,6 +26,12 @@ public sealed class SitesGitMaintenanceHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (!_options.CurrentValue.Enabled)
+        {
+            _logger.LogInformation("Sites git pull/push maintenance is disabled.");
+            return;
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try

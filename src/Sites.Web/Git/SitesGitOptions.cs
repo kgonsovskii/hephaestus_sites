@@ -4,6 +4,8 @@ public sealed class SitesGitOptions
 {
     public const string SectionName = "Git";
 
+    public bool Enabled { get; set; } = true;
+
     public string RepositoryUrl { get; set; } = "https://github.com/kgonsovskii/hephaestus_sites_data.git";
 
     public string DefaultBranch { get; set; } = "main";

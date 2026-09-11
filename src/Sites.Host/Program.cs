@@ -6,8 +6,6 @@ using Sites.Web;
 using Sites.Web.Abstractions;
 
 SitesProfileResolver.Initialize();
-using (var bootLog = LoggerFactory.Create(builder => builder.AddSimpleConsole(options => options.SingleLine = true)))
-    Sites.Web.Git.SitesDataGitRunner.EnsureSynced(bootLog.CreateLogger("Sites.Host"));
 
 var selectedSiteName = Environment.GetEnvironmentVariable("SITES_SITE")
     ?? ParseSelectedSiteName(args);
@@ -15,6 +13,11 @@ if (selectedSiteName is not null)
     SitesProfileForSite.UseProfileThatContains(selectedSiteName);
 
 var builder = WebApplication.CreateBuilder(args);
+if (builder.Configuration.GetValue("Git:Enabled", true))
+{
+    using var bootLog = LoggerFactory.Create(b => b.AddSimpleConsole(options => options.SingleLine = true));
+    Sites.Web.Git.SitesDataGitRunner.EnsureSynced(bootLog.CreateLogger("Sites.Host"));
+}
 var certificateStore = new TlsCertificateStore();
 
 builder.WebHost.ConfigureKestrel((context, options) =>
