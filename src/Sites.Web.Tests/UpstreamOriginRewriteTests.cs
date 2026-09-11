@@ -45,6 +45,27 @@ public sealed class UpstreamOriginRewriteTests
             site));
     }
 
+    [Fact]
+    public void EnsureUpstreamSecFetchSite_AddsSameOriginWhenMissing()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://online.oldgames.sk/api/getrom/689");
+
+        ReverseProxyMiddleware.EnsureUpstreamSecFetchSite(request);
+
+        Assert.Equal("same-origin", request.Headers.GetValues("Sec-Fetch-Site").Single());
+    }
+
+    [Fact]
+    public void EnsureUpstreamSecFetchSite_ReplacesCrossSite()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://online.oldgames.sk/api/getrom/689");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-Site", "cross-site");
+
+        ReverseProxyMiddleware.EnsureUpstreamSecFetchSite(request);
+
+        Assert.Equal("same-origin", request.Headers.GetValues("Sec-Fetch-Site").Single());
+    }
+
     private static JsonSiteModule CreateSite() =>
         new(new SiteDefinition
         {

@@ -409,7 +409,8 @@ public sealed class ReverseProxyMiddleware
                 continue;
 
             if (header.Key.Equals("Referer", StringComparison.OrdinalIgnoreCase)
-                || header.Key.Equals("Origin", StringComparison.OrdinalIgnoreCase))
+                || header.Key.Equals("Origin", StringComparison.OrdinalIgnoreCase)
+                || header.Key.Equals("Sec-Fetch-Site", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             request.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
@@ -423,6 +424,16 @@ public sealed class ReverseProxyMiddleware
         var upstreamOrigin = BuildUpstreamOrigin(context, site);
         if (upstreamOrigin is not null)
             request.Headers.TryAddWithoutValidation("Origin", upstreamOrigin);
+
+        // Chrome only sends Sec-Fetch-* on HTTPS/localhost. Origin WAF requires
+        // Sec-Fetch-Site: same-origin on /api/getrom and 401s without it.
+        EnsureUpstreamSecFetchSite(request);
+    }
+
+    internal static void EnsureUpstreamSecFetchSite(HttpRequestMessage request)
+    {
+        request.Headers.Remove("Sec-Fetch-Site");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-Site", "same-origin");
     }
 
     private static Uri BuildUpstreamReferer(HttpContext context, ISiteModule site)
