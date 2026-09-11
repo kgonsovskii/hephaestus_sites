@@ -125,9 +125,9 @@ public static class RemoteDeployRunner
     {
         var script = NormalizeRemoteShellText(remoteScriptText);
         var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(script));
-        var remoteShell = $"echo {b64} | base64 -d | bash";
+        var remoteShell = $"bash --noprofile --norc -c 'echo {b64} | base64 -d | bash; e=$?; exit $e'";
 
-        var args = new List<string> { "-e", "ssh", "-T" };
+        var args = new List<string> { "-e", "ssh", "-n", "-T" };
         args.AddRange(SshCommonOpts);
         args.Add($"{user}@{host}");
         args.Add(remoteShell);
@@ -158,6 +158,7 @@ public static class RemoteDeployRunner
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = true,
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8
         };
@@ -170,6 +171,14 @@ public static class RemoteDeployRunner
         using var proc = new Process { StartInfo = psi };
         if (!proc.Start())
             throw new InvalidOperationException("Failed to start sshpass process.");
+
+        try
+        {
+            proc.StandardInput.Close();
+        }
+        catch
+        {
+        }
 
         var emit = emitLineAsync ?? DefaultEmitAsync;
         var stdout = PumpLinesAsync(proc.StandardOutput, null, emit, cancellationToken);
