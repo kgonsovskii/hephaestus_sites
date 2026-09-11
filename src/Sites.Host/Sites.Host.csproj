@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Sites.Cp\Sites.Cp.csproj" />
     <ProjectReference Include="..\Sites.DataFtp\Sites.DataFtp.csproj" />
     <ProjectReference Include="..\Sites.RemoteDeploy\Sites.RemoteDeploy.csproj" />
+    <ProjectReference Include="..\Sites.Track\Sites.Track.csproj" />
     <ProjectReference Include="..\Sites.Web\Sites.Web.csproj" />
     <ProjectReference Include="..\Sites.Modules\Sites.Modules.csproj" />
   </ItemGroup>

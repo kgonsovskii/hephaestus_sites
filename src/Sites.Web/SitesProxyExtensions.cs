@@ -69,7 +69,9 @@ public static class SitesProxyExtensions
         return services;
     }
 
-    public static WebApplication UseSitesProxyPipeline(this WebApplication app)
+    public static WebApplication UseSitesProxyPipeline(
+        this WebApplication app,
+        Action<IApplicationBuilder>? afterSiteRouting = null)
     {
         app.UseWhen(
             context => context.RequestServices
@@ -81,6 +83,7 @@ public static class SitesProxyExtensions
 
         app.UseMiddleware<OversizedCookieMiddleware>();
         app.UseMiddleware<SiteRoutingMiddleware>();
+        afterSiteRouting?.Invoke(app);
         app.UseMiddleware<RequestLoggingMiddleware>();
         app.UseMiddleware<BlockedPathsMiddleware>();
         app.UseMiddleware<LocalAssetsMiddleware>();

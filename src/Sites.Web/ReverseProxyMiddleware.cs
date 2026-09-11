@@ -113,9 +113,15 @@ public sealed class ReverseProxyMiddleware
         {
             var replacements = GetContentReplacements(site, context.Request);
             var injections = site.Rules.HtmlInjections;
+            var extraInjections = context.RequestServices.GetService<IHtmlExtras>()?.Injections
+                ?? Array.Empty<HtmlInjection>();
             var rewriteForeignLinks = site.RedirectForeignRequests;
             var jsPatchPath = JsAssetPatch.ResolvePatchPath(site, context.Request.Path.Value ?? "/");
-            if (replacements.Count == 0 && injections.Count == 0 && !rewriteForeignLinks && jsPatchPath is null)
+            if (replacements.Count == 0 &&
+                injections.Count == 0 &&
+                extraInjections.Count == 0 &&
+                !rewriteForeignLinks &&
+                jsPatchPath is null)
             {
                 context.Response.Headers["X-Proxy-Cache"] = cachingEnabled ? "BYPASS" : "DISABLED";
                 await context.Response.StartAsync(context.RequestAborted);
@@ -132,13 +138,18 @@ public sealed class ReverseProxyMiddleware
                     replacements);
             }
 
-            if (injections.Count > 0)
+            if (injections.Count > 0 || extraInjections.Count > 0)
             {
+                var combined = extraInjections.Count == 0
+                    ? injections
+                    : injections.Count == 0
+                        ? extraInjections
+                        : injections.Concat(extraInjections).ToArray();
                 body = HtmlInjector.InjectBytes(
                     body,
                     contentType,
                     context.Request.Path.Value ?? "/",
-                    injections);
+                    combined);
             }
 
             if (rewriteForeignLinks)

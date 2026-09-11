@@ -64,6 +64,8 @@ dotnet run --project src/Sites.Host
 
 `Sites.Host` pulls `hephaestus_sites_data` and issues/renews Let's Encrypt on every start (deploy or reboot). The background loop checks again after 15s, then every 12 hours.
 
+Tracking: `?flow=campaign` sets a cookie. HTML pages count `hit` / `/video` as `video`. Play beacons `POST /t/e`. Hephaestus later `POST /internal/track/goal` with `{ "ip": "..." }`. Memory flushes to Postgres every 2 minutes. An IP can convert once per 24h.
+
 ## Optional manual cert tool
 
 ```bash

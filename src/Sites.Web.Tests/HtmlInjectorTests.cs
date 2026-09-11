@@ -106,4 +106,14 @@ public sealed class HtmlInjectorTests
 
         Assert.Contains("<script src=\"/videoscript.js\"></script></head>", result);
     }
+
+    [Fact]
+    public void Inject_TrackExtras_InsertsBeforeBodyCloseOnAllPages()
+    {
+        const string html = "<html><head></head><body>page</body></html>";
+
+        var result = HtmlInjector.Inject(html, "/categories", [Sites.Track.TrackHtmlExtras.Script]);
+
+        Assert.Contains("""<script src="/_s/track.js" async></script></body>""", result);
+    }
 }

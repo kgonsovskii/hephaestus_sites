@@ -30,7 +30,7 @@ SET client_min_messages = WARNING;
 CREATE TABLE track_visit (
   day        DATE NOT NULL,
   ip         VARCHAR(45) NOT NULL,
-  partner    VARCHAR(100) NOT NULL DEFAULT '',
+  flow       VARCHAR(100) NOT NULL DEFAULT '',
   site       VARCHAR(200) NOT NULL DEFAULT '',
   target1    VARCHAR(200) NOT NULL DEFAULT '',
   target2    VARCHAR(200) NOT NULL DEFAULT '',
@@ -40,7 +40,8 @@ CREATE TABLE track_visit (
   goal       BOOLEAN NOT NULL DEFAULT FALSE,
   first_seen TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_seen  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (day, ip, partner, site)
+  goal_at    TIMESTAMP WITHOUT TIME ZONE,
+  PRIMARY KEY (day, ip, flow, site)
 );
 
 ALTER SCHEMA public OWNER TO tss;

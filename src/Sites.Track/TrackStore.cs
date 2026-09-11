@@ -1,0 +1,187 @@
+using System.Collections.Concurrent;
+
+namespace Sites.Track;
+
+public sealed class TrackStore
+{
+    private readonly ConcurrentDictionary<TrackVisitKey, TrackVisit> _visits = new();
+    private readonly object _dirtyLock = new();
+    private bool _dirty;
+
+    public bool IsDirty
+    {
+        get
+        {
+            lock (_dirtyLock)
+                return _dirty;
+        }
+    }
+
+    public void ReplaceAll(IEnumerable<TrackVisit> visits)
+    {
+        _visits.Clear();
+        foreach (var visit in visits)
+            _visits[visit.Key] = visit;
+
+        lock (_dirtyLock)
+            _dirty = false;
+    }
+
+    public TrackVisit? TryGet(TrackVisitKey key) =>
+        _visits.TryGetValue(key, out var visit) ? visit : null;
+
+    public IReadOnlyCollection<TrackVisit> Snapshot() => _visits.Values.ToArray();
+
+    public TrackVisit Touch(
+        DateOnly day,
+        string ip,
+        string flow,
+        string site,
+        string target1,
+        string target2,
+        TrackEventKind kind,
+        DateTime now)
+    {
+        var key = new TrackVisitKey(day, ip, flow, site);
+        var visit = _visits.AddOrUpdate(
+            key,
+            _ => Create(day, ip, flow, site, target1, target2, kind, now),
+            (_, existing) =>
+            {
+                lock (existing)
+                {
+                    Apply(existing, kind, now);
+                    if (target1.Length > 0)
+                        existing.Target1 = target1;
+                    if (target2.Length > 0)
+                        existing.Target2 = target2;
+                    return existing;
+                }
+            });
+
+        MarkDirty();
+        return visit;
+    }
+
+    public bool TryMarkGoal(string ip, TimeSpan lockWindow, DateTime now, out TrackVisit? visit)
+    {
+        visit = null;
+        var cutoff = now - lockWindow;
+
+        foreach (var candidate in _visits.Values)
+        {
+            DateTime? goalAt;
+            lock (candidate)
+                goalAt = candidate.GoalAt;
+
+            if (!string.Equals(candidate.Ip, ip, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (goalAt is DateTime locked && locked >= cutoff)
+                return false;
+        }
+
+        TrackVisit? best = null;
+        foreach (var candidate in _visits.Values)
+        {
+            if (!string.Equals(candidate.Ip, ip, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (candidate.LastSeen < cutoff)
+                continue;
+            if (string.IsNullOrEmpty(candidate.Flow))
+                continue;
+
+            if (best is null || Score(candidate) > Score(best) ||
+                (Score(candidate) == Score(best) && candidate.LastSeen > best.LastSeen))
+                best = candidate;
+        }
+
+        if (best is null)
+            return false;
+
+        lock (best)
+        {
+            if (best.GoalAt is DateTime existing && existing >= cutoff)
+                return false;
+
+            best.Goal = true;
+            best.GoalAt = now;
+            best.LastSeen = now;
+        }
+
+        MarkDirty();
+        visit = best;
+        return true;
+    }
+
+    public void MarkClean()
+    {
+        lock (_dirtyLock)
+            _dirty = false;
+    }
+
+    private void MarkDirty()
+    {
+        lock (_dirtyLock)
+            _dirty = true;
+    }
+
+    private static TrackVisit Create(
+        DateOnly day,
+        string ip,
+        string flow,
+        string site,
+        string target1,
+        string target2,
+        TrackEventKind kind,
+        DateTime now)
+    {
+        var visit = new TrackVisit
+        {
+            Day = day,
+            Ip = ip,
+            Flow = flow,
+            Site = site,
+            Target1 = target1,
+            Target2 = target2,
+            FirstSeen = now,
+            LastSeen = now
+        };
+        Apply(visit, kind, now);
+        return visit;
+    }
+
+    private static void Apply(TrackVisit visit, TrackEventKind kind, DateTime now)
+    {
+        visit.LastSeen = now;
+        switch (kind)
+        {
+            case TrackEventKind.Hit:
+                visit.Hit = true;
+                break;
+            case TrackEventKind.Video:
+                visit.Hit = true;
+                visit.Video = true;
+                break;
+            case TrackEventKind.Play:
+                visit.Hit = true;
+                visit.Play = true;
+                break;
+            case TrackEventKind.Goal:
+                visit.Goal = true;
+                visit.GoalAt = now;
+                break;
+        }
+    }
+
+    private static int Score(TrackVisit visit)
+    {
+        if (visit.Play)
+            return 3;
+        if (visit.Video)
+            return 2;
+        if (visit.Hit)
+            return 1;
+        return 0;
+    }
+}

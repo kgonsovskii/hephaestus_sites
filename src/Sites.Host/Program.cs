@@ -2,6 +2,7 @@ using Sites.CertMaintenance;
 using Sites.Cp;
 using Sites.DataFtp;
 using Sites.Host;
+using Sites.Track;
 using Sites.Web;
 using Sites.Web.Abstractions;
 
@@ -43,6 +44,7 @@ builder.Services.AddSitesProxyEngineFromReferencedAssembly(
     "Sites.Modules",
     selectedSiteName);
 builder.Services.AddSitesCertMaintenance(builder.Configuration, certificateStore);
+builder.Services.AddSitesTrack(builder.Configuration);
 
 var app = builder.Build();
 
@@ -82,7 +84,7 @@ else
 app.UseHttpLogging();
 app.UseSitesCertMaintenance();
 app.UseSitesCp();
-app.UseSitesProxyPipeline();
+app.UseSitesProxyPipeline(branch => branch.UseSitesTrack());
 
 await app.StartAsync();
 await CertMaintenanceBootstrap.TryBootstrapAsync(app.Services);

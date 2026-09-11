@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sites.RemoteDeploy", "Sites
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sites.DataFtp", "Sites.DataFtp\Sites.DataFtp.csproj", "{E2DF3488-6C98-4DB0-BC83-47AD3B981E8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sites.Track", "Sites.Track\Sites.Track.csproj", "{022781AC-0DDB-41BE-BF6F-1526542EF0C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -191,6 +193,18 @@ Global
 		{E2DF3488-6C98-4DB0-BC83-47AD3B981E8E}.Release|x64.Build.0 = Release|Any CPU
 		{E2DF3488-6C98-4DB0-BC83-47AD3B981E8E}.Release|x86.ActiveCfg = Release|Any CPU
 		{E2DF3488-6C98-4DB0-BC83-47AD3B981E8E}.Release|x86.Build.0 = Release|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Debug|x64.Build.0 = Debug|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Debug|x86.Build.0 = Debug|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Release|x64.ActiveCfg = Release|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Release|x64.Build.0 = Release|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Release|x86.ActiveCfg = Release|Any CPU
+		{022781AC-0DDB-41BE-BF6F-1526542EF0C9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
