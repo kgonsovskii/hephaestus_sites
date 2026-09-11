@@ -1,93 +1,47 @@
 # sites
 
-## Repository layout
+Прокси-сайты + CP `/cp`. Профиль — соседний `profile.txt`.
 
 ```
 parent/
-  profile.txt                 — active profile name
-  hephaestus_sites/           — this repo (code)
-    src/                      — solution and C# projects
-    deploy/                   — remote install + code PAT + data PAT
-    output/  release/ cert/
-  hephaestus_sites_data/      — sibling data repo (dynamic)
-    {profile}/sites.json
-    {profile}/settings.json
-    {profile}/wwwroot/
+  profile.txt
+  hephaestus_sites/         ← код
+  hephaestus_sites_data/    ← сайты, wwwroot, settings
 ```
 
-## Remote deploy (local machine → VPS)
+`sites.json`: ключ — наш домен (`targetHost`), `sourceHost` — источник. Модуль в `src/Sites.Modules` перекрывает JSON, если `sourceHost` совпал.
 
-```bat
-deploy.bat
-```
+## Деплой на VPS
 
-Deploys every host in `deploy/install-remote-creds.txt` in parallel and prints a success/fail report.
+`deploy.bat` — все хосты из `deploy/install-remote-creds.txt` параллельно (host / login / password / profile). На сервере: git + .NET (пропуск, если уже есть) → clone кода и данных → PostgreSQL (**SQL каждый раз, база `sites` пересоздаётся**) → publish → systemd `sites-host`.
 
-What happens on each VPS (over SSH):
+| Скрипт | Что делает | Аргументы |
+|--------|------------|-----------|
+| `deploy.bat` | Удалённый деплой | `[профиль]` (остальное — в CLI) |
+| `deploy_profile.bat` | Спросит профиль, затем `deploy.bat` | дальше как deploy |
+| `deploy/install-remote.txt` | То, что крутится по SSH | env: `SITES_PROFILE`, git URL |
+| `deploy/install-local.sh` | Данные + postgres + publish + systemd | нужен `SITES_PROFILE` |
+| `deploy/install-data.sh` | Клон/reset `hephaestus_sites_data` | — |
+| `deploy/install-postgres.sh` | Пакет postgres (skip если есть) + SQL | — |
+| `deploy/update.sh` | На сервере: git reset + publish + restart | `[профиль]` (по умолчанию `default`) |
 
-1. Validate the creds profile and overwrite `$HOME/profile.txt`
-2. Install `git` + .NET 10 SDK/runtime (apt)
-3. `git clone`/`reset` **code** (`hephaestus_sites`) and **data** (`hephaestus_sites_data`)
-4. Install PostgreSQL and apply `deploy/setup-postgres.sql` (database `sites`, role `tss` / `123`). Each deploy **drops and recreates** `sites` (tracking data is wiped).
-5. `dotnet publish` → `~/hephaestus_sites/release/`
-6. Restart `sites-host` systemd service — on start it pulls data again and issues/renews Let's Encrypt for every host in that profile's `sites.json`
+DNS доменов должен смотреть на VPS. Сертификаты Let's Encrypt — при старте `sites-host`.
 
-CP git pull/push syncs **hephaestus_sites_data** only (not the code repo), same pattern as Hephaestus + `hephaestus_data`.
+## Локально
 
-Credentials: `deploy/install-remote-creds.txt` (host / login / password / profile per server). All hosts deploy in parallel; each target’s `$HOME/profile.txt` is overwritten. Defaults in `src/Sites.Deploy.Cli/appsettings.json`.
-
-## Build layout
-
-| Path | Purpose |
-|---|---|
-| `output/` | All project build output (`src/Directory.Build.props`) |
-| `release/` | Linux publish — `sites-host` systemd `WorkingDirectory` |
+| Скрипт | Что делает | Аргументы |
+|--------|------------|-----------|
+| `run.bat` | `Sites.Host` (Development, без HTTPS) | без аргументов — все сайты; `[хост]` или `--sitename хост` — один сайт на `:5000` |
+| `certs.bat` | CertTool (Let's Encrypt → `cert/sites.pfx`) | без аргументов = `publish`; иначе `publish`, `check`, `publish --staging`… |
+| `clearcache.bat` / `.sh` | Диск-кэш прокси (`C:\_cache` / `/_cache`) | — |
+| `push.bat` | commit + push | `[сообщение]` (по умолчанию `Update`) |
+| `pull.bat` | `git pull` | — |
 
 ```bash
 dotnet build src/Sites.sln
-dotnet msbuild src/Sites.Publish/Sites.Publish.csproj -t:PublishSites -p:PublishRuntimeIdentifier=linux-x64
-```
-
-## Development (local)
-
-```bash
 dotnet run --project src/Sites.Host
 ```
 
-`appsettings.Development.json` disables HTTPS and cert maintenance.
+## Трекинг (кратко)
 
-## Production (VPS)
-
-1. Point DNS for all site domains to the server.
-2. Set `CertMaintenance:AcmeEmail` in `src/Sites.Host/appsettings.json` (real email — Let's Encrypt rejects `example.com`).
-3. Deploy via `deploy.bat` (or run `Sites.Host` on the server after publish).
-
-`Sites.Host` pulls `hephaestus_sites_data` and issues/renews Let's Encrypt on every start (deploy or reboot). The background loop checks again after 15s, then every 12 hours.
-
-Tracking: `?flow=campaign` sets a cookie. HTML pages count `hit` / `/video` as `video`. Play beacons `POST /t/e`. Hephaestus later `POST /internal/track/goal` with `{ "ip": "..." }`. Memory flushes to Postgres every 2 minutes. An IP can convert once per 24h.
-
-## Optional manual cert tool
-
-```bash
-dotnet run --project src/Sites.CertTool -- check
-dotnet run --project src/Sites.CertTool -- publish --staging
-```
-
-## Site configuration (`hephaestus_sites_data/{profile}/sites.json`)
-
-Keys are **targetHost** (our publish domain):
-
-```json
-{
-  "tube-18.xyz": { "sourceHost": "tube18.sex" },
-  "veryoldgames.xyz": { "sourceHost": "bestoldgames.net" }
-}
-```
-
-Optional coded `SiteModuleBase` in `src/Sites.Modules` overrides JSON when `sourceHost` matches.
-
-## Control panel (`/cp`)
-
-`https://tube-18.xyz/cp/` — site list. Add is `/cp/edit`, edit is `/cp/edit?site=tube-18.xyz`. CRUD over `hephaestus_sites_data/{profile}/sites.json`, live registry reload. Git buttons push/pull the data repo.
-
-Optional password: `Cp:AdminPassword` in `src/Sites.Host/appsettings.json`.
+`?flow=` → cookie `sf` 30 дней; пустой/мусорный flow → `_default`. Домен = последние две метки хоста **только при записи**. Hit / Video (`/video`) / Play (`POST /_s/e`, не Video) / Goal (Hephaestus `POST /internal/track/goal` `{ip}`). Hold 24ч (`goal_at`). Стата: `/cp/Stats`.

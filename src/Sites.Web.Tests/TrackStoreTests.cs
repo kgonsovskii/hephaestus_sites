@@ -48,12 +48,34 @@ public sealed class TrackCookieTests
     }
 
     [Fact]
+    public void TryWriteFromQuery_InvalidFlow_WritesDefault()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.QueryString = new QueryString("?flow=undefined");
+
+        Assert.True(TrackCookie.TryWriteFromQuery(context));
+        Assert.Contains("sf=_default", context.Response.Headers.SetCookie.ToString());
+    }
+
+    [Fact]
     public void ReadFlow_IgnoresPartnerQuery()
     {
         var context = new DefaultHttpContext();
         context.Request.QueryString = new QueryString("?partner=old-id");
 
-        Assert.Null(TrackCookie.ReadFlow(context.Request));
+        Assert.Equal(TrackCookie.DefaultFlow, TrackCookie.ReadFlow(context.Request));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("undefined")]
+    [InlineData("null")]
+    [InlineData("none")]
+    public void NormalizeFlow_EmptyOrInvalid_IsDefault(string? value)
+    {
+        Assert.Equal(TrackCookie.DefaultFlow, TrackCookie.NormalizeFlow(value));
     }
 
     [Fact]
@@ -231,6 +253,21 @@ public sealed class TrackMiddlewareTests
         Assert.NotNull(visit);
         Assert.True(visit!.Hit);
         Assert.False(visit.Video);
+    }
+
+    [Fact]
+    public async Task GetHome_WithoutFlow_TracksDefault()
+    {
+        var store = new TrackStore();
+        var middleware = Create(store);
+        var context = CreateContext("GET", "/", "", "1.2.3.4");
+
+        await middleware.InvokeAsync(context);
+
+        var visit = store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(DateTime.UtcNow), "1.2.3.4", TrackCookie.DefaultFlow, "4tube.xyz"));
+        Assert.NotNull(visit);
+        Assert.True(visit!.Hit);
+        Assert.Equal(TrackCookie.DefaultFlow, visit.Flow);
     }
 
     [Fact]

@@ -8,6 +8,7 @@ public static class TrackCookie
     public const string FlowName = "sf";
     public const string Target1Name = "st1";
     public const string Target2Name = "st2";
+    public const string DefaultFlow = "_default";
     public const int FlowMaxLength = 100;
     public const int TargetMaxLength = 200;
 
@@ -43,20 +44,32 @@ public static class TrackCookie
     public static bool SameClientIp(string? left, string? right) =>
         string.Equals(NormalizeClientIp(left), NormalizeClientIp(right), StringComparison.OrdinalIgnoreCase);
 
-    public static string? ReadFlow(HttpRequest request)
+    public static string NormalizeFlow(string? value)
+    {
+        var flow = Normalize(value, FlowMaxLength);
+        if (flow.Length == 0)
+            return DefaultFlow;
+        if (flow.Equals("undefined", StringComparison.OrdinalIgnoreCase) ||
+            flow.Equals("null", StringComparison.OrdinalIgnoreCase) ||
+            flow.Equals("none", StringComparison.OrdinalIgnoreCase))
+            return DefaultFlow;
+        return flow;
+    }
+
+    public static string ReadFlow(HttpRequest request)
     {
         var fromQuery = Normalize(request.Query["flow"].ToString(), FlowMaxLength);
         if (fromQuery.Length > 0)
-            return fromQuery;
+            return NormalizeFlow(fromQuery);
 
         if (request.Cookies.TryGetValue(FlowName, out var cookie))
         {
             var fromCookie = Normalize(cookie, FlowMaxLength);
             if (fromCookie.Length > 0)
-                return fromCookie;
+                return NormalizeFlow(fromCookie);
         }
 
-        return null;
+        return DefaultFlow;
     }
 
     public static string RequestDomain(HttpRequest request)
@@ -99,9 +112,10 @@ public static class TrackCookie
 
     public static bool TryWriteFromQuery(HttpContext context)
     {
-        var flow = Normalize(context.Request.Query["flow"].ToString(), FlowMaxLength);
-        if (flow.Length == 0)
+        if (!context.Request.Query.ContainsKey("flow"))
             return false;
+
+        var flow = NormalizeFlow(context.Request.Query["flow"].ToString());
 
         var t1 = FirstNonEmpty(
             Normalize(context.Request.Query["target1"].ToString(), TargetMaxLength),
