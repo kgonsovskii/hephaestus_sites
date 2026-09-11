@@ -44,14 +44,26 @@ public static class TrackPath
         return true;
     }
 
-    public static TrackEventKind PageEvent(string path)
+    public static TrackEventKind PageEvent(string path) =>
+        IsVideoPage(path) ? TrackEventKind.Video : TrackEventKind.Hit;
+
+    public static bool IsVideoPage(string path)
     {
         var normalized = Normalize(path);
-        if (normalized.Equals("/video", StringComparison.OrdinalIgnoreCase) ||
-            normalized.StartsWith("/video/", StringComparison.OrdinalIgnoreCase))
-            return TrackEventKind.Video;
+        return normalized.Equals("/video", StringComparison.OrdinalIgnoreCase) ||
+               normalized.StartsWith("/video/", StringComparison.OrdinalIgnoreCase);
+    }
 
-        return TrackEventKind.Hit;
+    public static bool IsVideoPageFromReferer(string? referer)
+    {
+        if (string.IsNullOrWhiteSpace(referer))
+            return false;
+
+        if (!Uri.TryCreate(referer, UriKind.Absolute, out var uri) &&
+            !Uri.TryCreate(referer, UriKind.Relative, out uri))
+            return false;
+
+        return IsVideoPage(uri.IsAbsoluteUri ? uri.AbsolutePath : referer);
     }
 
     public static string Normalize(string path)

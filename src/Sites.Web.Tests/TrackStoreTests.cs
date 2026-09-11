@@ -126,6 +126,11 @@ public sealed class TrackPathTests
         Assert.Equal(TrackEventKind.Video, TrackPath.PageEvent("/video/8230/slug"));
         Assert.Equal(TrackEventKind.Hit, TrackPath.PageEvent("/"));
         Assert.Equal(TrackEventKind.Hit, TrackPath.PageEvent("/categories"));
+        Assert.True(TrackPath.IsVideoPage("/video/8230/slug"));
+        Assert.False(TrackPath.IsVideoPage("/"));
+        Assert.False(TrackPath.IsVideoPage("/videos/latest"));
+        Assert.True(TrackPath.IsVideoPageFromReferer("https://4tube.xyz/video/1/slug"));
+        Assert.False(TrackPath.IsVideoPageFromReferer("https://4tube.xyz/"));
     }
 
     [Fact]
@@ -292,7 +297,8 @@ public sealed class TrackMiddlewareTests
         var middleware = Create(store);
         var context = CreateContext("POST", "/_s/e", "", "9.9.9.9");
         context.Request.Headers.Cookie = "sf=camp1";
-        context.Request.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("""{"e":"play"}"""));
+        context.Request.Headers.Referer = "https://4tube.xyz/video/8230/slug";
+        context.Request.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("""{"e":"play","p":"/video/8230/slug"}"""));
 
         await middleware.InvokeAsync(context);
 
@@ -301,6 +307,23 @@ public sealed class TrackMiddlewareTests
         Assert.NotNull(visit);
         Assert.True(visit!.Play);
         Assert.False(visit.Video);
+        Assert.True(visit.Hit);
+    }
+
+    [Fact]
+    public async Task PostPlayBeacon_HomePage_DoesNotSetPlay()
+    {
+        var store = new TrackStore();
+        var middleware = Create(store);
+        var context = CreateContext("POST", "/_s/e", "", "9.9.9.9");
+        context.Request.Headers.Cookie = "sf=camp1";
+        context.Request.Headers.Referer = "https://4tube.xyz/";
+        context.Request.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("""{"e":"play","p":"/"}"""));
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status204NoContent, context.Response.StatusCode);
+        Assert.Null(store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(DateTime.UtcNow), "9.9.9.9", "camp1", "4tube.xyz")));
     }
 
     [Fact]
@@ -349,7 +372,10 @@ public sealed class TrackMiddlewareTests
         Assert.Contains("sendBeacon", body);
         Assert.Contains("/_s/e", body);
         Assert.Contains("tube18:player", body);
-        Assert.Contains("getElementsByTagName(\"video\")", body);
+        Assert.Contains("userPlay", body);
+        Assert.Contains("__sitesTrackPlay", body);
+        Assert.Contains("isVideoPage", body);
+        Assert.DoesNotContain("getElementsByTagName", body);
         Assert.Equal("text/javascript; charset=utf-8", context.Response.ContentType);
     }
 

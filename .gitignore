@@ -102,6 +102,9 @@ secrets.json
 
 ## Others
 _temp/
+tmp/
+temp/
+**/%TEMP%/
 *.swp
 *~
 .DS_Store

@@ -115,19 +115,26 @@ public sealed class TrackMiddleware
             return;
         }
 
-        var kind = TrackEventKind.Play;
+        var isPlay = false;
+        string? pagePath = null;
         try
         {
             using var doc = await JsonDocument.ParseAsync(context.Request.Body, cancellationToken: context.RequestAborted);
             if (doc.RootElement.TryGetProperty("e", out var e) &&
                 e.GetString()?.Equals("play", StringComparison.OrdinalIgnoreCase) == true)
-                kind = TrackEventKind.Play;
+                isPlay = true;
+            if (doc.RootElement.TryGetProperty("p", out var p))
+                pagePath = p.GetString();
         }
         catch (JsonException)
         {
         }
 
-        Record(context, kind);
+        var onVideoPage = TrackPath.IsVideoPage(pagePath ?? "") ||
+                          TrackPath.IsVideoPageFromReferer(context.Request.Headers.Referer.ToString());
+        if (isPlay && onVideoPage)
+            Record(context, TrackEventKind.Play);
+
         context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 
@@ -176,7 +183,7 @@ public sealed class TrackMiddleware
     private static async Task WriteScriptAsync(HttpContext context)
     {
         context.Response.ContentType = "text/javascript; charset=utf-8";
-        context.Response.Headers.CacheControl = "public, max-age=3600";
+        context.Response.Headers.CacheControl = "public, max-age=60";
         await context.Response.WriteAsync(Script, context.RequestAborted);
     }
 
