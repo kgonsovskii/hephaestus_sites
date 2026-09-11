@@ -31,6 +31,7 @@ CREATE TABLE track_visit (
   day        DATE NOT NULL,
   ip         VARCHAR(45) NOT NULL,
   flow       VARCHAR(100) NOT NULL DEFAULT '',
+  domain     VARCHAR(200) NOT NULL DEFAULT '',
   site       VARCHAR(200) NOT NULL DEFAULT '',
   target1    VARCHAR(200) NOT NULL DEFAULT '',
   target2    VARCHAR(200) NOT NULL DEFAULT '',
@@ -41,7 +42,7 @@ CREATE TABLE track_visit (
   first_seen TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_seen  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   goal_at    TIMESTAMP WITHOUT TIME ZONE,
-  PRIMARY KEY (day, ip, flow, site)
+  PRIMARY KEY (day, ip, flow, domain)
 );
 
 ALTER SCHEMA public OWNER TO tss;

@@ -56,17 +56,11 @@ public sealed class TrackMiddleware
         await _next(context);
     }
 
-    private void TryRecordPage(HttpContext context, string path)
+    private void Record(HttpContext context, TrackEventKind kind)
     {
-        if (!TrackPath.ShouldRecordPage(path))
-            return;
-
         var flow = TrackCookie.ReadFlow(context.Request);
-        if (string.IsNullOrEmpty(flow))
-            return;
-
         var ip = TrackCookie.ClientIp(context);
-        if (string.IsNullOrEmpty(ip))
+        if (string.IsNullOrEmpty(flow) || string.IsNullOrEmpty(ip))
             return;
 
         string siteName;
@@ -78,6 +72,10 @@ public sealed class TrackMiddleware
         {
             return;
         }
+
+        var domain = TrackCookie.RequestDomain(context.Request);
+        if (domain.Length == 0)
+            domain = TrackCookie.Normalize(siteName, 200);
 
         var (t1, t2) = TrackCookie.ReadTargets(context.Request);
         var now = DateTime.UtcNow;
@@ -85,11 +83,20 @@ public sealed class TrackMiddleware
             DateOnly.FromDateTime(now),
             ip,
             flow,
+            domain,
             siteName,
             t1,
             t2,
-            TrackPath.PageEvent(path),
+            kind,
             now);
+    }
+
+    private void TryRecordPage(HttpContext context, string path)
+    {
+        if (!TrackPath.ShouldRecordPage(path))
+            return;
+
+        Record(context, TrackPath.PageEvent(path));
     }
 
     private async Task HandleBeaconAsync(HttpContext context)
@@ -97,17 +104,6 @@ public sealed class TrackMiddleware
         var flow = TrackCookie.ReadFlow(context.Request);
         var ip = TrackCookie.ClientIp(context);
         if (string.IsNullOrEmpty(flow) || string.IsNullOrEmpty(ip))
-        {
-            context.Response.StatusCode = StatusCodes.Status204NoContent;
-            return;
-        }
-
-        string siteName;
-        try
-        {
-            siteName = context.GetSite().TargetHost;
-        }
-        catch (InvalidOperationException)
         {
             context.Response.StatusCode = StatusCodes.Status204NoContent;
             return;
@@ -125,9 +121,7 @@ public sealed class TrackMiddleware
         {
         }
 
-        var (t1, t2) = TrackCookie.ReadTargets(context.Request);
-        var now = DateTime.UtcNow;
-        _store.Touch(DateOnly.FromDateTime(now), ip, flow, siteName, t1, t2, kind, now);
+        Record(context, kind);
         context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 

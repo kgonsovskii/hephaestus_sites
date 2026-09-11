@@ -29,12 +29,12 @@ public sealed class TrackPostgres
             await connection.OpenAsync(cancellationToken);
             await using var cmd = new NpgsqlCommand(
                 """
-                SELECT day, ip, flow, site, target1, target2, hit, video, play, goal, first_seen, last_seen, goal_at
+                SELECT day, ip, flow, domain, site, target1, target2, hit, video, play, goal, first_seen, last_seen, goal_at
                 FROM track_visit
                 WHERE last_seen >= @since
                 """,
                 connection);
-            cmd.Parameters.AddWithValue("since", DateTime.UtcNow.AddDays(-2));
+            cmd.Parameters.AddWithValue("since", DateTime.UtcNow.AddDays(-30));
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             var list = new List<TrackVisit>();
             while (await reader.ReadAsync(cancellationToken))
@@ -44,18 +44,19 @@ public sealed class TrackPostgres
                     Day = DateOnly.FromDateTime(reader.GetDateTime(0)),
                     Ip = reader.GetString(1),
                     Flow = reader.GetString(2),
-                    Site = reader.GetString(3),
-                    Target1 = reader.IsDBNull(4) ? "" : reader.GetString(4),
-                    Target2 = reader.IsDBNull(5) ? "" : reader.GetString(5),
-                    Hit = reader.GetBoolean(6),
-                    Video = reader.GetBoolean(7),
-                    Play = reader.GetBoolean(8),
-                    Goal = reader.GetBoolean(9),
-                    FirstSeen = DateTime.SpecifyKind(reader.GetDateTime(10), DateTimeKind.Utc),
-                    LastSeen = DateTime.SpecifyKind(reader.GetDateTime(11), DateTimeKind.Utc),
-                    GoalAt = reader.IsDBNull(12)
+                    Domain = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                    Site = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                    Target1 = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                    Target2 = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                    Hit = reader.GetBoolean(7),
+                    Video = reader.GetBoolean(8),
+                    Play = reader.GetBoolean(9),
+                    Goal = reader.GetBoolean(10),
+                    FirstSeen = DateTime.SpecifyKind(reader.GetDateTime(11), DateTimeKind.Utc),
+                    LastSeen = DateTime.SpecifyKind(reader.GetDateTime(12), DateTimeKind.Utc),
+                    GoalAt = reader.IsDBNull(13)
                         ? null
-                        : DateTime.SpecifyKind(reader.GetDateTime(12), DateTimeKind.Utc)
+                        : DateTime.SpecifyKind(reader.GetDateTime(13), DateTimeKind.Utc)
                 });
             }
 
@@ -82,15 +83,16 @@ public sealed class TrackPostgres
             await using var cmd = new NpgsqlCommand(
                 """
                 INSERT INTO track_visit (
-                  day, ip, flow, site, target1, target2, hit, video, play, goal, first_seen, last_seen, goal_at)
+                  day, ip, flow, domain, site, target1, target2, hit, video, play, goal, first_seen, last_seen, goal_at)
                 VALUES (
-                  @day, @ip, @flow, @site, @target1, @target2, @hit, @video, @play, @goal, @first_seen, @last_seen, @goal_at)
-                ON CONFLICT (day, ip, flow, site) DO UPDATE SET
+                  @day, @ip, @flow, @domain, @site, @target1, @target2, @hit, @video, @play, @goal, @first_seen, @last_seen, @goal_at)
+                ON CONFLICT (day, ip, flow, domain) DO UPDATE SET
                   hit = track_visit.hit OR EXCLUDED.hit,
                   video = track_visit.video OR EXCLUDED.video,
                   play = track_visit.play OR EXCLUDED.play,
                   goal = track_visit.goal OR EXCLUDED.goal,
                   last_seen = GREATEST(track_visit.last_seen, EXCLUDED.last_seen),
+                  site = CASE WHEN EXCLUDED.site <> '' THEN EXCLUDED.site ELSE track_visit.site END,
                   target1 = CASE WHEN EXCLUDED.target1 <> '' THEN EXCLUDED.target1 ELSE track_visit.target1 END,
                   target2 = CASE WHEN EXCLUDED.target2 <> '' THEN EXCLUDED.target2 ELSE track_visit.target2 END,
                   goal_at = COALESCE(track_visit.goal_at, EXCLUDED.goal_at)
@@ -100,6 +102,7 @@ public sealed class TrackPostgres
             cmd.Parameters.AddWithValue("day", visit.Day.ToDateTime(TimeOnly.MinValue));
             cmd.Parameters.AddWithValue("ip", visit.Ip);
             cmd.Parameters.AddWithValue("flow", visit.Flow);
+            cmd.Parameters.AddWithValue("domain", visit.Domain);
             cmd.Parameters.AddWithValue("site", visit.Site);
             cmd.Parameters.AddWithValue("target1", visit.Target1);
             cmd.Parameters.AddWithValue("target2", visit.Target2);

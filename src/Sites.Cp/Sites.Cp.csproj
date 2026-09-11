@@ -17,6 +17,7 @@
     <ProjectReference Include="..\Sites.RemoteDeploy\Sites.RemoteDeploy.csproj">
       <Private>true</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Sites.Track\Sites.Track.csproj" />
     <ProjectReference Include="..\Sites.Web\Sites.Web.csproj" />
   </ItemGroup>
 

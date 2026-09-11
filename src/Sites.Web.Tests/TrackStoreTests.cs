@@ -55,6 +55,15 @@ public sealed class TrackCookieTests
 
         Assert.Null(TrackCookie.ReadFlow(context.Request));
     }
+
+    [Fact]
+    public void RequestDomain_UsesHostHeaderLowercase()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Host = new HostString("WWW.4Tube.xyz:443");
+
+        Assert.Equal("www.4tube.xyz", TrackCookie.RequestDomain(context.Request));
+    }
 }
 
 public sealed class TrackPathTests
@@ -86,7 +95,7 @@ public sealed class TrackStoreTests
     {
         var store = new TrackStore();
         var now = new DateTime(2026, 9, 11, 12, 0, 0, DateTimeKind.Utc);
-        var visit = store.Touch(DateOnly.FromDateTime(now), "1.2.3.4", "flow-a", "4tube.xyz", "", "", TrackEventKind.Video, now);
+        var visit = store.Touch(DateOnly.FromDateTime(now), "1.2.3.4", "flow-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Video, now);
 
         Assert.True(visit.Hit);
         Assert.True(visit.Video);
@@ -98,14 +107,14 @@ public sealed class TrackStoreTests
     {
         var store = new TrackStore();
         var now = new DateTime(2026, 9, 11, 12, 0, 0, DateTimeKind.Utc);
-        store.Touch(DateOnly.FromDateTime(now), "1.2.3.4", "flow-a", "4tube.xyz", "", "", TrackEventKind.Play, now);
+        store.Touch(DateOnly.FromDateTime(now), "1.2.3.4", "flow-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Play, now);
 
         Assert.True(store.TryMarkGoal("1.2.3.4", TimeSpan.FromHours(24), now, out var first));
         Assert.True(first!.Goal);
         Assert.False(store.TryMarkGoal("1.2.3.4", TimeSpan.FromHours(24), now.AddHours(1), out _));
 
         var later = now.AddHours(25);
-        store.Touch(DateOnly.FromDateTime(later), "1.2.3.4", "flow-a", "4tube.xyz", "", "", TrackEventKind.Hit, later);
+        store.Touch(DateOnly.FromDateTime(later), "1.2.3.4", "flow-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Hit, later);
         Assert.True(store.TryMarkGoal("1.2.3.4", TimeSpan.FromHours(24), later, out _));
     }
 
@@ -114,11 +123,39 @@ public sealed class TrackStoreTests
     {
         var store = new TrackStore();
         var now = new DateTime(2026, 9, 11, 12, 0, 0, DateTimeKind.Utc);
-        store.Touch(DateOnly.FromDateTime(now), "9.9.9.9", "flow-home", "4tube.xyz", "", "", TrackEventKind.Hit, now);
-        store.Touch(DateOnly.FromDateTime(now), "9.9.9.9", "flow-play", "4tube.xyz", "", "", TrackEventKind.Play, now.AddMinutes(1));
+        store.Touch(DateOnly.FromDateTime(now), "9.9.9.9", "flow-home", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Hit, now);
+        store.Touch(DateOnly.FromDateTime(now), "9.9.9.9", "flow-play", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Play, now.AddMinutes(1));
 
         Assert.True(store.TryMarkGoal("9.9.9.9", TimeSpan.FromHours(24), now.AddMinutes(2), out var visit));
         Assert.Equal("flow-play", visit!.Flow);
+        Assert.Equal("4tube.xyz", visit.Domain);
+    }
+}
+
+public sealed class TrackStatsTests
+{
+    [Fact]
+    public void Aggregate_CountsUniqueIpsPerDayFlowDomain()
+    {
+        var day = new DateOnly(2026, 9, 11);
+        var now = day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var store = new TrackStore();
+        store.Touch(day, "1.1.1.1", "camp-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Hit, now);
+        store.Touch(day, "1.1.1.1", "camp-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Play, now);
+        store.Touch(day, "2.2.2.2", "camp-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Hit, now);
+        store.Touch(day, "3.3.3.3", "camp-a", "insert-coin.xyz", "insert-coin.xyz", "", "", TrackEventKind.Video, now);
+
+        var rows = TrackStats.Aggregate(store.Snapshot(), day, day);
+
+        Assert.Equal(2, rows.Count);
+        var tube = rows.Single(row => row.Domain == "4tube.xyz");
+        Assert.Equal("camp-a", tube.Flow);
+        Assert.Equal(2, tube.Hit);
+        Assert.Equal(1, tube.Play);
+        Assert.Equal(0, tube.Goal);
+        var coin = rows.Single(row => row.Domain == "insert-coin.xyz");
+        Assert.Equal(1, coin.Hit);
+        Assert.Equal(1, coin.Video);
     }
 }
 
@@ -177,7 +214,7 @@ public sealed class TrackMiddlewareTests
     {
         var store = new TrackStore();
         var now = DateTime.UtcNow;
-        store.Touch(DateOnly.FromDateTime(now), "5.5.5.5", "camp1", "4tube.xyz", "", "", TrackEventKind.Play, now);
+        store.Touch(DateOnly.FromDateTime(now), "5.5.5.5", "camp1", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Play, now);
         var middleware = Create(store);
         var context = CreateContext("POST", "/internal/track/goal", "", "127.0.0.1");
         context.Request.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("""{"ip":"5.5.5.5"}"""));
@@ -205,15 +242,31 @@ public sealed class TrackMiddlewareTests
         Assert.Equal("text/javascript; charset=utf-8", context.Response.ContentType);
     }
 
+    [Fact]
+    public async Task GetHome_StoresRequestHostNotSiteName()
+    {
+        var store = new TrackStore();
+        var middleware = Create(store);
+        var context = CreateContext("GET", "/", "?flow=camp1", "1.2.3.4", "www.4tube.xyz");
+
+        await middleware.InvokeAsync(context);
+
+        var visit = store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(DateTime.UtcNow), "1.2.3.4", "camp1", "www.4tube.xyz"));
+        Assert.NotNull(visit);
+        Assert.Equal("www.4tube.xyz", visit!.Domain);
+        Assert.Equal("4tube.xyz", visit.Site);
+    }
+
     private static TrackMiddleware Create(TrackStore store) =>
         new(_ => Task.CompletedTask, store, Microsoft.Extensions.Options.Options.Create(new TrackOptions()));
 
-    private static DefaultHttpContext CreateContext(string method, string path, string query, string ip)
+    private static DefaultHttpContext CreateContext(string method, string path, string query, string ip, string host = "4tube.xyz")
     {
         var context = new DefaultHttpContext();
         context.Request.Method = method;
         context.Request.Path = path;
         context.Request.QueryString = new QueryString(query);
+        context.Request.Host = new HostString(host);
         context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(ip);
         context.SetSite(new TrackTestSite());
         return context;

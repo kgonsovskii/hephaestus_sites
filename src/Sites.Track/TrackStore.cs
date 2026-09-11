@@ -36,21 +36,24 @@ public sealed class TrackStore
         DateOnly day,
         string ip,
         string flow,
+        string domain,
         string site,
         string target1,
         string target2,
         TrackEventKind kind,
         DateTime now)
     {
-        var key = new TrackVisitKey(day, ip, flow, site);
+        var key = new TrackVisitKey(day, ip, flow, domain);
         var visit = _visits.AddOrUpdate(
             key,
-            _ => Create(day, ip, flow, site, target1, target2, kind, now),
+            _ => Create(day, ip, flow, domain, site, target1, target2, kind, now),
             (_, existing) =>
             {
                 lock (existing)
                 {
                     Apply(existing, kind, now);
+                    if (site.Length > 0)
+                        existing.Site = site;
                     if (target1.Length > 0)
                         existing.Target1 = target1;
                     if (target2.Length > 0)
@@ -130,6 +133,7 @@ public sealed class TrackStore
         DateOnly day,
         string ip,
         string flow,
+        string domain,
         string site,
         string target1,
         string target2,
@@ -141,6 +145,7 @@ public sealed class TrackStore
             Day = day,
             Ip = ip,
             Flow = flow,
+            Domain = domain,
             Site = site,
             Target1 = target1,
             Target2 = target2,

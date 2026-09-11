@@ -37,6 +37,15 @@ public static class TrackCookie
         return null;
     }
 
+    public static string RequestDomain(HttpRequest request)
+    {
+        var host = request.Host.Host;
+        if (string.IsNullOrWhiteSpace(host))
+            return "";
+
+        return Normalize(host.Trim().TrimEnd('.').ToLowerInvariant(), 200);
+    }
+
     public static (string Target1, string Target2) ReadTargets(HttpRequest request)
     {
         var t1 = FirstNonEmpty(

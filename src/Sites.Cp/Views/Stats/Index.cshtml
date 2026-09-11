@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stats — Sites CP</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #1a1a1a; }
+        body { margin: 0; background: #f4f5f7; }
+        header { background: #111827; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        header nav a { color: #cbd5e1; text-decoration: none; margin-right: 14px; }
+        header nav a.active { color: #fff; font-weight: 600; }
+        main { max-width: 1100px; margin: 24px auto; padding: 0 16px 40px; }
+        .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+        h2 { margin: 0 0 12px; font-size: 18px; }
+        button { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font: inherit; }
+        button.secondary { background: #6b7280; }
+        input, select { box-sizing: border-box; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+        label { display: block; font-size: 13px; color: #374151; margin: 0 0 4px; }
+        .filters { display: grid; grid-template-columns: 120px 1fr 1fr auto; gap: 12px; align-items: end; }
+        .muted { color: #6b7280; font-size: 13px; }
+        .hint { color: #6b7280; font-size: 12px; margin-top: 8px; }
+        #status { min-height: 20px; margin-bottom: 8px; font-size: 13px; }
+        #status.error { color: #b91c1c; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
+        th { font-size: 12px; text-transform: uppercase; color: #6b7280; }
+        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        tfoot td { font-weight: 600; border-top: 1px solid #d1d5db; }
+        code { font-size: 12px; background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
+        @@media (max-width: 800px) {
+            .filters { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+@await Html.PartialAsync("_CpNav", "stats")
+<main>
+    <div id="status"></div>
+    <div class="card">
+        <h2>Tracking</h2>
+        <p class="muted">Unique IPs per UTC day, campaign <code>flow</code>, and the request domain (Host header — not the site name). Counts are relative, not exact uniques across NAT.</p>
+        <div class="filters">
+            <div>
+                <label for="days">Days</label>
+                <select id="days">
+                    <option value="1">1</option>
+                    <option value="7" selected>7</option>
+                    <option value="14">14</option>
+                    <option value="30">30</option>
+                </select>
+            </div>
+            <div>
+                <label for="flow">Flow</label>
+                <input id="flow" type="text" autocomplete="off" />
+            </div>
+            <div>
+                <label for="domain">Domain</label>
+                <input id="domain" type="text" autocomplete="off" />
+            </div>
+            <button type="button" id="refreshBtn">Refresh</button>
+        </div>
+        <div class="hint" id="rangeHint"></div>
+    </div>
+    <div class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>Day (UTC)</th>
+                <th>Flow</th>
+                <th>Domain</th>
+                <th class="num">Hit</th>
+                <th class="num">Video</th>
+                <th class="num">Play</th>
+                <th class="num">Goal</th>
+            </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+            <tfoot>
+            <tr>
+                <td colspan="3">Total (row sums)</td>
+                <td class="num" id="totHit">0</td>
+                <td class="num" id="totVideo">0</td>
+                <td class="num" id="totPlay">0</td>
+                <td class="num" id="totGoal">0</td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+</main>
+<script>
+(function () {
+    const pathBase = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Context.Request.PathBase.Value ?? ""));
+    const api = (path) => (pathBase.endsWith("/") ? pathBase.slice(0, -1) : pathBase) + path;
+
+    function setStatus(msg, ok) {
+        const el = document.getElementById("status");
+        el.textContent = msg || "";
+        el.className = ok === false ? "error" : "";
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    async function load() {
+        const days = document.getElementById("days").value;
+        const flow = document.getElementById("flow").value.trim();
+        const domain = document.getElementById("domain").value.trim();
+        const params = new URLSearchParams({ days });
+        if (flow) params.set("flow", flow);
+        if (domain) params.set("domain", domain);
+        const res = await fetch(api("/api/stats?" + params.toString()), { credentials: "same-origin" });
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+    }
+
+    function render(data) {
+        document.getElementById("rangeHint").textContent =
+            `UTC ${data.from} → ${data.to} · ${data.rows.length} group(s)`;
+        const tbody = document.getElementById("rows");
+        tbody.innerHTML = data.rows.map(row =>
+            `<tr>
+                <td>${escapeHtml(row.day)}</td>
+                <td><code>${escapeHtml(row.flow)}</code></td>
+                <td><code>${escapeHtml(row.domain)}</code></td>
+                <td class="num">${row.hit}</td>
+                <td class="num">${row.video}</td>
+                <td class="num">${row.play}</td>
+                <td class="num">${row.goal}</td>
+            </tr>`
+        ).join("") || `<tr><td colspan="7" class="muted">No visits in this range.</td></tr>`;
+        const totals = data.totals || {};
+        document.getElementById("totHit").textContent = totals.hit ?? 0;
+        document.getElementById("totVideo").textContent = totals.video ?? 0;
+        document.getElementById("totPlay").textContent = totals.play ?? 0;
+        document.getElementById("totGoal").textContent = totals.goal ?? 0;
+    }
+
+    async function refresh() {
+        try {
+            setStatus("");
+            render(await load());
+        } catch (err) {
+            setStatus(String(err.message || err), false);
+        }
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", refresh);
+    document.getElementById("days").addEventListener("change", refresh);
+    document.getElementById("flow").addEventListener("keydown", e => { if (e.key === "Enter") refresh(); });
+    document.getElementById("domain").addEventListener("keydown", e => { if (e.key === "Enter") refresh(); });
+    refresh();
+})();
+</script>
+</body>
+</html>

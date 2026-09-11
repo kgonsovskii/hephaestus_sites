@@ -58,6 +58,7 @@ public sealed class RemoteDeployRunnerTests
         Assert.Contains("apt_get install -y postgresql postgresql-client", installPostgres);
         Assert.Contains("DROP DATABASE IF EXISTS sites", setupSql);
         Assert.Contains("flow", setupSql);
+        Assert.Contains("domain", setupSql);
         Assert.Contains("goal_at", setupSql);
     }
 
