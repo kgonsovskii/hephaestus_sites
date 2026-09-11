@@ -94,8 +94,7 @@ public sealed class TrackStore
             if (string.IsNullOrEmpty(candidate.Flow))
                 continue;
 
-            if (best is null || Score(candidate) > Score(best) ||
-                (Score(candidate) == Score(best) && candidate.LastSeen > best.LastSeen))
+            if (best is null || IsBetterGoalMatch(candidate, best))
                 best = candidate;
         }
 
@@ -177,6 +176,17 @@ public sealed class TrackStore
                 visit.GoalAt = now;
                 break;
         }
+    }
+
+    /// <summary>
+    /// Credit the flow this IP used last (campaign landing after organic Play must win).
+    /// Same LastSeen: Play, then Video, then Hit.
+    /// </summary>
+    private static bool IsBetterGoalMatch(TrackVisit candidate, TrackVisit best)
+    {
+        if (candidate.LastSeen != best.LastSeen)
+            return candidate.LastSeen > best.LastSeen;
+        return Score(candidate) > Score(best);
     }
 
     private static int Score(TrackVisit visit)

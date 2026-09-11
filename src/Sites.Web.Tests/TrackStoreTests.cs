@@ -201,7 +201,7 @@ public sealed class TrackStoreTests
     }
 
     [Fact]
-    public void TryMarkGoal_PrefersPlayRow()
+    public void TryMarkGoal_PrefersMostRecentVisit()
     {
         var store = new TrackStore();
         var now = new DateTime(2026, 9, 11, 12, 0, 0, DateTimeKind.Utc);
@@ -211,6 +211,20 @@ public sealed class TrackStoreTests
         Assert.True(store.TryMarkGoal("9.9.9.9", TimeSpan.FromHours(24), now.AddMinutes(2), out var visit));
         Assert.Equal("flow-play", visit!.Flow);
         Assert.Equal("4tube.xyz", visit.Domain);
+    }
+
+    [Fact]
+    public void TryMarkGoal_PrefersRecentCampaignHitOverOlderOrganicPlay()
+    {
+        var store = new TrackStore();
+        var now = new DateTime(2026, 9, 11, 12, 0, 0, DateTimeKind.Utc);
+        store.Touch(DateOnly.FromDateTime(now), "82.192.76.8", TrackCookie.DefaultFlow, "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Play, now);
+        store.Touch(DateOnly.FromDateTime(now), "82.192.76.8", "123", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Hit, now.AddMinutes(10));
+
+        Assert.True(store.TryMarkGoal("82.192.76.8", TimeSpan.FromHours(24), now.AddMinutes(11), out var visit));
+        Assert.Equal("123", visit!.Flow);
+        Assert.True(visit.Goal);
+        Assert.False(store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(now), "82.192.76.8", TrackCookie.DefaultFlow, "4tube.xyz"))!.Goal);
     }
 }
 

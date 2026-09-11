@@ -34,7 +34,7 @@ https://4tube.xyz/video/123/?flow=camp1
 | **Hit** | любой HTML (включая `/video`) |
 | **Video** | заход на `/video` или `/video/…` |
 | **Play** | клик в плеере (`userPlay`) — тот же момент, что старт таймера 30с; не автоплей, не превью |
-| **Goal** | Hephaestus `POST /internal/track/goal` `{ "ip": "…" }`; повтор с того же IP не раньше **24ч** |
+| **Goal** | Hephaestus `POST /internal/track/goal` `{ "ip": "…" }`. Вешается на **последний** визит этого IP (не на старую органику с Play). Повтор с того же IP не раньше **24ч** |
 
 Домен в строке — последние две метки Host (`www.4tube.xyz` → `4tube.xyz`) **только при записи**.
 
