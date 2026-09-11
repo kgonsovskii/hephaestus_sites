@@ -203,7 +203,7 @@
 
         <div class="section">
             <h4>Settings</h4>
-            <div class="hint">Optional key-value pairs stored in sites.json for future use. Values can be plain text, numbers, or JSON.</div>
+            <div class="hint">Optional key-value pairs stored in sites.json and substituted into local <code>.js</code> as <code>$Key$</code> (e.g. VideoInterval, DownloadUrl, DisablePlayerEvents). Values can be plain text, numbers, or JSON. DisablePlayerEvents defaults to false; set true to skip player event hooks.</div>
             <table class="dyn-table" id="settingsTable">
                 <thead>
                 <tr>

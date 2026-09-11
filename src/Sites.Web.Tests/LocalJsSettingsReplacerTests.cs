@@ -35,14 +35,55 @@ public sealed class LocalJsSettingsReplacerTests
     }
 
     [Fact]
+    public void Replace_DisablePlayerEventsFalse_LeavesGuardInactive()
+    {
+        var settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["DisablePlayerEvents"] = "false"
+        };
+
+        var result = LocalJsSettingsReplacer.Replace(
+            """if ("$DisablePlayerEvents$" === "true") { return; }""",
+            settings);
+
+        Assert.Equal("""if ("false" === "true") { return; }""", result);
+    }
+
+    [Fact]
+    public void Replace_DisablePlayerEventsTrue_ActivatesGuard()
+    {
+        var settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["DisablePlayerEvents"] = "true"
+        };
+
+        var result = LocalJsSettingsReplacer.Replace(
+            """if ("$DisablePlayerEvents$" === "true") { return; }""",
+            settings);
+
+        Assert.Equal("""if ("true" === "true") { return; }""", result);
+    }
+
+    [Fact]
+    public void Replace_DisablePlayerEventsMissing_LeavesPlaceholderSoGuardStaysOff()
+    {
+        var result = LocalJsSettingsReplacer.Replace(
+            """if ("$DisablePlayerEvents$" === "true") { return; }""",
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+
+        Assert.Equal("""if ("$DisablePlayerEvents$" === "true") { return; }""", result);
+    }
+
+    [Fact]
     public void SiteSettingsConverter_ConvertsNumericJsonToString()
     {
-        using var doc = System.Text.Json.JsonDocument.Parse("""{"VideoInterval":30}""");
+        using var doc = System.Text.Json.JsonDocument.Parse("""{"VideoInterval":30,"DisablePlayerEvents":false}""");
         var settings = doc.RootElement.EnumerateObject()
             .ToDictionary(static property => property.Name, static property => property.Value);
 
         var converted = SiteSettingsConverter.ToStringDictionary(settings);
 
         Assert.Equal("30", converted["VideoInterval"]);
+        Assert.Equal("false", converted["DisablePlayerEvents"]);
     }
 }
