@@ -2,6 +2,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Sites.Web;
 using Sites.Web.Abstractions;
@@ -15,12 +17,18 @@ public sealed class TrackMiddleware
     private readonly RequestDelegate _next;
     private readonly TrackStore _store;
     private readonly IOptions<TrackOptions> _options;
+    private readonly ILogger<TrackMiddleware> _logger;
 
-    public TrackMiddleware(RequestDelegate next, TrackStore store, IOptions<TrackOptions> options)
+    public TrackMiddleware(
+        RequestDelegate next,
+        TrackStore store,
+        IOptions<TrackOptions> options,
+        ILogger<TrackMiddleware>? logger = null)
     {
         _next = next;
         _store = store;
         _options = options;
+        _logger = logger ?? NullLogger<TrackMiddleware>.Instance;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -149,7 +157,7 @@ public sealed class TrackMiddleware
             return;
         }
 
-        ip = TrackCookie.Normalize(ip, 45);
+        ip = TrackCookie.NormalizeClientIp(ip);
         if (ip.Length == 0)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -157,8 +165,12 @@ public sealed class TrackMiddleware
         }
 
         var now = DateTime.UtcNow;
-        var marked = _store.TryMarkGoal(ip, _options.Value.GoalLock, now, out _);
-        context.Response.StatusCode = marked ? StatusCodes.Status204NoContent : StatusCodes.Status204NoContent;
+        var marked = _store.TryMarkGoal(ip, _options.Value.GoalLock, now, out var visit);
+        if (marked)
+            _logger.LogInformation("Track goal marked ip={Ip} flow={Flow} domain={Domain}", ip, visit?.Flow, visit?.Domain);
+        else
+            _logger.LogWarning("Track goal unmatched ip={Ip} (no visit with flow in the last {Hours}h)", ip, _options.Value.GoalLock.TotalHours);
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 
     private static async Task WriteScriptAsync(HttpContext context)

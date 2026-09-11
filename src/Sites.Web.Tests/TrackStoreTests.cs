@@ -57,6 +57,23 @@ public sealed class TrackCookieTests
     }
 
     [Fact]
+    public void NormalizeClientIp_MapsIpv4Mapped()
+    {
+        Assert.Equal("1.2.3.4", TrackCookie.NormalizeClientIp("::ffff:1.2.3.4"));
+        Assert.True(TrackCookie.SameClientIp("::ffff:1.2.3.4", "1.2.3.4"));
+    }
+
+    [Fact]
+    public void ClientIp_UsesForwardedForWhenRemoteIsLoopback()
+    {
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = System.Net.IPAddress.Loopback;
+        context.Request.Headers["X-Forwarded-For"] = "203.0.113.9, 10.0.0.1";
+
+        Assert.Equal("203.0.113.9", TrackCookie.ClientIp(context));
+    }
+
+    [Fact]
     public void RequestDomain_UsesHostHeaderLowercase()
     {
         var context = new DefaultHttpContext();
@@ -105,6 +122,18 @@ public sealed class TrackStoreTests
     }
 
     [Fact]
+    public void Touch_Play_DoesNotSetVideo()
+    {
+        var store = new TrackStore();
+        var now = new DateTime(2026, 9, 11, 12, 0, 0, DateTimeKind.Utc);
+        var visit = store.Touch(DateOnly.FromDateTime(now), "1.2.3.4", "flow-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Play, now);
+
+        Assert.True(visit.Hit);
+        Assert.False(visit.Video);
+        Assert.True(visit.Play);
+    }
+
+    [Fact]
     public void TryMarkGoal_LocksIpForWindow()
     {
         var store = new TrackStore();
@@ -118,6 +147,17 @@ public sealed class TrackStoreTests
         var later = now.AddHours(25);
         store.Touch(DateOnly.FromDateTime(later), "1.2.3.4", "flow-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Hit, later);
         Assert.True(store.TryMarkGoal("1.2.3.4", TimeSpan.FromHours(24), later, out _));
+    }
+
+    [Fact]
+    public void TryMarkGoal_MatchesIpv4MappedAddress()
+    {
+        var store = new TrackStore();
+        var now = new DateTime(2026, 9, 11, 12, 0, 0, DateTimeKind.Utc);
+        store.Touch(DateOnly.FromDateTime(now), "10.20.30.40", "flow-a", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Play, now);
+
+        Assert.True(store.TryMarkGoal("::ffff:10.20.30.40", TimeSpan.FromHours(24), now, out var visit));
+        Assert.True(visit!.Goal);
     }
 
     [Fact]
@@ -153,6 +193,7 @@ public sealed class TrackStatsTests
         var tube = rows.Single(row => row.Domain == "4tube.xyz");
         Assert.Equal("camp-a", tube.Flow);
         Assert.Equal(2, tube.Hit);
+        Assert.Equal(0, tube.Video);
         Assert.Equal(1, tube.Play);
         Assert.Equal(0, tube.Goal);
         var coin = rows.Single(row => row.Domain == "insert-coin.xyz");
@@ -209,6 +250,7 @@ public sealed class TrackMiddlewareTests
         var visit = store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(DateTime.UtcNow), "9.9.9.9", "camp1", "4tube.xyz"));
         Assert.NotNull(visit);
         Assert.True(visit!.Play);
+        Assert.False(visit.Video);
     }
 
     [Fact]
@@ -224,6 +266,21 @@ public sealed class TrackMiddlewareTests
         await middleware.InvokeAsync(context);
 
         Assert.Equal(StatusCodes.Status204NoContent, context.Response.StatusCode);
+        Assert.True(store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(now), "5.5.5.5", "camp1", "4tube.xyz"))!.Goal);
+    }
+
+    [Fact]
+    public async Task PostGoal_MarksVisitWhenIpIsIpv4Mapped()
+    {
+        var store = new TrackStore();
+        var now = DateTime.UtcNow;
+        store.Touch(DateOnly.FromDateTime(now), "5.5.5.5", "camp1", "4tube.xyz", "4tube.xyz", "", "", TrackEventKind.Play, now);
+        var middleware = Create(store);
+        var context = CreateContext("POST", "/internal/track/goal", "", "127.0.0.1");
+        context.Request.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("""{"ip":"::ffff:5.5.5.5"}"""));
+
+        await middleware.InvokeAsync(context);
+
         Assert.True(store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(now), "5.5.5.5", "camp1", "4tube.xyz"))!.Goal);
     }
 

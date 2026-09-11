@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Http;
 
 namespace Sites.Track;
@@ -20,6 +21,27 @@ public static class TrackCookie
         var trimmed = value.Trim();
         return trimmed.Length <= maxLength ? trimmed : trimmed[..maxLength];
     }
+
+    public static string NormalizeClientIp(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "";
+
+        var trimmed = value.Trim();
+        var comma = trimmed.IndexOf(',');
+        if (comma >= 0)
+            trimmed = trimmed[..comma].Trim();
+        if (trimmed.Equals("unknown", StringComparison.OrdinalIgnoreCase))
+            return "";
+        if (!IPAddress.TryParse(trimmed, out var ip))
+            return Normalize(trimmed, 45);
+        if (ip.IsIPv4MappedToIPv6)
+            ip = ip.MapToIPv4();
+        return ip.ToString();
+    }
+
+    public static bool SameClientIp(string? left, string? right) =>
+        string.Equals(NormalizeClientIp(left), NormalizeClientIp(right), StringComparison.OrdinalIgnoreCase);
 
     public static string? ReadFlow(HttpRequest request)
     {
@@ -93,14 +115,40 @@ public static class TrackCookie
 
     public static string? ClientIp(HttpContext context)
     {
-        var ip = context.Connection.RemoteIpAddress;
-        if (ip is null)
-            return null;
+        var remote = context.Connection.RemoteIpAddress;
+        if (remote is not null && !IsPrivate(remote))
+            return Format(remote);
 
+        if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwarded) ||
+            context.Request.Headers.TryGetValue("HTTP_X_FORWARDED_FOR", out forwarded))
+        {
+            var fromHeader = NormalizeClientIp(forwarded.ToString());
+            if (fromHeader.Length > 0)
+                return fromHeader;
+        }
+
+        return remote is null ? null : Format(remote);
+    }
+
+    private static string Format(IPAddress ip)
+    {
         if (ip.IsIPv4MappedToIPv6)
             ip = ip.MapToIPv4();
-
         return ip.ToString();
+    }
+
+    private static bool IsPrivate(IPAddress ip)
+    {
+        if (ip.IsIPv4MappedToIPv6)
+            ip = ip.MapToIPv4();
+        if (IPAddress.IsLoopback(ip))
+            return true;
+        if (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+            return false;
+        var bytes = ip.GetAddressBytes();
+        return bytes[0] == 10
+            || (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
+            || (bytes[0] == 192 && bytes[1] == 168);
     }
 
     private static string FirstNonEmpty(params string[] values)

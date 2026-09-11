@@ -77,7 +77,7 @@ public sealed class TrackStore
             lock (candidate)
                 goalAt = candidate.GoalAt;
 
-            if (!string.Equals(candidate.Ip, ip, StringComparison.OrdinalIgnoreCase))
+            if (!TrackCookie.SameClientIp(candidate.Ip, ip))
                 continue;
 
             if (goalAt is DateTime locked && locked >= cutoff)
@@ -87,7 +87,7 @@ public sealed class TrackStore
         TrackVisit? best = null;
         foreach (var candidate in _visits.Values)
         {
-            if (!string.Equals(candidate.Ip, ip, StringComparison.OrdinalIgnoreCase))
+            if (!TrackCookie.SameClientIp(candidate.Ip, ip))
                 continue;
             if (candidate.LastSeen < cutoff)
                 continue;
