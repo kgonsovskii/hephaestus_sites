@@ -11,6 +11,8 @@ using (var bootLog = LoggerFactory.Create(builder => builder.AddSimpleConsole(op
 
 var selectedSiteName = Environment.GetEnvironmentVariable("SITES_SITE")
     ?? ParseSelectedSiteName(args);
+if (selectedSiteName is not null)
+    SitesProfileForSite.UseProfileThatContains(selectedSiteName);
 
 var builder = WebApplication.CreateBuilder(args);
 var certificateStore = new TlsCertificateStore();
@@ -101,7 +103,7 @@ static void LogHostEndpoints(IConfiguration configuration, IHostEnvironment envi
     }
 
     if (environment.IsDevelopment())
-        logger.LogInformation("Open http://127.0.0.1:{Port}/", hostOptions.HttpPort);
+        logger.LogInformation("Open http://127.0.0.1:{Port}/ (single-site: run.bat <targetHost>)", hostOptions.HttpPort);
 }
 
 static string? ParseSelectedSiteName(string[] args)

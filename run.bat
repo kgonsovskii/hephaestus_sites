@@ -11,7 +11,7 @@ if /i "%~1"=="--sitename" (
     echo Error: --sitename requires a value.
     echo Usage: run.bat [--sitename ^<targetHost^>]
     echo   No args: all sites from sites.json
-    echo   --sitename tube-18.xyz: single-site mode
+    echo   run.bat insert-coin.xyz: single-site on http://127.0.0.1:5000
     exit /b 1
   )
   set "SITE_NAME=%~2"

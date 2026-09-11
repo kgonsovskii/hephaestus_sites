@@ -408,7 +408,8 @@ public sealed class ReverseProxyMiddleware
             if (RequestHeadersToSkip.Contains(header.Key))
                 continue;
 
-            if (header.Key.Equals("Referer", StringComparison.OrdinalIgnoreCase))
+            if (header.Key.Equals("Referer", StringComparison.OrdinalIgnoreCase)
+                || header.Key.Equals("Origin", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             request.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
@@ -418,6 +419,10 @@ public sealed class ReverseProxyMiddleware
 
         if (upstreamReferer is not null)
             request.Headers.Referrer = upstreamReferer;
+
+        var upstreamOrigin = BuildUpstreamOrigin(context, site);
+        if (upstreamOrigin is not null)
+            request.Headers.TryAddWithoutValidation("Origin", upstreamOrigin);
     }
 
     private static Uri BuildUpstreamReferer(HttpContext context, ISiteModule site)
@@ -425,7 +430,7 @@ public sealed class ReverseProxyMiddleware
         var refererHeader = context.Request.Headers.Referer.ToString();
         if (!string.IsNullOrWhiteSpace(refererHeader) &&
             Uri.TryCreate(refererHeader, UriKind.Absolute, out var clientReferer) &&
-            ShouldRewriteRefererToSource(clientReferer, context, site))
+            ShouldRewriteClientOriginToSource(clientReferer, context, site))
         {
             return new Uri($"{site.SourceBaseUrl.TrimEnd('/')}{clientReferer.PathAndQuery}");
         }
@@ -433,7 +438,26 @@ public sealed class ReverseProxyMiddleware
         return new Uri($"{site.SourceBaseUrl.TrimEnd('/')}/");
     }
 
-    private static bool ShouldRewriteRefererToSource(Uri clientReferer, HttpContext context, ISiteModule site)
+    /// <summary>
+    /// fetch() always sends Origin as the public site. Upstream APIs (ROM download, WAF)
+    /// expect the source origin, same as Referer.
+    /// </summary>
+    internal static string? BuildUpstreamOrigin(HttpContext context, ISiteModule site)
+    {
+        var originHeader = context.Request.Headers.Origin.ToString();
+        if (string.IsNullOrWhiteSpace(originHeader))
+            return null;
+
+        if (Uri.TryCreate(originHeader, UriKind.Absolute, out var clientOrigin) &&
+            ShouldRewriteClientOriginToSource(clientOrigin, context, site))
+        {
+            return site.SourceBaseUrl.TrimEnd('/');
+        }
+
+        return originHeader;
+    }
+
+    internal static bool ShouldRewriteClientOriginToSource(Uri clientReferer, HttpContext context, ISiteModule site)
     {
         var (_, publicHost) = PublicTargetResolver.Resolve(context.Request, site);
 

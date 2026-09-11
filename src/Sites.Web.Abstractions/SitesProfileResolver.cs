@@ -12,6 +12,9 @@ public static class SitesProfileResolver
 
     public static string Current { get; private set; } = DefaultProfile;
 
+    public static void Use(string profileName) =>
+        Current = NormalizeProfileName(profileName);
+
     public static void Initialize(string? startDirectory = null)
     {
         if (TryReadEnvironmentProfile(out var fromEnv))
