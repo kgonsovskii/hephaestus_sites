@@ -18,6 +18,9 @@ echo "[sites-install] profile=${SITES_PROFILE} clone=${SITES_CLONE_DIR} publish=
 echo "[sites-install] hephaestus_sites_data (sibling)"
 bash "${SCRIPT_DIR}/install-data.sh"
 
+echo "[sites-install] postgresql"
+bash "${SCRIPT_DIR}/install-postgres.sh"
+
 echo "[sites-install] dotnet publish -> ${SITES_PUBLISH_DIR}"
 dotnet publish "${SITES_CLONE_DIR}/src/Sites.Publish/Sites.Publish.csproj" \
   -c Release \
@@ -48,8 +51,9 @@ echo "[sites-install] writing ${UNIT_PATH}"
 cat > "${UNIT_PATH}" <<EOF
 [Unit]
 Description=Sites reverse proxy host (${SITES_SERVICE_NAME})
-After=network-online.target
+After=network-online.target postgresql.service
 Wants=network-online.target
+Wants=postgresql.service
 
 [Service]
 Type=simple

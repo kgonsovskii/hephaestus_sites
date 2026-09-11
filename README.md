@@ -28,8 +28,9 @@ What happens on each VPS (over SSH):
 1. Validate the creds profile and overwrite `$HOME/profile.txt`
 2. Install `git` + .NET 10 SDK/runtime (apt)
 3. `git clone`/`reset` **code** (`hephaestus_sites`) and **data** (`hephaestus_sites_data`)
-4. `dotnet publish` → `~/hephaestus_sites/release/`
-5. Restart `sites-host` systemd service — on start it pulls data again and issues/renews Let's Encrypt for every host in that profile's `sites.json`
+4. Install PostgreSQL and apply `deploy/setup-postgres.sql` (database `sites`, role `tss` / `123`). Each deploy **drops and recreates** `sites` (tracking data is wiped).
+5. `dotnet publish` → `~/hephaestus_sites/release/`
+6. Restart `sites-host` systemd service — on start it pulls data again and issues/renews Let's Encrypt for every host in that profile's `sites.json`
 
 CP git pull/push syncs **hephaestus_sites_data** only (not the code repo), same pattern as Hephaestus + `hephaestus_data`.
 

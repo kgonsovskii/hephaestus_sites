@@ -44,6 +44,23 @@ public sealed class RemoteDeployRunnerTests
     }
 
     [Fact]
+    public void InstallLocalScript_InstallsPostgres()
+    {
+        var repoRoot = RepositoryPaths.TryResolveRoot()
+            ?? throw new InvalidOperationException("Repository root not found.");
+        var deploy = RepositoryPaths.DeployDirectory(repoRoot);
+        var installLocal = File.ReadAllText(Path.Combine(deploy, "install-local.sh"));
+        var installPostgres = File.ReadAllText(Path.Combine(deploy, "install-postgres.sh"));
+        var setupSql = File.ReadAllText(Path.Combine(deploy, "setup-postgres.sql"));
+
+        Assert.Contains("install-postgres.sh", installLocal);
+        Assert.Contains("postgresql.service", installLocal);
+        Assert.Contains("apt_get install -y postgresql postgresql-client", installPostgres);
+        Assert.Contains("DROP DATABASE IF EXISTS sites", setupSql);
+        Assert.Contains("CREATE DATABASE sites", setupSql);
+    }
+
+    [Fact]
     public void InstallDataScript_ResetsExistingDataRepo()
     {
         var repoRoot = RepositoryPaths.TryResolveRoot()

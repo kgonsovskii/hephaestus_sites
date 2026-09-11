@@ -1,7 +1,8 @@
 [Unit]
 Description=Sites reverse proxy host (HTTP/HTTPS on 80/443)
-After=network-online.target
+After=network-online.target postgresql.service
 Wants=network-online.target
+Wants=postgresql.service
 
 [Service]
 Type=simple
