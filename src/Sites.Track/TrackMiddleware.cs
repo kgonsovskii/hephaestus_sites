@@ -81,7 +81,7 @@ public sealed class TrackMiddleware
 
         var domain = TrackCookie.RequestDomain(context.Request);
         if (domain.Length == 0)
-            domain = TrackCookie.Normalize(siteName, 200);
+            domain = TrackCookie.RegistrableDomain(siteName);
 
         var (t1, t2) = TrackCookie.ReadTargets(context.Request);
         var now = DateTime.UtcNow;

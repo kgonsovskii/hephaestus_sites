@@ -79,7 +79,20 @@ public sealed class TrackCookieTests
         var context = new DefaultHttpContext();
         context.Request.Host = new HostString("WWW.4Tube.xyz:443");
 
-        Assert.Equal("www.4tube.xyz", TrackCookie.RequestDomain(context.Request));
+        Assert.Equal("4tube.xyz", TrackCookie.RequestDomain(context.Request));
+    }
+
+    [Theory]
+    [InlineData("www.4tube.xyz", "4tube.xyz")]
+    [InlineData("WWW.4Tube.xyz", "4tube.xyz")]
+    [InlineData("4tube.xyz", "4tube.xyz")]
+    [InlineData("a.b.4tube.xyz", "4tube.xyz")]
+    [InlineData("insert-coin.xyz", "insert-coin.xyz")]
+    [InlineData("cdn.insert-coin.xyz", "insert-coin.xyz")]
+    [InlineData("localhost", "localhost")]
+    public void RegistrableDomain_KeepsSecondLevel(string host, string expected)
+    {
+        Assert.Equal(expected, TrackCookie.RegistrableDomain(host));
     }
 }
 
@@ -304,7 +317,7 @@ public sealed class TrackMiddlewareTests
     }
 
     [Fact]
-    public async Task GetHome_StoresRequestHostNotSiteName()
+    public async Task GetHome_StoresRegistrableDomainNotWwwHost()
     {
         var store = new TrackStore();
         var middleware = Create(store);
@@ -312,9 +325,24 @@ public sealed class TrackMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        var visit = store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(DateTime.UtcNow), "1.2.3.4", "camp1", "www.4tube.xyz"));
+        var visit = store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(DateTime.UtcNow), "1.2.3.4", "camp1", "4tube.xyz"));
         Assert.NotNull(visit);
-        Assert.Equal("www.4tube.xyz", visit!.Domain);
+        Assert.Equal("4tube.xyz", visit!.Domain);
+        Assert.Equal("4tube.xyz", visit.Site);
+    }
+
+    [Fact]
+    public async Task GetHome_StoresRequestHostNotSiteName()
+    {
+        var store = new TrackStore();
+        var middleware = Create(store);
+        var context = CreateContext("GET", "/", "?flow=camp1", "1.2.3.4", "cdn.insert-coin.xyz");
+
+        await middleware.InvokeAsync(context);
+
+        var visit = store.TryGet(new TrackVisitKey(DateOnly.FromDateTime(DateTime.UtcNow), "1.2.3.4", "camp1", "insert-coin.xyz"));
+        Assert.NotNull(visit);
+        Assert.Equal("insert-coin.xyz", visit!.Domain);
         Assert.Equal("4tube.xyz", visit.Site);
     }
 

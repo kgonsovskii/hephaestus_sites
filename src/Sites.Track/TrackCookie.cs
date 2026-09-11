@@ -65,7 +65,23 @@ public static class TrackCookie
         if (string.IsNullOrWhiteSpace(host))
             return "";
 
-        return Normalize(host.Trim().TrimEnd('.').ToLowerInvariant(), 200);
+        return RegistrableDomain(host);
+    }
+
+    /// <summary>www.4tube.xyz and 4tube.xyz both become 4tube.xyz (last two DNS labels).</summary>
+    public static string RegistrableDomain(string? host)
+    {
+        var normalized = Normalize(host, 200).Trim().TrimEnd('.').ToLowerInvariant();
+        if (normalized.Length == 0)
+            return "";
+        if (IPAddress.TryParse(normalized, out _))
+            return normalized;
+
+        var labels = normalized.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        if (labels.Length <= 2)
+            return string.Join('.', labels);
+
+        return labels[^2] + "." + labels[^1];
     }
 
     public static (string Target1, string Target2) ReadTargets(HttpRequest request)
