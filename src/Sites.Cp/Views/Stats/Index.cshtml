@@ -22,10 +22,13 @@
         .hint { color: #6b7280; font-size: 12px; margin-top: 8px; }
         #status { min-height: 20px; margin-bottom: 8px; font-size: 13px; }
         #status.error { color: #b91c1c; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
         th { font-size: 12px; text-transform: uppercase; color: #6b7280; }
-        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; width: 4.5rem; }
+        col.day { width: 7.5rem; }
+        col.flow { width: 8rem; }
+        col.metric { width: 4.5rem; }
         tfoot td { font-weight: 600; border-top: 1px solid #d1d5db; }
         code { font-size: 12px; background: #f3f4f6; padding: 1px 4px; border-radius: 4px; }
         @@media (max-width: 800px) {
@@ -64,6 +67,15 @@
     </div>
     <div class="card">
         <table>
+            <colgroup>
+                <col class="day" />
+                <col class="flow" />
+                <col />
+                <col class="metric" />
+                <col class="metric" />
+                <col class="metric" />
+                <col class="metric" />
+            </colgroup>
             <thead>
             <tr>
                 <th>Day (UTC)</th>

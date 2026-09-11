@@ -20,22 +20,22 @@ echo "[sites-deploy] publish dir: ${SITES_PUBLISH_DIR}"
 echo "[sites-deploy] git repo: ${SITES_GIT_REPO}"
 echo "[sites-deploy] data repo: ${SITES_DATA_GIT_REPO}"
 
-wait_for_apt_dpkg_lock
-apt_get update
-apt_get install -y git ca-certificates curl software-properties-common
+ensure_pkg git
+ensure_pkg ca-certificates
+ensure_pkg curl
 
-if ! dpkg-query -W -f='${Status}' dotnet-sdk-10.0 2>/dev/null | grep -q 'install ok installed'; then
+if pkg_installed dotnet-sdk-10.0; then
+  echo "[sites-deploy] skip .NET PPA (dotnet-sdk-10.0 already installed)"
+else
+  ensure_pkg software-properties-common
   add-apt-repository -y ppa:dotnet/backports
-  apt_get update
+  _APT_INDEX_UPDATED=0
+  apt_update_once
 fi
 
-apt_get install -y dotnet-sdk-10.0 dotnet-runtime-10.0 aspnetcore-runtime-10.0
-apt_get install -y --only-upgrade \
-  dotnet-host \
-  dotnet-runtime-10.0 \
-  aspnetcore-runtime-10.0 \
-  dotnet-sdk-10.0 \
-  2>/dev/null || true
+ensure_pkg dotnet-sdk-10.0
+ensure_pkg dotnet-runtime-10.0
+ensure_pkg aspnetcore-runtime-10.0
 
 if ! dotnet --list-sdks | grep -q '^10\.'; then
   echo "[sites-deploy] ERROR: .NET 10 SDK not detected after install." >&2

@@ -19,9 +19,9 @@ if [ ! -f "$SQL" ]; then
   exit 1
 fi
 
-echo "[sites-postgres] installing postgresql"
-apt_get update
-apt_get install -y postgresql postgresql-client
+echo "[sites-postgres] postgresql"
+ensure_pkg postgresql
+ensure_pkg postgresql-client
 
 if command -v systemctl >/dev/null 2>&1; then
   systemctl enable postgresql >/dev/null 2>&1 || true

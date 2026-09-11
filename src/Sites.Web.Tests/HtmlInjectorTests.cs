@@ -114,6 +114,6 @@ public sealed class HtmlInjectorTests
 
         var result = HtmlInjector.Inject(html, "/categories", [Sites.Track.TrackHtmlExtras.Script]);
 
-        Assert.Contains("""<script src="/_s/track.js" async></script></body>""", result);
+        Assert.Contains("""<script src="/_s/s.js"></script></body>""", result);
     }
 }

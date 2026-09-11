@@ -27,15 +27,13 @@ public sealed class TrackMiddleware
     {
         var path = context.Request.Path.Value ?? "/";
 
-        if (HttpMethods.IsGet(context.Request.Method) &&
-            path.Equals("/_s/track.js", StringComparison.OrdinalIgnoreCase))
+        if (HttpMethods.IsGet(context.Request.Method) && IsTrackScriptPath(path))
         {
             await WriteScriptAsync(context);
             return;
         }
 
-        if (HttpMethods.IsPost(context.Request.Method) &&
-            path.Equals("/t/e", StringComparison.OrdinalIgnoreCase))
+        if (HttpMethods.IsPost(context.Request.Method) && IsPlayBeaconPath(path))
         {
             await HandleBeaconAsync(context);
             return;
@@ -185,4 +183,12 @@ public sealed class TrackMiddleware
         using var reader = new StreamReader(stream, Encoding.UTF8);
         return reader.ReadToEnd();
     }
+
+    private static bool IsTrackScriptPath(string path) =>
+        path.Equals("/_s/s.js", StringComparison.OrdinalIgnoreCase) ||
+        path.Equals("/_s/track.js", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsPlayBeaconPath(string path) =>
+        path.Equals("/_s/e", StringComparison.OrdinalIgnoreCase) ||
+        path.Equals("/t/e", StringComparison.OrdinalIgnoreCase);
 }

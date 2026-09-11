@@ -41,6 +41,14 @@ public sealed class RemoteDeployRunnerTests
         Assert.Contains(": \"${SITES_PROFILE:?SITES_PROFILE is required for remote install}\"", script);
         Assert.Contains("PROFILE_FILE=\"$(dirname \"${SITES_CLONE_DIR}\")/profile.txt\"", script);
         Assert.DoesNotContain("SITES_PROFILE=\"${SITES_PROFILE:-default}\"", script);
+        Assert.Contains("ensure_pkg git", script);
+        Assert.Contains("ensure_pkg ca-certificates", script);
+        Assert.Contains("ensure_pkg curl", script);
+        Assert.Contains("ensure_pkg dotnet-sdk-10.0", script);
+        Assert.Contains("ensure_pkg dotnet-runtime-10.0", script);
+        Assert.Contains("ensure_pkg aspnetcore-runtime-10.0", script);
+        Assert.DoesNotContain("apt_get install -y git ca-certificates curl", script);
+        Assert.DoesNotContain("--only-upgrade", script);
     }
 
     [Fact]
@@ -51,11 +59,16 @@ public sealed class RemoteDeployRunnerTests
         var deploy = RepositoryPaths.DeployDirectory(repoRoot);
         var installLocal = File.ReadAllText(Path.Combine(deploy, "install-local.sh"));
         var installPostgres = File.ReadAllText(Path.Combine(deploy, "install-postgres.sh"));
+        var waitSh = File.ReadAllText(Path.Combine(deploy, "wait.sh"));
         var setupSql = File.ReadAllText(Path.Combine(deploy, "setup-postgres.sql"));
 
         Assert.Contains("install-postgres.sh", installLocal);
         Assert.Contains("postgresql.service", installLocal);
-        Assert.Contains("apt_get install -y postgresql postgresql-client", installPostgres);
+        Assert.Contains("ensure_pkg()", waitSh);
+        Assert.Contains("pkg_installed()", waitSh);
+        Assert.Contains("ensure_pkg postgresql", installPostgres);
+        Assert.Contains("ensure_pkg postgresql-client", installPostgres);
+        Assert.DoesNotContain("apt_get install -y postgresql postgresql-client", installPostgres);
         Assert.Contains("DROP DATABASE IF EXISTS sites", setupSql);
         Assert.Contains("flow", setupSql);
         Assert.Contains("domain", setupSql);

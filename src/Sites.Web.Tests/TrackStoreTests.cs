@@ -83,6 +83,8 @@ public sealed class TrackPathTests
         Assert.False(TrackPath.ShouldRecordPage("/vendor/x.js"));
         Assert.False(TrackPath.ShouldRecordPage("/logo.png"));
         Assert.False(TrackPath.ShouldRecordPage("/_s/track.js"));
+        Assert.False(TrackPath.ShouldRecordPage("/_s/s.js"));
+        Assert.False(TrackPath.ShouldRecordPage("/_s/e"));
         Assert.True(TrackPath.ShouldRecordPage("/"));
         Assert.True(TrackPath.ShouldRecordPage("/video/1"));
     }
@@ -197,7 +199,7 @@ public sealed class TrackMiddlewareTests
     {
         var store = new TrackStore();
         var middleware = Create(store);
-        var context = CreateContext("POST", "/t/e", "", "9.9.9.9");
+        var context = CreateContext("POST", "/_s/e", "", "9.9.9.9");
         context.Request.Headers.Cookie = "sf=camp1";
         context.Request.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("""{"e":"play"}"""));
 
@@ -229,7 +231,7 @@ public sealed class TrackMiddlewareTests
     public async Task GetTrackJs_ReturnsBeaconScript()
     {
         var middleware = Create(new TrackStore());
-        var context = CreateContext("GET", "/_s/track.js", "", "1.1.1.1");
+        var context = CreateContext("GET", "/_s/s.js", "", "1.1.1.1");
         context.Response.Body = new MemoryStream();
 
         await middleware.InvokeAsync(context);
@@ -238,7 +240,9 @@ public sealed class TrackMiddlewareTests
         using var reader = new StreamReader(context.Response.Body);
         var body = await reader.ReadToEndAsync();
         Assert.Contains("sendBeacon", body);
+        Assert.Contains("/_s/e", body);
         Assert.Contains("tube18:player", body);
+        Assert.Contains("getElementsByTagName(\"video\")", body);
         Assert.Equal("text/javascript; charset=utf-8", context.Response.ContentType);
     }
 

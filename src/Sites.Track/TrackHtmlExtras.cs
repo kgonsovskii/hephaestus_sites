@@ -8,7 +8,7 @@ public sealed class TrackHtmlExtras : IHtmlExtras
     {
         Paths = ["*"],
         Position = HtmlInjectionPosition.BeforeBodyClose,
-        Snippet = """<script src="/_s/track.js" async></script>"""
+        Snippet = """<script src="/_s/s.js"></script>"""
     };
 
     public IReadOnlyList<HtmlInjection> Injections { get; } = [Script];

@@ -25,7 +25,10 @@ public static class TrackPath
     public static bool ShouldRecordPage(string path)
     {
         var normalized = Normalize(path);
-        if (normalized == "/t/e" || normalized == "/_s/track.js")
+        if (normalized == "/t/e" ||
+            normalized == "/_s/e" ||
+            normalized == "/_s/s.js" ||
+            normalized == "/_s/track.js")
             return false;
 
         foreach (var prefix in SkipPrefixes)
