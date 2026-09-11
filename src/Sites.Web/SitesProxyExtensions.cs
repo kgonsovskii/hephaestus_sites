@@ -53,6 +53,7 @@ public static class SitesProxyExtensions
         services.ConfigureOptions<SitesGzipCompressionConfigurer>();
         services.AddSingleton<ProxyDiskCache>();
         services.AddSingleton<ProxyCachePolicy>();
+        services.AddHostedService<SitesTextCacheStartupHostedService>();
 
         services.AddHttpClient("reverse-proxy", (serviceProvider, client) =>
         {
