@@ -3,6 +3,7 @@ using Sites.Cp.Models;
 using Sites.DataFtp;
 using Sites.Web;
 using Sites.Web.Abstractions;
+using Sites.Web.Caching;
 using Sites.Web.Git;
 
 namespace Sites.Cp.Controllers;
@@ -25,6 +26,8 @@ public sealed class SitesSystemApiController : ControllerBase
     private readonly Sites.Cp.Services.SitesRebootService _reboot;
     private readonly ISitesDataFtpUrlProvider _dataFtpUrl;
     private readonly SitesProfileSettingsService _settings;
+    private readonly ProxyDiskCache _cache;
+    private readonly ProxyCachePolicy _cachePolicy;
 
     public SitesSystemApiController(
         SitesGitService git,
@@ -34,7 +37,9 @@ public sealed class SitesSystemApiController : ControllerBase
         Sites.Cp.Services.SitesUpdateService update,
         Sites.Cp.Services.SitesRebootService reboot,
         ISitesDataFtpUrlProvider dataFtpUrl,
-        SitesProfileSettingsService settings)
+        SitesProfileSettingsService settings,
+        ProxyDiskCache cache,
+        ProxyCachePolicy cachePolicy)
     {
         _git = git;
         _catalog = catalog;
@@ -44,6 +49,8 @@ public sealed class SitesSystemApiController : ControllerBase
         _reboot = reboot;
         _dataFtpUrl = dataFtpUrl;
         _settings = settings;
+        _cache = cache;
+        _cachePolicy = cachePolicy;
     }
 
     [HttpGet("info")]
@@ -72,6 +79,7 @@ public sealed class SitesSystemApiController : ControllerBase
         SitesProfileResolver.WriteProfileFile(repoRoot, request.Profile);
         _settings.Reload();
         var siteCount = _catalog.ReloadRegistry();
+        SitesMaintenanceCaches.ClearTextCache(_cache, _cachePolicy);
         return Ok(new ProfileUpdateResponse
         {
             Profile = SitesProfileResolver.Current,
@@ -89,7 +97,11 @@ public sealed class SitesSystemApiController : ControllerBase
     {
         var result = await _git.PullAsync(cancellationToken);
         if (result.Succeeded)
+        {
+            _settings.Reload();
             _catalog.ReloadRegistry();
+            SitesMaintenanceCaches.ClearTextCache(_cache, _cachePolicy);
+        }
         return Ok(result);
     }
 
@@ -101,7 +113,9 @@ public sealed class SitesSystemApiController : ControllerBase
     public async Task<ActionResult<SitesGitOperationResult>> GitSync(CancellationToken cancellationToken)
     {
         var result = await _git.SyncAsync(cancellationToken);
+        _settings.Reload();
         _catalog.ReloadRegistry();
+        SitesMaintenanceCaches.ClearTextCache(_cache, _cachePolicy);
         return Ok(result);
     }
 
